@@ -314,20 +314,20 @@ Status: **Complete** (3/3)
 
 ## Phase 20: Simplify Skill Input
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Simplify assets/feat.md input
-  - [ ] Replace Step 1 to only ask for description
-  - [ ] Remove user story references
-  - [ ] Update templates
-- [ ] Simplify assets/fix.md input
-  - [ ] Replace Step 1 to only ask for description
-  - [ ] Remove summary/observed/expected/repro prompts
-- [ ] Reinstall and verify simplified skills
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify feat skill simplified input
-  - [ ] Verify fix skill simplified input
+- [x] Simplify assets/feat.md input
+  - [x] Replace Step 1 to only ask for description
+  - [x] Remove user story references
+  - [x] Update templates
+- [x] Simplify assets/fix.md input
+  - [x] Replace Step 1 to only ask for description
+  - [x] Remove summary/observed/expected/repro prompts
+- [x] Reinstall and verify simplified skills
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify feat skill simplified input
+  - [x] Verify fix skill simplified input
 
 ---
 
@@ -404,7 +404,7 @@ Status: **Not Started** (0/5)
 | Phase 17: Concise One-at-a-Time Questions in Skills | Complete | 21/21 |
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
-| Phase 20: Simplify Skill Input | Not Started | 0/12 |
+| Phase 20: Simplify Skill Input | Complete | 12/12 |
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **163/209** |
+| **Total** | | **175/209** |

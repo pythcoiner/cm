@@ -38,41 +38,14 @@ You MUST follow this wizard flow step by step. Do NOT skip steps or modify files
 
 ## Step 1: Bug Description
 
-### Step 1.1: Bug Summary
-
 **Ask the user:**
 
-> What is the **bug summary**? (one line)
-
-Wait for the user's response before proceeding.
-
-### Step 1.2: Observed Behavior
-
-**Ask the user:**
-
-> What is **happening incorrectly**?
+> **Describe the bug you want to fix.**
 >
-> (Describe the observed behavior)
-
-Wait for the user's response before proceeding.
-
-### Step 1.3: Expected Behavior
-
-**Ask the user:**
-
-> What **should happen** instead?
->
-> (Describe the expected behavior)
-
-Wait for the user's response before proceeding.
-
-### Step 1.4: Reproduction Steps
-
-**Ask the user:**
-
-> How can we **reproduce** this bug?
->
-> (Step-by-step reproduction instructions)
+> Include whatever is relevant:
+> - What's happening incorrectly
+> - What should happen instead
+> - How to reproduce (if known)
 
 Wait for the user's response before proceeding.
 

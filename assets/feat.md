@@ -37,33 +37,16 @@ You MUST follow this wizard flow step by step. Do NOT skip steps or modify files
 
 ---
 
-## Step 1: Feature Overview
-
-### Step 1.1: Feature Name
+## Step 1: Feature Description
 
 **Ask the user:**
 
-> What is the **feature name**?
+> **Describe the feature you want to add.**
 >
-> (A short identifier like `user-auth`, `export-pdf`, `search-filter`)
-
-Wait for the user's response before proceeding.
-
-### Step 1.2: Feature Description
-
-**Ask the user:**
-
-> What does this feature do? (one sentence)
-
-Wait for the user's response before proceeding.
-
-### Step 1.3: User Story
-
-**Ask the user:**
-
-> What is the **user story**?
->
-> Format: As a [user type], I want [goal] so that [benefit]
+> Include:
+> - What it does
+> - Why it's needed
+> - Any key requirements
 
 Wait for the user's response before proceeding.
 
@@ -276,8 +259,6 @@ Add a new section for the feature under the appropriate module or create a new m
 **Key files:**
 - `path/to/file1.rs` - [Description]
 - `path/to/file2.rs` - [Description]
-
-**User story:** As a [user type], I want [goal] so that [benefit].
 
 **Requirements:**
 - [Requirement 1]
