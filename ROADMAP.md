@@ -28,6 +28,58 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ---
 
+## Phase 0.5: cm init + Skills (Priority)
+
+Enable users to install cm skills (/cm, /feat, /fix) into any project.
+
+- [ ] **0.5.1** Create assets/ directory with all skills
+  - [ ] Create assets/ directory in repo root
+  - [ ] Move .claude/skills/cm.md to assets/cm.md
+  - [ ] Create assets/feat.md (add feature wizard)
+  - [ ] Create assets/fix.md (add bug fix wizard)
+
+- [ ] **0.5.2** Embed all skills in binary
+  - [ ] Create src/skill.rs with include_str! for all 3 skills
+  - [ ] Add `pub mod skill;` to src/lib.rs
+
+- [ ] **0.5.3** Add init subcommand
+  - [ ] Add `Command` enum with `Init` variant to src/cli/mod.rs
+  - [ ] Create src/cli/init.rs module
+  - [ ] Implement `execute_init(force: bool)` function
+  - [ ] Create .claude/skills/ directory if needed
+  - [ ] Write all 3 skill files (cm.md, feat.md, fix.md)
+  - [ ] Handle --force flag for overwrite
+
+- [ ] **0.5.4** Update CLI dispatch
+  - [ ] Handle subcommand before flag-based dispatch
+  - [ ] Add mod init to cli module
+
+- [ ] **0.5.5** Create /feat skill content
+  - [ ] Step 1: Ask for feature name/description
+  - [ ] Step 2: Ask for scope (phase, dependencies, files)
+  - [ ] Step 3: Ask for task breakdown
+  - [ ] Step 4: Show confirmation summary
+  - [ ] Step 5: Update PLAN.md, ROADMAP.md, tasks.json
+
+- [ ] **0.5.6** Create /fix skill content
+  - [ ] Step 1: Ask for bug description
+  - [ ] Step 2: Ask for investigation details (files, root cause, priority)
+  - [ ] Step 3: Ask for fix approach
+  - [ ] Step 4: Show confirmation summary
+  - [ ] Step 5: Update ROADMAP.md, tasks.json
+
+- [ ] **0.5.7** Verify all skills
+  - [ ] `cargo build` passes
+  - [ ] `cargo clippy` passes
+  - [ ] `cm init` creates all 3 skill files
+  - [ ] `cm init --force` overwrites existing
+  - [ ] /cm wizard works correctly
+  - [ ] /feat adds feature to plan/roadmap/tasks
+  - [ ] /fix adds bug fix to roadmap/tasks
+  - [ ] `cm init --force` overwrites existing file
+
+---
+
 ## Phase 1: State Types
 
 - [x] **1.1** Create src/state/mod.rs
@@ -435,3 +487,145 @@ This is the detailed checklist of all implementation tasks. Check items off as t
   - [x] `cargo clippy` passes
   - [x] `cargo test` passes
   - [x] Manual end-to-end test
+
+---
+
+## Phase 12: Configuration File Support
+
+- [ ] **12.1** Define configuration file format
+  - [ ] Choose format (TOML recommended for Rust projects)
+  - [ ] Define schema for all ManagerConfig fields
+  - [ ] Support: model, timeout, max_cycles, log_path, working_dir
+
+- [ ] **12.2** Implement config file loading
+  - [ ] Add `toml` dependency to Cargo.toml
+  - [ ] Create src/config/mod.rs
+  - [ ] ConfigFile struct with serde derive
+  - [ ] load_config(path) -> Result<ConfigFile>
+  - [ ] Merge with CLI args (CLI takes precedence)
+
+- [ ] **12.3** Wire --config flag in CLI
+  - [ ] Load config file if --config provided
+  - [ ] Apply config values to ManagerConfig
+  - [ ] Support default path: .cm/config.toml
+
+- [ ] **12.4** Create CONFIG.md documentation
+  - [ ] Document all configuration options
+  - [ ] Provide example config.toml
+  - [ ] Document precedence: CLI > config file > defaults
+
+- [ ] **12.5** Verify configuration support
+  - [ ] `cargo build` passes
+  - [ ] `cargo clippy` passes
+  - [ ] Add unit tests for config loading
+  - [ ] Manual test with config file
+
+---
+
+## Phase 13: Wire TUI into CLI
+
+The TUI module exists but is not connected to the execution path.
+
+- [ ] **13.1** Add --tui flag to CLI
+  - [ ] New flag: --tui (enable terminal UI mode)
+  - [ ] Default: run without TUI (current behavior)
+
+- [ ] **13.2** Connect TUI to Manager
+  - [ ] Modify execute_run() to optionally use TUI
+  - [ ] Set up mpsc channels between Manager and TUI
+  - [ ] Manager sends events (TaskStarted, AgentOutput, etc.)
+  - [ ] TUI sends commands (Pause, Interrupt, Quit)
+
+- [ ] **13.3** Run Manager in background thread
+  - [ ] Spawn manager.run() in std::thread
+  - [ ] TUI owns main thread for event loop
+  - [ ] Handle thread join and error propagation
+
+- [ ] **13.4** Verify TUI integration
+  - [ ] `cargo build` passes
+  - [ ] `cargo clippy` passes
+  - [ ] Manual test: cm --tui with real tasks
+
+---
+
+## Phase 14: Enable Signal Handling
+
+The ctrlc feature is optional and disabled. Graceful Ctrl+C shutdown requires it.
+
+- [ ] **14.1** Enable ctrlc by default
+  - [ ] Change Cargo.toml: ctrlc = "3.4" (remove optional)
+  - [ ] Or add default feature that includes ctrlc
+
+- [ ] **14.2** Wire signal handler in CLI
+  - [ ] Call ShutdownHandler::register_signal_handlers() at startup
+  - [ ] Pass shutdown flag to Manager
+  - [ ] Check flag in orchestration loop
+
+- [ ] **14.3** Verify signal handling
+  - [ ] `cargo build` passes
+  - [ ] `cargo clippy` passes
+  - [ ] Manual test: Ctrl+C during execution saves state
+
+---
+
+## Phase 15: Deterministic Markdown Generation
+
+Refactor so JSON is source of truth, MD files are generated views.
+Principle: cm only edits *.json, always regenerates *.md
+
+- [ ] **15.1** Create LogRecord struct
+  - [ ] Create src/state/log_record.rs
+  - [ ] LogRecord with id, timestamp, action, phase_id, task_id, agent_id, data
+  - [ ] LogData enum: PhaseStart, TaskStart, AgentSpawn, AgentComplete, BuildResult, ReviewResult, TaskComplete, TaskDeferred, Error, Shutdown
+  - [ ] Derive Serialize/Deserialize
+
+- [ ] **15.2** Extend TasksState with log_records
+  - [ ] Add `log_records: Vec<LogRecord>` to TasksState
+  - [ ] Add `#[serde(default)]` for backward compatibility
+  - [ ] Update src/state/mod.rs with module declaration
+
+- [ ] **15.3** Create roadmap.json schema
+  - [ ] Create src/state/roadmap.rs
+  - [ ] RoadmapState with version, title, phases
+  - [ ] RoadmapPhase with id, number, name, items
+  - [ ] RoadmapItem with id, name, completed, sub_items, linked_task_ids
+  - [ ] RoadmapSubItem with name, completed
+  - [ ] load_roadmap() and save_roadmap() functions
+
+- [ ] **15.4** Add roadmap link to Task
+  - [ ] Add `roadmap_item_id: Option<String>` to Task struct
+  - [ ] Bidirectional: Task links to RoadmapItem, RoadmapItem links to Tasks
+
+- [ ] **15.5** Create markdown generators
+  - [ ] Create src/generate/mod.rs
+  - [ ] Create src/generate/log_md.rs: generate_log_md(&[LogRecord]) -> String
+  - [ ] Create src/generate/roadmap_md.rs: generate_roadmap_md(&RoadmapState) -> String
+  - [ ] Add `pub mod generate;` to src/lib.rs
+
+- [ ] **15.6** Refactor LogManager
+  - [ ] Remove direct LOG.md file writing
+  - [ ] log_* methods create LogRecord and append to state.log_records
+  - [ ] Return created LogRecord for immediate use
+
+- [ ] **15.7** Integrate regeneration into Manager
+  - [ ] After save_state(), call regenerate_all()
+  - [ ] Regenerate LOG.md from state.log_records
+  - [ ] Regenerate ROADMAP.md from roadmap.json
+  - [ ] Ensures MD files are always in sync with JSON
+
+- [ ] **15.8** Add --regenerate CLI flag
+  - [ ] New flag: cm --regenerate
+  - [ ] Regenerates all .md files from .json without executing tasks
+  - [ ] Useful for manual sync or after JSON edits
+
+- [ ] **15.9** Migration tooling
+  - [ ] Parse existing ROADMAP.md to create roadmap.json
+  - [ ] Update .claude/skills/cm.md to generate JSON files
+  - [ ] Generate tasks.json with roadmap_item_id links
+
+- [ ] **15.10** Verify deterministic generation
+  - [ ] `cargo build` passes
+  - [ ] `cargo clippy` passes
+  - [ ] `cm --regenerate` produces correct LOG.md format
+  - [ ] `cm --regenerate` produces correct ROADMAP.md format
+  - [ ] Full execution cycle updates both JSON and MD correctly
