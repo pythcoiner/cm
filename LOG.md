@@ -788,3 +788,56 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 12 - Configuration File Support`
 - **Hash:** 0777e2a
+
+---
+
+## Phase 13: Wire TUI into CLI
+
+### Implementation
+- **Agent:** implem-phase-13 (sub-agent, id: ac39aa5)
+- **Started:** 2026-01-24
+
+#### Files Modified
+- `src/cli/mod.rs` (~80 lines added) - --tui flag, execute_run_with_tui(), ThreadError/TuiError variants
+- `src/manager/mod.rs` (~80 lines added) - run_with_channels() method with event sending and command handling
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| CliError::ThreadError | Error for background thread panics |
+| CliError::TuiError | Error wrapper for TUI errors |
+
+#### Functions Implemented
+| Function | Location | Description |
+|----------|----------|-------------|
+| execute_run_with_tui() | cli/mod.rs | Sets up channels, spawns manager thread, runs TUI |
+| run_with_channels() | manager/mod.rs | Manager loop with event sending and command handling |
+
+#### Features
+- TUI runs on main thread (terminal requirement)
+- Manager runs in background thread
+- Bidirectional mpsc channels for communication
+- Manager sends: StateUpdated, TaskStarted, TaskCompleted, Error
+- Manager handles: Pause, Interrupt, Quit commands
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 170 tests passed (143 unit + 27 integration)
+
+### Review
+- **Agent:** review-phase-13 (sub-agent, id: af9e92c)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 13 - Wire TUI into CLI`
+- **Hash:** b1acdc0

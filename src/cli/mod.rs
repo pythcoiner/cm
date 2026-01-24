@@ -16,6 +16,7 @@ use thiserror::Error;
 use crate::config::{ConfigError, ConfigFile};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager};
 use crate::state::{load_state, save_state, StateError, TaskStatus, TasksState};
+use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
 #[derive(Debug, Subcommand)]
@@ -54,6 +55,14 @@ pub enum CliError {
     /// No tasks to execute.
     #[error("no tasks to execute")]
     NoTasks,
+
+    /// A background thread panicked.
+    #[error("background thread panicked")]
+    ThreadError,
+
+    /// TUI error.
+    #[error("tui error: {0}")]
+    TuiError(String),
 }
 
 /// Claude Code Manager - Automated agent coordination for software development.
@@ -118,6 +127,10 @@ pub struct Cli {
     /// Working directory for build verification.
     #[arg(long, value_name = "DIR")]
     pub working_dir: Option<PathBuf>,
+
+    /// Enable terminal UI mode.
+    #[arg(long)]
+    pub tui: bool,
 }
 
 /// Run the CLI application.
@@ -282,8 +295,46 @@ fn execute_run(cli: &Cli) -> Result<(), CliError> {
 
     let config = build_manager_config(cli)?;
 
-    let mut manager = Manager::new(config)?;
-    manager.run()?;
+    if cli.tui {
+        execute_run_with_tui(config)
+    } else {
+        let mut manager = Manager::new(config)?;
+        manager.run()?;
+        Ok(())
+    }
+}
+
+/// Execute run mode with the terminal UI.
+///
+/// Spawns the manager in a background thread and runs the TUI on the main thread.
+fn execute_run_with_tui(config: ManagerConfig) -> Result<(), CliError> {
+    use std::sync::mpsc;
+    use std::thread;
+
+    info!("Starting TUI mode");
+
+    // Load state for initial TUI display
+    let initial_state = load_state(&config.state_path)?;
+
+    // Create channels for bidirectional communication
+    let (event_tx, event_rx) = mpsc::channel::<ManagerEvent>();
+    let (cmd_tx, cmd_rx) = mpsc::channel::<TuiCommand>();
+
+    // Spawn manager in background thread
+    let manager_handle = thread::spawn(move || -> Result<(), ManagerError> {
+        let mut manager = Manager::new(config)?;
+        manager.run_with_channels(event_tx, cmd_rx)
+    });
+
+    // Run TUI on main thread (it owns the terminal)
+    tui::run_tui_with_channels(initial_state, event_rx, cmd_tx)
+        .map_err(|e| CliError::TuiError(e.to_string()))?;
+
+    // Wait for manager thread
+    match manager_handle.join() {
+        Ok(result) => result?,
+        Err(_) => return Err(CliError::ThreadError),
+    }
 
     Ok(())
 }

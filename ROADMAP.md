@@ -526,25 +526,25 @@ Enable users to install cm skills (/cm, /feat, /fix) into any project.
 
 The TUI module exists but is not connected to the execution path.
 
-- [ ] **13.1** Add --tui flag to CLI
-  - [ ] New flag: --tui (enable terminal UI mode)
-  - [ ] Default: run without TUI (current behavior)
+- [x] **13.1** Add --tui flag to CLI
+  - [x] New flag: --tui (enable terminal UI mode)
+  - [x] Default: run without TUI (current behavior)
 
-- [ ] **13.2** Connect TUI to Manager
-  - [ ] Modify execute_run() to optionally use TUI
-  - [ ] Set up mpsc channels between Manager and TUI
-  - [ ] Manager sends events (TaskStarted, AgentOutput, etc.)
-  - [ ] TUI sends commands (Pause, Interrupt, Quit)
+- [x] **13.2** Connect TUI to Manager
+  - [x] Modify execute_run() to optionally use TUI
+  - [x] Set up mpsc channels between Manager and TUI
+  - [x] Manager sends events (TaskStarted, AgentOutput, etc.)
+  - [x] TUI sends commands (Pause, Interrupt, Quit)
 
-- [ ] **13.3** Run Manager in background thread
-  - [ ] Spawn manager.run() in std::thread
-  - [ ] TUI owns main thread for event loop
-  - [ ] Handle thread join and error propagation
+- [x] **13.3** Run Manager in background thread
+  - [x] Spawn manager.run() in std::thread
+  - [x] TUI owns main thread for event loop
+  - [x] Handle thread join and error propagation
 
-- [ ] **13.4** Verify TUI integration
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Manual test: cm --tui with real tasks
+- [x] **13.4** Verify TUI integration
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Manual test: cm --tui with real tasks
 
 ---
 

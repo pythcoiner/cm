@@ -5,12 +5,15 @@
 //! build verifier, and log manager to execute tasks in the correct order.
 
 use std::path::PathBuf;
+use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;
 
 use chrono::Utc;
 use log::{debug, error, info, warn};
 use thiserror::Error;
 use uuid::Uuid;
+
+use crate::tui::{ManagerEvent, TuiCommand};
 
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier};
@@ -234,6 +237,110 @@ impl Manager {
 
             // Save state after each task
             self.update_state()?;
+        }
+
+        self.manager_state = ManagerState::Idle;
+        info!("Manager run loop completed");
+        Ok(())
+    }
+
+    /// Run the main orchestration loop with TUI channel communication.
+    ///
+    /// This variant of `run()` sends events to the TUI and checks for commands.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_tx` - Sender for manager events to the TUI
+    /// * `cmd_rx` - Receiver for commands from the TUI
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - Task execution fails
+    /// - State cannot be saved
+    pub fn run_with_channels(
+        &mut self,
+        event_tx: Sender<ManagerEvent>,
+        cmd_rx: Receiver<TuiCommand>,
+    ) -> Result<(), ManagerError> {
+        info!("Starting manager run loop with TUI channels");
+        self.manager_state = ManagerState::Executing;
+
+        // Send initial state to TUI
+        let _ = event_tx.send(ManagerEvent::StateUpdated(self.state.clone()));
+
+        let mut paused = false;
+
+        loop {
+            // Check for TUI commands (non-blocking)
+            while let Ok(cmd) = cmd_rx.try_recv() {
+                match cmd {
+                    TuiCommand::Pause => {
+                        paused = !paused;
+                        info!("Manager paused: {}", paused);
+                    }
+                    TuiCommand::Interrupt => {
+                        info!("Interrupt received, stopping manager");
+                        self.manager_state = ManagerState::Idle;
+                        return Ok(());
+                    }
+                    TuiCommand::Quit => {
+                        info!("Quit received, stopping manager");
+                        self.manager_state = ManagerState::Idle;
+                        return Ok(());
+                    }
+                }
+            }
+
+            // If paused, wait a bit and check again
+            if paused {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                continue;
+            }
+
+            // Select next task
+            let task_id = match self.select_next_task() {
+                Some(task) => task.id.clone(),
+                None => {
+                    info!("No more runnable tasks, exiting loop");
+                    break;
+                }
+            };
+
+            info!("Selected task for execution: {}", task_id);
+
+            // Send TaskStarted event
+            let _ = event_tx.send(ManagerEvent::TaskStarted {
+                task_id: task_id.clone(),
+            });
+
+            // Execute the task
+            match self.execute_task(&task_id) {
+                Ok(()) => {
+                    info!("Task {} completed successfully", task_id);
+                    let _ = event_tx.send(ManagerEvent::TaskCompleted {
+                        task_id: task_id.clone(),
+                    });
+                }
+                Err(e) => {
+                    error!("Task {} failed: {}", task_id, e);
+                    let _ = event_tx.send(ManagerEvent::Error(format!(
+                        "Task {} failed: {}",
+                        task_id, e
+                    )));
+                    self.log_manager
+                        .log_error(&format!("Task {} failed: {}", task_id, e))?;
+
+                    // Don't propagate the error; continue with next task
+                    // The task will be marked as failed/deferred in execute_task
+                }
+            }
+
+            // Save state after each task
+            self.update_state()?;
+
+            // Send updated state to TUI
+            let _ = event_tx.send(ManagerEvent::StateUpdated(self.state.clone()));
         }
 
         self.manager_state = ManagerState::Idle;
