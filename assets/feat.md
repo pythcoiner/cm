@@ -307,7 +307,19 @@ Add new tasks to the appropriate phase:
 
 ---
 
-## Step 9: Validate Changes
+## Step 9: Regenerate Markdown
+
+After updating the JSON files, regenerate the markdown documentation:
+
+```bash
+cm --regenerate
+```
+
+This ensures ROADMAP.md and LOG.md stay in sync with the JSON source files (roadmap.json, tasks.json).
+
+---
+
+## Step 10: Validate Changes
 
 After updating the files, run validation to ensure all JSON files are correct:
 
@@ -316,7 +328,7 @@ cm --sanity-check
 ```
 
 Check the output:
-- If validation **passes**: Proceed to Step 10
+- If validation **passes**: Proceed to Step 11
 - If validation **fails**:
   1. Review the error messages
   2. Fix the issues in the JSON files (tasks.json or roadmap.json)
@@ -330,7 +342,7 @@ Check the output:
 
 ---
 
-## Step 10: Completion
+## Step 11: Completion
 
 After updating all files, inform the user:
 

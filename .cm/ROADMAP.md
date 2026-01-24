@@ -281,14 +281,14 @@ Status: **Complete** (4/4)
 
 ## Phase 18: Regenerate MD After Skills
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] Update assets/feat.md with regeneration step
-  - [ ] Add step to run cm --regenerate after file updates
-  - [ ] Place before sanity check step
-- [ ] Update assets/fix.md with regeneration step
-  - [ ] Add step to run cm --regenerate after file updates
-  - [ ] Place before sanity check step
+- [x] Update assets/feat.md with regeneration step
+  - [x] Add step to run cm --regenerate after file updates
+  - [x] Place before sanity check step
+- [x] Update assets/fix.md with regeneration step
+  - [x] Add step to run cm --regenerate after file updates
+  - [x] Place before sanity check step
 
 ---
 
@@ -402,9 +402,9 @@ Status: **Not Started** (0/5)
 | Phase 15: Deterministic Markdown Generation | Complete | 8/8 |
 | Phase 16: Sanity Check Workflow | Complete | 32/32 |
 | Phase 17: Concise One-at-a-Time Questions in Skills | Complete | 21/21 |
-| Phase 18: Regenerate MD After Skills | Not Started | 0/6 |
+| Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Not Started | 0/13 |
 | Phase 20: Simplify Skill Input | Not Started | 0/12 |
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **144/209** |
+| **Total** | | **150/209** |

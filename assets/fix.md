@@ -239,7 +239,19 @@ If the user wants, add a checkbox entry:
 
 ---
 
-## Step 8: Validate Changes
+## Step 8: Regenerate Markdown
+
+After updating the JSON files, regenerate the markdown documentation:
+
+```bash
+cm --regenerate
+```
+
+This ensures ROADMAP.md and LOG.md stay in sync with tasks.json.
+
+---
+
+## Step 9: Validate Changes
 
 After updating the files, run validation to ensure all JSON files are correct:
 
@@ -248,7 +260,7 @@ cm --sanity-check
 ```
 
 Check the output:
-- If validation **passes**: Proceed to Step 9
+- If validation **passes**: Proceed to Step 10
 - If validation **fails**:
   1. Review the error messages
   2. Fix the issues in tasks.json
@@ -262,7 +274,7 @@ Check the output:
 
 ---
 
-## Step 9: Completion
+## Step 10: Completion
 
 After updating files, inform the user:
 
@@ -278,7 +290,7 @@ After updating files, inform the user:
 > - `.cm/tasks.json` - Added fix task
 >
 > **Next steps:**
-> 1. Validation completed in Step 8
+> 1. Validation completed in Step 9
 > 2. Run `cm run` to execute tasks (fix will run at [position])
 > 3. Alternatively, run `cm --step` to execute just this fix
 >
