@@ -656,7 +656,7 @@ impl Manager {
                 // Try to extract session_id for retry
                 if let Some(session_id) = &output.session_id {
                     warn!("Parse failed, retrying with --continue: {}", msg);
-                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+                    eprintln!("[{} AGENT] {} response parse failed, retrying...", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide a summary of your changes. \
@@ -669,7 +669,7 @@ impl Manager {
 
                     // Try parsing again, fail if still bad
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
-                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        eprintln!("[{} AGENT] {} retry also failed: {}", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id, e);
                         e
                     })?
                 } else {
@@ -815,7 +815,7 @@ impl Manager {
             Err(AgentError::ParseError(msg)) => {
                 if let Some(session_id) = &output.session_id {
                     warn!("Parse failed, retrying with --continue: {}", msg);
-                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+                    eprintln!("[{} AGENT] {} response parse failed, retrying...", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide your review verdict and any issues found.";
@@ -826,7 +826,7 @@ impl Manager {
                     let retry_output = retry_handle.wait()?;
 
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
-                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        eprintln!("[{} AGENT] {} retry also failed: {}", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id, e);
                         e
                     })?
                 } else {
@@ -935,7 +935,7 @@ impl Manager {
             Err(AgentError::ParseError(msg)) => {
                 if let Some(session_id) = &output.session_id {
                     warn!("Parse failed, retrying with --continue: {}", msg);
-                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+                    eprintln!("[{} AGENT] {} response parse failed, retrying...", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide a summary of the fixes you made.";
@@ -946,7 +946,7 @@ impl Manager {
                     let retry_output = retry_handle.wait()?;
 
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
-                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        eprintln!("[{} AGENT] {} retry also failed: {}", Utc::now().format("%Y-%m-%dT%H:%M:%SZ"), task.id, e);
                         e
                     })?
                 } else {

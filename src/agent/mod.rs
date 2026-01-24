@@ -305,7 +305,8 @@ fn run_agent_thread(
         // Update progress every second (static message, replaces previous)
         let elapsed_secs = start.elapsed().as_secs();
         if elapsed_secs > last_progress_secs {
-            eprint!("\r[Agent {}] running for {}s...", task_id, elapsed_secs);
+            let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+            eprint!("\r[{} AGENT] {} running for {}s...", now, task_id, elapsed_secs);
             std::io::stderr().flush().ok();
             last_progress_secs = elapsed_secs;
         }
@@ -317,8 +318,10 @@ fn run_agent_thread(
                 let duration = start.elapsed();
 
                 // Clear progress line and print completion
+                let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 eprintln!(
-                    "\r[Agent {}] completed in {}s              ",
+                    "\r[{} AGENT] {} completed in {}s              ",
+                    now,
                     task_id,
                     duration.as_secs()
                 );
