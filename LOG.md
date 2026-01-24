@@ -840,4 +840,4 @@ Each phase entry should include:
 
 ### Commit
 - **Message:** `cm: Phase 13 - Wire TUI into CLI`
-- **Hash:** b1acdc0
+- **Hash:** 9bd4009
