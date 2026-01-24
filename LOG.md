@@ -154,3 +154,52 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 1 - State Types`
 - **Hash:** 798f60c
+
+---
+
+## Phase 2: Agent Module
+
+### Implementation
+- **Agent:** implem-phase-2 (sub-agent, id: af3ed4f)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/agent/mod.rs` (~270 lines) - AgentError, AgentSpawner, AgentHandle, AgentOutput
+- `src/agent/prompt.rs` (~200 lines) - PromptBuilder with 12 unit tests
+- `src/agent/response.rs` (~200 lines) - ResponseParser with 12 unit tests
+
+#### Files Modified
+- `src/lib.rs` - Updated agent module declaration to directory module
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| AgentError | Error enum: CliNotFound, SpawnFailed, OutputError, Timeout, Interrupted, ParseError |
+| AgentSpawner | Spawns claude processes with model and timeout |
+| AgentHandle | Manages running agent with wait() and interrupt() |
+| AgentOutput | stdout, stderr, exit_code, duration |
+| PromptBuilder | Builds implem, review, and fix prompts |
+| ResponseParser | Parses JSON responses from claude CLI |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 43 passed (26 new agent tests)
+
+### Review
+- **Agent:** review-phase-2 (sub-agent, id: abecba2)
+- **Issues Found:** 1 (Medium - spec alignment for build_review_prompt signature)
+- **Resolution:** Updated ROADMAP.md to reflect improved design (code_to_review param)
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 2 - Agent Module`
+- **Hash:** 4503640

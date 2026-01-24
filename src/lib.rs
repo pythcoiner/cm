@@ -17,11 +17,7 @@ pub mod manager {
 pub mod state;
 
 /// Agent spawning, prompt building, and response parsing.
-pub mod agent {
-    // TODO: Implement agent spawning with `claude -p`
-    // TODO: Implement prompt building with context isolation
-    // TODO: Implement JSON response parsing
-}
+pub mod agent;
 
 /// Build verification: cargo build/clippy/test and git operations.
 pub mod build {

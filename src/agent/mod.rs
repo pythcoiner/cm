@@ -1,0 +1,322 @@
+//! Agent spawning, prompt building, and response parsing.
+//!
+//! This module provides functionality for spawning Claude agents as subprocesses,
+//! building prompts with task-specific context, and parsing JSON responses.
+
+use std::io::Read;
+use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread::{self, JoinHandle};
+use std::time::{Duration, Instant};
+
+use chrono::{DateTime, Utc};
+use thiserror::Error;
+
+mod prompt;
+mod response;
+
+pub use prompt::PromptBuilder;
+pub use response::ResponseParser;
+
+/// Errors that can occur during agent operations.
+#[derive(Debug, Error)]
+pub enum AgentError {
+    /// The claude CLI was not found in PATH.
+    #[error("claude CLI not found - ensure it is installed and in PATH")]
+    CliNotFound,
+
+    /// Failed to spawn the agent process.
+    #[error("failed to spawn agent: {0}")]
+    SpawnFailed(String),
+
+    /// Failed to read output from the agent.
+    #[error("failed to read agent output: {0}")]
+    OutputError(String),
+
+    /// The agent timed out.
+    #[error("agent timed out")]
+    Timeout,
+
+    /// The agent was interrupted.
+    #[error("agent was interrupted")]
+    Interrupted,
+
+    /// Failed to parse the agent response.
+    #[error("failed to parse response: {0}")]
+    ParseError(String),
+}
+
+/// Output from an agent execution.
+#[derive(Debug, Clone)]
+pub struct AgentOutput {
+    /// Standard output from the agent.
+    pub stdout: String,
+    /// Standard error from the agent.
+    pub stderr: String,
+    /// Exit code of the agent process (None if killed/not available).
+    pub exit_code: Option<i32>,
+    /// Duration of the agent execution.
+    pub duration: Duration,
+}
+
+/// Spawns and manages Claude agent processes.
+///
+/// The spawner configures agent execution parameters like model and timeout,
+/// then spawns agent processes that run in separate threads.
+pub struct AgentSpawner {
+    /// Model to use for the agent.
+    model: String,
+    /// Timeout for agent execution.
+    timeout: Duration,
+}
+
+impl AgentSpawner {
+    /// Create a new agent spawner with the specified model and timeout.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The model identifier to use (e.g., "claude-sonnet-4-5-20250929")
+    /// * `timeout` - Maximum time to wait for the agent to complete
+    pub fn new(model: String, timeout: Duration) -> Self {
+        Self { model, timeout }
+    }
+
+    /// Spawn a new agent process with the given prompt.
+    ///
+    /// The agent runs in a separate thread and can be managed via the returned handle.
+    ///
+    /// # Arguments
+    ///
+    /// * `prompt` - The prompt to send to the agent
+    /// * `task_id` - The ID of the task this agent is executing
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgentError::CliNotFound` if the claude CLI is not found.
+    /// Returns `AgentError::SpawnFailed` if the process cannot be started.
+    pub fn spawn(&self, prompt: &str, task_id: &str) -> Result<AgentHandle, AgentError> {
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let started_at = Utc::now();
+        let timeout = self.timeout;
+        let task_id_owned = task_id.to_string();
+        let prompt_owned = prompt.to_string();
+        let model_owned = self.model.clone();
+        let stop_flag_clone = stop_flag.clone();
+
+        // Spawn the child process
+        let mut child = Command::new("claude")
+            .args([
+                "-p",
+                &prompt_owned,
+                "--output-format",
+                "json",
+                "--model",
+                &model_owned,
+            ])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    AgentError::CliNotFound
+                } else {
+                    AgentError::SpawnFailed(e.to_string())
+                }
+            })?;
+
+        // Run the process in a separate thread
+        let thread_handle = thread::spawn(move || {
+            run_agent_thread(&mut child, timeout, stop_flag_clone)
+        });
+
+        Ok(AgentHandle {
+            thread_handle: Some(thread_handle),
+            stop_flag,
+            task_id: task_id_owned,
+            started_at,
+        })
+    }
+
+    /// Get the model being used by this spawner.
+    pub fn model(&self) -> &str {
+        &self.model
+    }
+
+    /// Get the timeout configured for this spawner.
+    pub fn timeout(&self) -> Duration {
+        self.timeout
+    }
+}
+
+/// Handle to a running agent process.
+///
+/// Provides methods to wait for completion or interrupt the agent.
+pub struct AgentHandle {
+    /// Handle to the thread running the agent.
+    thread_handle: Option<JoinHandle<Result<AgentOutput, AgentError>>>,
+    /// Flag to signal the agent should stop.
+    stop_flag: Arc<AtomicBool>,
+    /// ID of the task this agent is executing.
+    task_id: String,
+    /// When the agent was started.
+    started_at: DateTime<Utc>,
+}
+
+impl AgentHandle {
+    /// Wait for the agent to complete and return its output.
+    ///
+    /// This method blocks until the agent finishes or is interrupted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The agent times out (`AgentError::Timeout`)
+    /// - The agent is interrupted (`AgentError::Interrupted`)
+    /// - Output cannot be read (`AgentError::OutputError`)
+    pub fn wait(mut self) -> Result<AgentOutput, AgentError> {
+        let handle = self
+            .thread_handle
+            .take()
+            .expect("thread handle should exist");
+
+        match handle.join() {
+            Ok(result) => result,
+            Err(_) => Err(AgentError::OutputError(
+                "agent thread panicked".to_string(),
+            )),
+        }
+    }
+
+    /// Signal the agent to stop.
+    ///
+    /// This sets the stop flag which the agent thread checks periodically.
+    /// The process will be killed on the next check.
+    pub fn interrupt(&self) {
+        self.stop_flag.store(true, Ordering::SeqCst);
+    }
+
+    /// Get the task ID this agent is executing.
+    pub fn task_id(&self) -> &str {
+        &self.task_id
+    }
+
+    /// Get when the agent was started.
+    pub fn started_at(&self) -> DateTime<Utc> {
+        self.started_at
+    }
+}
+
+/// Run the agent in a thread, handling timeout and interruption.
+fn run_agent_thread(
+    child: &mut Child,
+    timeout: Duration,
+    stop_flag: Arc<AtomicBool>,
+) -> Result<AgentOutput, AgentError> {
+    let start = Instant::now();
+    let check_interval = Duration::from_millis(100);
+
+    // Wait for process to complete, checking for timeout and stop flag
+    loop {
+        // Check if we should stop
+        if stop_flag.load(Ordering::SeqCst) {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(AgentError::Interrupted);
+        }
+
+        // Check if timed out
+        if start.elapsed() > timeout {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(AgentError::Timeout);
+        }
+
+        // Check if process has completed
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                // Process has exited, collect output
+                let duration = start.elapsed();
+
+                let mut stdout = String::new();
+                if let Some(mut stdout_handle) = child.stdout.take() {
+                    stdout_handle
+                        .read_to_string(&mut stdout)
+                        .map_err(|e| AgentError::OutputError(e.to_string()))?;
+                }
+
+                let mut stderr = String::new();
+                if let Some(mut stderr_handle) = child.stderr.take() {
+                    stderr_handle
+                        .read_to_string(&mut stderr)
+                        .map_err(|e| AgentError::OutputError(e.to_string()))?;
+                }
+
+                return Ok(AgentOutput {
+                    stdout,
+                    stderr,
+                    exit_code: status.code(),
+                    duration,
+                });
+            }
+            Ok(None) => {
+                // Process still running, sleep and check again
+                thread::sleep(check_interval);
+            }
+            Err(e) => {
+                return Err(AgentError::OutputError(format!(
+                    "failed to check process status: {}",
+                    e
+                )));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_spawner_creation() {
+        let spawner = AgentSpawner::new(
+            "claude-sonnet-4-5-20250929".to_string(),
+            Duration::from_secs(300),
+        );
+
+        assert_eq!(spawner.model(), "claude-sonnet-4-5-20250929");
+        assert_eq!(spawner.timeout(), Duration::from_secs(300));
+    }
+
+    #[test]
+    fn test_agent_error_display() {
+        let err = AgentError::CliNotFound;
+        assert!(err.to_string().contains("claude CLI not found"));
+
+        let err = AgentError::SpawnFailed("permission denied".to_string());
+        assert!(err.to_string().contains("permission denied"));
+
+        let err = AgentError::Timeout;
+        assert!(err.to_string().contains("timed out"));
+
+        let err = AgentError::Interrupted;
+        assert!(err.to_string().contains("interrupted"));
+
+        let err = AgentError::ParseError("invalid json".to_string());
+        assert!(err.to_string().contains("invalid json"));
+    }
+
+    #[test]
+    fn test_agent_output_debug() {
+        let output = AgentOutput {
+            stdout: "test output".to_string(),
+            stderr: "".to_string(),
+            exit_code: Some(0),
+            duration: Duration::from_secs(1),
+        };
+
+        let debug_str = format!("{:?}", output);
+        assert!(debug_str.contains("test output"));
+        assert!(debug_str.contains("exit_code"));
+    }
+}

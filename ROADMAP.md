@@ -83,41 +83,41 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 2: Agent Module
 
-- [ ] **2.1** Create src/agent/mod.rs
-  - [ ] Module declarations
-  - [ ] AgentError enum with thiserror
-  - [ ] AgentSpawner struct
+- [x] **2.1** Create src/agent/mod.rs
+  - [x] Module declarations
+  - [x] AgentError enum with thiserror
+  - [x] AgentSpawner struct
 
-- [ ] **2.2** Implement AgentSpawner
-  - [ ] new(model, timeout) constructor
-  - [ ] spawn(prompt, task_id) -> Result<AgentHandle>
-  - [ ] Use std::process::Command for `claude -p`
-  - [ ] Capture stdout/stderr
-  - [ ] Return AgentHandle with process handle
+- [x] **2.2** Implement AgentSpawner
+  - [x] new(model, timeout) constructor
+  - [x] spawn(prompt, task_id) -> Result<AgentHandle>
+  - [x] Use std::process::Command for `claude -p`
+  - [x] Capture stdout/stderr
+  - [x] Return AgentHandle with process handle
 
-- [ ] **2.3** Create AgentHandle type
-  - [ ] AgentHandle struct (thread handle, stop_flag, task_id, started_at)
-  - [ ] wait() -> Result<AgentOutput> (blocks until thread completes)
-  - [ ] interrupt() -> kill child process via stop_flag
-  - [ ] Use std::thread, NOT async
+- [x] **2.3** Create AgentHandle type
+  - [x] AgentHandle struct (thread handle, stop_flag, task_id, started_at)
+  - [x] wait() -> Result<AgentOutput> (blocks until thread completes)
+  - [x] interrupt() -> kill child process via stop_flag
+  - [x] Use std::thread, NOT async
 
-- [ ] **2.4** Create src/agent/prompt.rs
-  - [ ] PromptBuilder struct
-  - [ ] build_implem_prompt(task) -> String
-  - [ ] build_review_prompt(task) -> String
-  - [ ] build_fix_prompt(task, issues) -> String
-  - [ ] Ensure NO global context leaks into prompts
+- [x] **2.4** Create src/agent/prompt.rs
+  - [x] PromptBuilder struct
+  - [x] build_implem_prompt(task) -> String
+  - [x] build_review_prompt(task, code_to_review) -> String
+  - [x] build_fix_prompt(task, issues) -> String
+  - [x] Ensure NO global context leaks into prompts
 
-- [ ] **2.5** Create src/agent/response.rs
-  - [ ] ResponseParser struct
-  - [ ] parse(raw_json) -> Result<AgentResponse>
-  - [ ] Handle malformed JSON gracefully
-  - [ ] Extract files_created, files_modified, commands_run
+- [x] **2.5** Create src/agent/response.rs
+  - [x] ResponseParser struct
+  - [x] parse(raw_json) -> Result<AgentResponse>
+  - [x] Handle malformed JSON gracefully
+  - [x] Extract files_created, files_modified, commands_run
 
-- [ ] **2.6** Verify agent module
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Unit tests for prompt building
+- [x] **2.6** Verify agent module
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Unit tests for prompt building
 
 ---
 
