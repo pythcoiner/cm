@@ -444,8 +444,28 @@ impl Manager {
             .filter(|t| t.status == TaskStatus::Pending)
             .collect();
 
+        // Check for stuck in_progress tasks
+        let in_progress: Vec<_> = state
+            .phases
+            .iter()
+            .flat_map(|p| &p.tasks)
+            .filter(|t| t.status == TaskStatus::InProgress)
+            .collect();
+
         if pending.is_empty() {
-            println!("No pending tasks.");
+            if !in_progress.is_empty() {
+                println!("No runnable tasks available.");
+                println!(
+                    "\nFound {} task(s) stuck in 'in_progress' status:",
+                    in_progress.len()
+                );
+                for task in &in_progress {
+                    println!("  - {} ({})", task.id, task.name);
+                }
+                println!("\nRun with --continue to reset and retry these tasks.");
+            } else {
+                println!("No pending tasks.");
+            }
             return Ok(TaskSelection::Quit);
         }
 
@@ -465,6 +485,21 @@ impl Manager {
         // Find next runnable task
         if let Some(next) = state.next_runnable_task() {
             println!("\nNext runnable: {} - {}", next.id, next.name);
+        } else if !in_progress.is_empty() {
+            // No runnable tasks, but there are stuck in_progress tasks
+            println!(
+                "\nNo runnable tasks. Found {} task(s) stuck in 'in_progress' status:",
+                in_progress.len()
+            );
+            for task in &in_progress {
+                println!("  - {} ({})", task.id, task.name);
+            }
+            println!("\nRun with --continue to reset and retry these tasks.");
+            return Ok(TaskSelection::Quit);
+        } else {
+            // No runnable tasks and no in_progress tasks - all pending tasks are blocked
+            println!("\nNo runnable tasks available (all pending tasks are blocked).");
+            return Ok(TaskSelection::Quit);
         }
 
         // Prompt
