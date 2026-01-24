@@ -249,6 +249,7 @@ mod tests {
             current_phase: Some("phase-1".to_string()),
             current_task: Some("task-1".to_string()),
             agent_history: vec![],
+            interrupted_at: None,
         }
     }
 

@@ -630,3 +630,44 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 10 - Terminal UI`
 - **Hash:** f6a3cfa
+
+---
+
+## Phase 11: Polish
+
+### Implementation
+- **Agent:** implem-phase-11 (sub-agent, id: a48e6f4)
+- **Started:** 2026-01-24
+
+#### Files Modified
+- `src/cli/mod.rs` (~30 lines added) - --dry-run flag and execute_dry_run function
+- `src/manager/mod.rs` (~20 lines added) - debug! logging for verbose mode
+
+#### Features Implemented
+| Feature | Description |
+|---------|-------------|
+| --dry-run mode | Print what would be done without spawning agents or modifying state |
+| --verbose mode | Enable debug logging for agent prompts/responses |
+| execute_dry_run() | Display tasks with status: would run, blocked, done, deferred |
+
+### Build
+- **Command:** `cargo build --release`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 147 tests passed (120 unit + 27 integration)
+
+### Review
+- **Agent:** review-phase-11 (sub-agent, id: a5d40b8)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 11 - Polish`
+- **Hash:** f874a13

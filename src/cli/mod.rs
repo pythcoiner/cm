@@ -65,6 +65,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub verbose: bool,
 
+    /// Dry run - print what would be done without executing.
+    #[arg(long)]
+    pub dry_run: bool,
+
     /// Path to config file.
     #[arg(long, value_name = "FILE")]
     pub config: Option<PathBuf>,
@@ -103,7 +107,9 @@ pub fn run() -> Result<(), CliError> {
     }
 
     // Dispatch based on flags
-    let result = if cli.status {
+    let result = if cli.dry_run {
+        execute_dry_run(&cli)
+    } else if cli.status {
         execute_status(&cli)
     } else if cli.validate {
         execute_validate(&cli)
@@ -499,6 +505,52 @@ fn execute_validate(cli: &Cli) -> Result<(), CliError> {
             errors.len()
         )))
     }
+}
+
+/// Get a status icon for a task status.
+fn status_icon(status: &TaskStatus) -> &'static str {
+    match status {
+        TaskStatus::Pending => "[ ]",
+        TaskStatus::InProgress => "[~]",
+        TaskStatus::Completed => "[x]",
+        TaskStatus::Deferred => "[!]",
+    }
+}
+
+/// Execute the dry-run mode.
+///
+/// Prints what would be done without executing any tasks.
+fn execute_dry_run(cli: &Cli) -> Result<(), CliError> {
+    let state = load_state(&cli.state)?;
+
+    println!("Dry run mode - no changes will be made\n");
+    println!("Project: {}", state.project.name);
+    println!();
+
+    // Print what tasks would run
+    for phase in &state.phases {
+        println!("Phase: {} ({:?})", phase.name, phase.status);
+        for task in &phase.tasks {
+            let runnable = if state.is_task_blocked(&task.id) {
+                "blocked"
+            } else if task.status == TaskStatus::Completed {
+                "done"
+            } else if task.status == TaskStatus::Deferred {
+                "deferred"
+            } else {
+                "would run"
+            };
+            println!(
+                "  {} {} - {} ({})",
+                status_icon(&task.status),
+                task.id,
+                task.name,
+                runnable
+            );
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

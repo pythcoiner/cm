@@ -421,17 +421,17 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 11: Polish
 
-- [ ] **11.1** Add --dry-run mode
-  - [ ] Print what would be done
-  - [ ] Don't spawn agents or modify state
+- [x] **11.1** Add --dry-run mode
+  - [x] Print what would be done
+  - [x] Don't spawn agents or modify state
 
-- [ ] **11.2** Add --verbose mode
-  - [ ] Print agent prompts
-  - [ ] Print agent responses
-  - [ ] Detailed logging
+- [x] **11.2** Add --verbose mode
+  - [x] Print agent prompts
+  - [x] Print agent responses
+  - [x] Detailed logging
 
-- [ ] **11.3** Final verification
-  - [ ] `cargo build --release` passes
-  - [ ] `cargo clippy` passes
-  - [ ] `cargo test` passes
-  - [ ] Manual end-to-end test
+- [x] **11.3** Final verification
+  - [x] `cargo build --release` passes
+  - [x] `cargo clippy` passes
+  - [x] `cargo test` passes
+  - [x] Manual end-to-end test

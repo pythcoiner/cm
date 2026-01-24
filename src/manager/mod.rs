@@ -318,7 +318,9 @@ impl Manager {
         self.manager_state = ManagerState::WaitingForAgent;
 
         // Build the prompt
+        debug!("Building prompt for task {}", task.id);
         let prompt = PromptBuilder::build_implem_prompt(task);
+        debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
         // Log agent spawn
         self.log_manager
@@ -344,6 +346,10 @@ impl Manager {
 
         // Parse the response
         let response = ResponseParser::parse(&output.stdout)?;
+        debug!(
+            "Agent response: {}",
+            &response.raw_response[..response.raw_response.len().min(500)]
+        );
 
         // Log agent response
         self.log_manager.log_agent_response(&response)?;
@@ -432,7 +438,9 @@ impl Manager {
         let code_to_review = self.gather_code_for_review(task);
 
         // Build the review prompt
+        debug!("Building prompt for task {}", task.id);
         let prompt = PromptBuilder::build_review_prompt(task, &code_to_review);
+        debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
         // Log agent spawn
         self.log_manager
@@ -458,6 +466,10 @@ impl Manager {
 
         // Parse the response
         let response = ResponseParser::parse(&output.stdout)?;
+        debug!(
+            "Agent response: {}",
+            &response.raw_response[..response.raw_response.len().min(500)]
+        );
 
         // Log agent response
         self.log_manager.log_agent_response(&response)?;
@@ -513,7 +525,9 @@ impl Manager {
         let issues = self.gather_issues_for_fix(task);
 
         // Build the fix prompt
+        debug!("Building prompt for task {}", task.id);
         let prompt = PromptBuilder::build_fix_prompt(task, &issues);
+        debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
         // Log agent spawn
         self.log_manager
@@ -539,6 +553,10 @@ impl Manager {
 
         // Parse the response
         let response = ResponseParser::parse(&output.stdout)?;
+        debug!(
+            "Agent response: {}",
+            &response.raw_response[..response.raw_response.len().min(500)]
+        );
 
         // Log agent response
         self.log_manager.log_agent_response(&response)?;
