@@ -22,11 +22,7 @@ pub mod build;
 pub mod log;
 
 /// Terminal UI with ratatui for real-time progress display.
-pub mod tui {
-    // TODO: Implement TUI app with terminal setup
-    // TODO: Implement split view layout
-    // TODO: Implement TaskList, Stream, Controls widgets
-}
+pub mod tui;
 
 /// CLI argument parsing with clap.
 pub mod cli;

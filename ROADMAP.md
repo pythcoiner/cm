@@ -368,54 +368,54 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 10: Terminal UI (ratatui)
 
-- [ ] **10.1** Add ratatui dependency
-  - [ ] ratatui = "0.26"
-  - [ ] crossterm = "0.27" (backend)
+- [x] **10.1** Add ratatui dependency
+  - [x] ratatui = "0.26"
+  - [x] crossterm = "0.27" (backend)
 
-- [ ] **10.2** Create src/tui/mod.rs
-  - [ ] App struct (state for TUI)
-  - [ ] run_tui(manager) -> Result<()>
-  - [ ] Terminal setup/teardown
+- [x] **10.2** Create src/tui/mod.rs
+  - [x] App struct (state for TUI)
+  - [x] run_tui(manager) -> Result<()>
+  - [x] Terminal setup/teardown
 
-- [ ] **10.3** Create src/tui/layout.rs
-  - [ ] Split view: left (tasks) + right (stream)
-  - [ ] Bottom bar with controls
-  - [ ] Responsive to terminal size
+- [x] **10.3** Create src/tui/layout.rs
+  - [x] Split view: left (tasks) + right (stream)
+  - [x] Bottom bar with controls
+  - [x] Responsive to terminal size
 
-- [ ] **10.4** Create src/tui/widgets.rs
-  - [ ] TaskListWidget - shows phases and tasks with status icons
-  - [ ] StreamWidget - scrolling log of agent prompts/responses
-  - [ ] ControlsWidget - shows keybindings
+- [x] **10.4** Create src/tui/widgets.rs
+  - [x] TaskListWidget - shows phases and tasks with status icons
+  - [x] StreamWidget - scrolling log of agent prompts/responses
+  - [x] ControlsWidget - shows keybindings
 
-- [ ] **10.5** Implement task list view
-  - [ ] Show all phases with tasks
-  - [ ] Icons: ✓ completed, ⠋ in_progress, ○ pending, ⊘ deferred
-  - [ ] Highlight current task
-  - [ ] Scroll if too many tasks
+- [x] **10.5** Implement task list view
+  - [x] Show all phases with tasks
+  - [x] Icons: ✓ completed, ⠋ in_progress, ○ pending, ⊘ deferred
+  - [x] Highlight current task
+  - [x] Scroll if too many tasks
 
-- [ ] **10.6** Implement agent stream view
-  - [ ] Stream prompts sent to agents (human readable)
-  - [ ] Stream agent responses
-  - [ ] Color-code: prompts, responses, errors
-  - [ ] Auto-scroll with manual override
+- [x] **10.6** Implement agent stream view
+  - [x] Stream prompts sent to agents (human readable)
+  - [x] Stream agent responses
+  - [x] Color-code: prompts, responses, errors
+  - [x] Auto-scroll with manual override
 
-- [ ] **10.7** Implement keyboard controls
-  - [ ] `p` - Pause: set flag, wait for current agent to complete
-  - [ ] `i` - Interrupt: kill current agent process, save state
-  - [ ] `q` - Quit: same as interrupt
-  - [ ] Arrow keys - scroll stream view
+- [x] **10.7** Implement keyboard controls
+  - [x] `p` - Pause: set flag, wait for current agent to complete
+  - [x] `i` - Interrupt: kill current agent process, save state
+  - [x] `q` - Quit: same as interrupt
+  - [x] Arrow keys - scroll stream view
 
-- [ ] **10.8** Wire TUI into Manager
-  - [ ] Manager sends events to TUI via std::sync::mpsc channel
-  - [ ] TUI sends commands to Manager via std::sync::mpsc channel
-  - [ ] Manager runs in separate thread, TUI owns main thread
-  - [ ] Events: TaskStarted, AgentOutput, BuildResult, TaskCompleted
-  - [ ] Commands: Pause, Interrupt, Quit
+- [x] **10.8** Wire TUI into Manager
+  - [x] Manager sends events to TUI via std::sync::mpsc channel
+  - [x] TUI sends commands to Manager via std::sync::mpsc channel
+  - [x] Manager runs in separate thread, TUI owns main thread
+  - [x] Events: TaskStarted, AgentOutput, BuildResult, TaskCompleted
+  - [x] Commands: Pause, Interrupt, Quit
 
-- [ ] **10.9** Verify TUI
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Manual test with mock tasks
+- [x] **10.9** Verify TUI
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Manual test with mock tasks
 
 ---
 

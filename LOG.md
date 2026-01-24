@@ -575,3 +575,58 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 9 - Integration Testing`
 - **Hash:** 415c81a
+
+---
+
+## Phase 10: Terminal UI (ratatui)
+
+### Implementation
+- **Agent:** implem-phase-10 (sub-agent, id: a6d423b)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/tui/mod.rs` (~350 lines) - App struct, run_tui, terminal setup/teardown
+- `src/tui/layout.rs` (~70 lines) - Split view layout
+- `src/tui/widgets.rs` (~200 lines) - Task list, stream, controls widgets
+
+#### Files Modified
+- `src/lib.rs` - Updated tui module declaration
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| App | TUI application state |
+| StreamLine | Prompt, Response, Error, BuildResult output lines |
+| TuiCommand | Pause, Interrupt, Quit commands |
+| ManagerEvent | TaskStarted, AgentOutput, BuildResult, TaskCompleted events |
+
+#### Features Implemented
+| Feature | Description |
+|---------|-------------|
+| Task List View | Phases with nested tasks, status icons, current task highlight |
+| Stream View | Scrollable log with color coding (blue/green/red/magenta) |
+| Controls Bar | Keyboard shortcuts (p/i/q), pause status |
+| Channel Infrastructure | Bidirectional manager-TUI communication |
+| Keyboard Controls | p (pause), i (interrupt), q (quit), arrows, PageUp/Down |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 9 new TUI tests passed
+
+### Review
+- **Agent:** review-phase-10 (sub-agent, id: a65ce51)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 10 - Terminal UI`
+- **Hash:** f6a3cfa
