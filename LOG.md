@@ -671,3 +671,59 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 11 - Polish`
 - **Hash:** f874a13
+
+---
+
+## Phase 0.5: cm init + Skills
+
+### Implementation
+- **Agent:** implem-phase-0.5 (sub-agent, id: a84b208)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `assets/cm.md` (~600 lines) - Project setup wizard skill (copied from .claude/skills/cm.md)
+- `assets/feat.md` (~342 lines) - Feature addition wizard skill
+- `assets/fix.md` (~283 lines) - Bug fix wizard skill
+- `src/skill.rs` (~10 lines) - Embeds skills using include_str!
+- `src/cli/init.rs` (~175 lines) - Init command implementation with 5 unit tests
+
+#### Files Modified
+- `src/lib.rs` - Added `pub mod skill;`
+- `src/cli/mod.rs` - Added Command enum with Init variant, subcommand dispatch
+- `.gitignore` - Added `.claude/` entry
+
+#### Files Deleted
+- `.claude/skills/cm.md` - Moved to assets/cm.md
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| Command | Enum with Init { force: bool } variant |
+
+#### Functions Implemented
+| Function | Lines | Description |
+|----------|-------|-------------|
+| execute_init() | init.rs:11-40 | Creates .claude/skills/ and writes all skill files |
+| execute_init_in_dir() | init.rs:42-89 | Internal function for testability |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 152 tests passed (125 unit + 27 integration)
+
+### Review
+- **Agent:** review-phase-0.5 (sub-agent, id: a6f2b5b)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 0.5 - Init and Skills`
+- **Hash:** 9b1c85f

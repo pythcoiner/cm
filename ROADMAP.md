@@ -32,51 +32,51 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 Enable users to install cm skills (/cm, /feat, /fix) into any project.
 
-- [ ] **0.5.1** Create assets/ directory with all skills
-  - [ ] Create assets/ directory in repo root
-  - [ ] Move .claude/skills/cm.md to assets/cm.md
-  - [ ] Create assets/feat.md (add feature wizard)
-  - [ ] Create assets/fix.md (add bug fix wizard)
+- [x] **0.5.1** Create assets/ directory with all skills
+  - [x] Create assets/ directory in repo root
+  - [x] Move .claude/skills/cm.md to assets/cm.md
+  - [x] Create assets/feat.md (add feature wizard)
+  - [x] Create assets/fix.md (add bug fix wizard)
 
-- [ ] **0.5.2** Embed all skills in binary
-  - [ ] Create src/skill.rs with include_str! for all 3 skills
-  - [ ] Add `pub mod skill;` to src/lib.rs
+- [x] **0.5.2** Embed all skills in binary
+  - [x] Create src/skill.rs with include_str! for all 3 skills
+  - [x] Add `pub mod skill;` to src/lib.rs
 
-- [ ] **0.5.3** Add init subcommand
-  - [ ] Add `Command` enum with `Init` variant to src/cli/mod.rs
-  - [ ] Create src/cli/init.rs module
-  - [ ] Implement `execute_init(force: bool)` function
-  - [ ] Create .claude/skills/ directory if needed
-  - [ ] Write all 3 skill files (cm.md, feat.md, fix.md)
-  - [ ] Handle --force flag for overwrite
+- [x] **0.5.3** Add init subcommand
+  - [x] Add `Command` enum with `Init` variant to src/cli/mod.rs
+  - [x] Create src/cli/init.rs module
+  - [x] Implement `execute_init(force: bool)` function
+  - [x] Create .claude/skills/ directory if needed
+  - [x] Write all 3 skill files (cm.md, feat.md, fix.md)
+  - [x] Handle --force flag for overwrite
 
-- [ ] **0.5.4** Update CLI dispatch
-  - [ ] Handle subcommand before flag-based dispatch
-  - [ ] Add mod init to cli module
+- [x] **0.5.4** Update CLI dispatch
+  - [x] Handle subcommand before flag-based dispatch
+  - [x] Add mod init to cli module
 
-- [ ] **0.5.5** Create /feat skill content
-  - [ ] Step 1: Ask for feature name/description
-  - [ ] Step 2: Ask for scope (phase, dependencies, files)
-  - [ ] Step 3: Ask for task breakdown
-  - [ ] Step 4: Show confirmation summary
-  - [ ] Step 5: Update PLAN.md, ROADMAP.md, tasks.json
+- [x] **0.5.5** Create /feat skill content
+  - [x] Step 1: Ask for feature name/description
+  - [x] Step 2: Ask for scope (phase, dependencies, files)
+  - [x] Step 3: Ask for task breakdown
+  - [x] Step 4: Show confirmation summary
+  - [x] Step 5: Update PLAN.md, ROADMAP.md, tasks.json
 
-- [ ] **0.5.6** Create /fix skill content
-  - [ ] Step 1: Ask for bug description
-  - [ ] Step 2: Ask for investigation details (files, root cause, priority)
-  - [ ] Step 3: Ask for fix approach
-  - [ ] Step 4: Show confirmation summary
-  - [ ] Step 5: Update ROADMAP.md, tasks.json
+- [x] **0.5.6** Create /fix skill content
+  - [x] Step 1: Ask for bug description
+  - [x] Step 2: Ask for investigation details (files, root cause, priority)
+  - [x] Step 3: Ask for fix approach
+  - [x] Step 4: Show confirmation summary
+  - [x] Step 5: Update ROADMAP.md, tasks.json
 
-- [ ] **0.5.7** Verify all skills
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] `cm init` creates all 3 skill files
-  - [ ] `cm init --force` overwrites existing
-  - [ ] /cm wizard works correctly
-  - [ ] /feat adds feature to plan/roadmap/tasks
-  - [ ] /fix adds bug fix to roadmap/tasks
-  - [ ] `cm init --force` overwrites existing file
+- [x] **0.5.7** Verify all skills
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] `cm init` creates all 3 skill files
+  - [x] `cm init --force` overwrites existing
+  - [x] /cm wizard works correctly
+  - [x] /feat adds feature to plan/roadmap/tasks
+  - [x] /fix adds bug fix to roadmap/tasks
+  - [x] `cm init --force` overwrites existing file
 
 ---
 

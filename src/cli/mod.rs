@@ -4,14 +4,27 @@
 //! including argument parsing with clap and dispatching to the appropriate
 //! execution modes (run, continue, step, status, validate).
 
+mod init;
+
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use log::{debug, info, warn};
 use thiserror::Error;
 
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager};
 use crate::state::{load_state, save_state, StateError, TaskStatus, TasksState};
+
+/// Subcommands for the cm CLI.
+#[derive(Debug, Subcommand)]
+pub enum Command {
+    /// Initialize .claude/skills directory with cm, feat, and fix skills
+    Init {
+        /// Overwrite existing skill files
+        #[arg(long)]
+        force: bool,
+    },
+}
 
 /// Errors that can occur during CLI execution.
 #[derive(Debug, Error)]
@@ -45,6 +58,9 @@ pub enum CliError {
 #[command(name = "cm")]
 #[command(version, about, long_about = None)]
 pub struct Cli {
+    #[command(subcommand)]
+    pub command: Option<Command>,
+
     /// Resume from interrupted state.
     #[arg(long = "continue")]
     pub resume: bool,
@@ -104,6 +120,13 @@ pub fn run() -> Result<(), CliError> {
 
     if let Some(config) = &cli.config {
         debug!("Using config file: {:?}", config);
+    }
+
+    // Handle subcommand first (before flag dispatch)
+    if let Some(ref command) = cli.command {
+        return match command {
+            Command::Init { force } => init::execute_init(*force),
+        };
     }
 
     // Dispatch based on flags
