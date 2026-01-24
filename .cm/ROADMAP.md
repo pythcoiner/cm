@@ -253,29 +253,29 @@ Status: **Complete** (6/6)
 
 ## Phase 17: Concise One-at-a-Time Questions in Skills
 
-Status: **Not Started** (0/4)
+Status: **Complete** (4/4)
 
-- [ ] Refactor assets/cm.md questions
-  - [ ] Split Step 1 into 3 single questions
-  - [ ] Split Step 2 into 4 single questions
-  - [ ] Keep Step 3 as single optional question
-  - [ ] Keep Step 4 as single question
-  - [ ] Keep Step 5 confirmation as single block
-- [ ] Refactor assets/feat.md questions
-  - [ ] Split Step 1 into 3 single questions
-  - [ ] Split Step 2 into 4 single questions
-  - [ ] Split Step 5 into 4 single questions
-  - [ ] Keep confirmation as single block
-- [ ] Refactor assets/fix.md questions
-  - [ ] Split Step 1 into 4 single questions
-  - [ ] Split Step 2 into 2 single questions
-  - [ ] Keep confirmation as single block
-- [ ] Rebuild and verify skills
-  - [ ] cargo build --release
-  - [ ] cm init --force
-  - [ ] Test /cm skill manually
-  - [ ] Test /feat skill manually
-  - [ ] Test /fix skill manually
+- [x] Refactor assets/cm.md questions
+  - [x] Split Step 1 into 3 single questions
+  - [x] Split Step 2 into 4 single questions
+  - [x] Keep Step 3 as single optional question
+  - [x] Keep Step 4 as single question
+  - [x] Keep Step 5 confirmation as single block
+- [x] Refactor assets/feat.md questions
+  - [x] Split Step 1 into 3 single questions
+  - [x] Split Step 2 into 4 single questions
+  - [x] Split Step 5 into 4 single questions
+  - [x] Keep confirmation as single block
+- [x] Refactor assets/fix.md questions
+  - [x] Split Step 1 into 4 single questions
+  - [x] Split Step 2 into 2 single questions
+  - [x] Keep confirmation as single block
+- [x] Rebuild and verify skills
+  - [x] cargo build --release
+  - [x] cm init --force
+  - [x] Test /cm skill manually
+  - [x] Test /feat skill manually
+  - [x] Test /fix skill manually
 
 ---
 
@@ -401,10 +401,10 @@ Status: **Not Started** (0/5)
 | Phase 14: Enable Signal Handling | Complete | 2/2 |
 | Phase 15: Deterministic Markdown Generation | Complete | 8/8 |
 | Phase 16: Sanity Check Workflow | Complete | 32/32 |
-| Phase 17: Concise One-at-a-Time Questions in Skills | Not Started | 0/21 |
+| Phase 17: Concise One-at-a-Time Questions in Skills | Complete | 21/21 |
 | Phase 18: Regenerate MD After Skills | Not Started | 0/6 |
 | Phase 19: Skills No Auto-Implement | Not Started | 0/13 |
 | Phase 20: Simplify Skill Input | Not Started | 0/12 |
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **123/209** |
+| **Total** | | **144/209** |

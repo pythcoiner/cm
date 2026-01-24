@@ -25,14 +25,31 @@ You MUST follow this wizard flow step by step. Do NOT skip steps or modify files
 
 ## Step 1: Feature Overview
 
+### Step 1.1: Feature Name
+
 **Ask the user:**
 
-> What feature do you want to add?
+> What is the **feature name**?
 >
-> Please provide:
-> - **Feature name**: A short identifier (e.g., `user-auth`, `export-pdf`)
-> - **Description**: A one-sentence description of the feature
-> - **User story**: As a [user type], I want [goal] so that [benefit]
+> (A short identifier like `user-auth`, `export-pdf`, `search-filter`)
+
+Wait for the user's response before proceeding.
+
+### Step 1.2: Feature Description
+
+**Ask the user:**
+
+> What does this feature do? (one sentence)
+
+Wait for the user's response before proceeding.
+
+### Step 1.3: User Story
+
+**Ask the user:**
+
+> What is the **user story**?
+>
+> Format: As a [user type], I want [goal] so that [benefit]
 
 Wait for the user's response before proceeding.
 
@@ -40,15 +57,43 @@ Wait for the user's response before proceeding.
 
 ## Step 2: Requirements Gathering
 
+### Step 2.1: Functional Requirements
+
 **Ask the user:**
 
-> What are the detailed requirements for this feature?
+> What should this feature **do**?
 >
-> Please describe:
-> - **Functional requirements**: What should this feature do?
-> - **Non-functional requirements**: Performance, security, accessibility needs?
-> - **User interface**: Any UI/UX considerations?
-> - **Data requirements**: What data does this feature need?
+> (List the functional requirements)
+
+Wait for the user's response before proceeding.
+
+### Step 2.2: Non-Functional Requirements
+
+**Ask the user:**
+
+> Any **non-functional requirements**?
+>
+> (Performance, security, accessibility - or "none")
+
+Wait for the user's response before proceeding.
+
+### Step 2.3: User Interface
+
+**Ask the user:**
+
+> Any **UI/UX considerations**?
+>
+> (Interface requirements - or "N/A")
+
+Wait for the user's response before proceeding.
+
+### Step 2.4: Data Requirements
+
+**Ask the user:**
+
+> What **data** does this feature need?
+>
+> (Data storage, formats, sources - or "none specific")
 
 Wait for the user's response before proceeding.
 
@@ -108,15 +153,43 @@ Wait for the user's response before proceeding.
 
 ## Step 5: Integration Planning
 
+### Step 5.1: Entry Points
+
 **Ask the user:**
 
-> How should this feature integrate with existing functionality?
+> Where will users **access** this feature?
 >
-> Consider:
-> - **Entry points**: Where will users access this feature?
-> - **Dependencies**: Which existing tasks must complete first?
-> - **Testing**: What tests are needed?
-> - **Documentation**: What documentation updates are required?
+> (UI locations, API endpoints, commands)
+
+Wait for the user's response before proceeding.
+
+### Step 5.2: Dependencies
+
+**Ask the user:**
+
+> Which existing **tasks must complete first**?
+>
+> (Dependencies from tasks.json - or "none")
+
+Wait for the user's response before proceeding.
+
+### Step 5.3: Testing
+
+**Ask the user:**
+
+> What **tests** are needed?
+>
+> (Unit tests, integration tests, manual testing)
+
+Wait for the user's response before proceeding.
+
+### Step 5.4: Documentation
+
+**Ask the user:**
+
+> What **documentation** updates are required?
+>
+> (README, API docs, user guides - or "none")
 
 Wait for the user's response before proceeding.
 

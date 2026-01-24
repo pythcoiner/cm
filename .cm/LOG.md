@@ -102,3 +102,31 @@ Create src/state/validate.rs with comprehensive validation:
 - cargo clippy: PASS (no warnings)
 - cargo test: PASS (188 unit tests + 27 integration tests)
 
+---
+
+[2026-01-24 13:00:00 UTC] **PHASE_COMPLETE** | Phase 17: Concise One-at-a-Time Questions in Skills
+
+### Phase Summary
+
+**Status:** Complete (4/4 tasks)
+
+### Changes Made
+
+1. **assets/cm.md** - Refactored questions
+   - Step 1: Split into 3 sub-steps (1.1 Project Name, 1.2 Description, 1.3 Goal)
+   - Step 2: Split into 4 sub-steps (2.1 Success Criteria, 2.2 Key Features, 2.3 Constraints, 2.4 Out of Scope)
+   - Steps 3-10: Preserved unchanged
+
+2. **assets/feat.md** - Refactored questions
+   - Step 1: Split into 3 sub-steps (1.1 Feature Name, 1.2 Description, 1.3 User Story)
+   - Step 2: Split into 4 sub-steps (2.1-2.4 Requirements)
+   - Step 5: Split into 4 sub-steps (5.1-5.4 Integration Planning)
+
+3. **assets/fix.md** - Refactored questions
+   - Step 1: Split into 4 sub-steps (1.1 Summary, 1.2 Observed, 1.3 Expected, 1.4 Repro)
+   - Step 2: Split into 2 sub-steps (2.1 Severity, 2.2 Category)
+
+### Verification
+- cargo build: PASS
+- cargo test: PASS (all tests)
+

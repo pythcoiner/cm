@@ -16,14 +16,31 @@ You MUST follow this wizard flow step by step. Do NOT skip steps or generate fil
 
 ## Step 1: Project Definition
 
+### Step 1.1: Project Name
+
 **Ask the user:**
 
-> What do you want to build?
+> What is the **project name**?
 >
-> Please provide:
-> - **Project name**: A short identifier (e.g., `my-app`, `api-server`)
-> - **Description**: A one-sentence description of the project
-> - **Overall goal**: What problem does this solve or what does it accomplish?
+> (A short identifier like `my-app`, `api-server`, `data-pipeline`)
+
+Wait for the user's response before proceeding.
+
+### Step 1.2: Project Description
+
+**Ask the user:**
+
+> What does this project do? (one sentence)
+
+Wait for the user's response before proceeding.
+
+### Step 1.3: Project Goal
+
+**Ask the user:**
+
+> What is the **overall goal**?
+>
+> (What problem does this solve or what does it accomplish?)
 
 Wait for the user's response before proceeding.
 
@@ -31,15 +48,43 @@ Wait for the user's response before proceeding.
 
 ## Step 2: Scope and Goals
 
+### Step 2.1: Success Criteria
+
 **Ask the user:**
 
-> What is the scope and goals for this project?
+> How will we know when the project is **complete**?
 >
-> Please define:
-> - **Success criteria**: How will we know when the project is complete?
-> - **Key features**: What are the main features or capabilities?
-> - **Constraints**: Any technical constraints, deadlines, or limitations?
-> - **Out of scope**: What should we explicitly NOT include?
+> (List 2-4 measurable success criteria)
+
+Wait for the user's response before proceeding.
+
+### Step 2.2: Key Features
+
+**Ask the user:**
+
+> What are the **key features** or capabilities?
+>
+> (List the main things this project should do)
+
+Wait for the user's response before proceeding.
+
+### Step 2.3: Constraints
+
+**Ask the user:**
+
+> Are there any **constraints**?
+>
+> (Technical constraints, deadlines, limitations - or "none")
+
+Wait for the user's response before proceeding.
+
+### Step 2.4: Out of Scope
+
+**Ask the user:**
+
+> What should we explicitly **NOT include**?
+>
+> (Things to avoid or defer - or "nothing specific")
 
 Wait for the user's response before proceeding.
 
