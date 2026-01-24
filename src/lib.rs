@@ -29,6 +29,4 @@ pub mod tui {
 }
 
 /// CLI argument parsing with clap.
-pub mod cli {
-    // TODO: Implement CLI argument parsing
-}
+pub mod cli;

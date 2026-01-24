@@ -275,45 +275,45 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 7: CLI Commands
 
-- [ ] **7.1** Create src/cli/mod.rs
-  - [ ] Cli struct with clap derive
-  - [ ] Flags: --continue, --step, --status, --validate, --verbose
-  - [ ] Options: --config, --state
+- [x] **7.1** Create src/cli/mod.rs
+  - [x] Cli struct with clap derive
+  - [x] Flags: --continue, --step, --status, --validate, --verbose
+  - [x] Options: --config, --state
 
-- [ ] **7.2** Implement main execution (default)
-  - [ ] Load state from .cm/tasks.json
-  - [ ] Create Manager
-  - [ ] Call manager.run()
+- [x] **7.2** Implement main execution (default)
+  - [x] Load state from .cm/tasks.json
+  - [x] Create Manager
+  - [x] Call manager.run()
 
-- [ ] **7.3** Implement --continue flag
-  - [ ] Load state
-  - [ ] Call recovery.recover_from_crash()
-  - [ ] Resume execution
+- [x] **7.3** Implement --continue flag
+  - [x] Load state
+  - [x] Call recovery.recover_from_crash()
+  - [x] Resume execution
 
-- [ ] **7.4** Implement --step flag
-  - [ ] Execute one task only
-  - [ ] Save state and exit
+- [x] **7.4** Implement --step flag
+  - [x] Execute one task only
+  - [x] Save state and exit
 
-- [ ] **7.5** Implement --status flag
-  - [ ] Load state
-  - [ ] Display progress summary
-  - [ ] Show current phase/task
-  - [ ] Show deferred tasks
+- [x] **7.5** Implement --status flag
+  - [x] Load state
+  - [x] Display progress summary
+  - [x] Show current phase/task
+  - [x] Show deferred tasks
 
-- [ ] **7.6** Implement --validate flag
-  - [ ] Load tasks.json
-  - [ ] Validate against schema
-  - [ ] Report errors
+- [x] **7.6** Implement --validate flag
+  - [x] Load tasks.json
+  - [x] Validate against schema
+  - [x] Report errors
 
-- [ ] **7.7** Wire up main.rs
-  - [ ] Parse CLI args
-  - [ ] Dispatch based on flags
-  - [ ] Set up logging (--verbose)
+- [x] **7.7** Wire up main.rs
+  - [x] Parse CLI args
+  - [x] Dispatch based on flags
+  - [x] Set up logging (--verbose)
 
-- [ ] **7.8** Verify CLI
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] `cm --help` works
+- [x] **7.8** Verify CLI
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] `cm --help` works
 
 ---
 

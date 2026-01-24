@@ -447,3 +447,59 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 6 - Recovery`
 - **Hash:** 2838bea
+
+---
+
+## Phase 7: CLI Commands
+
+### Implementation
+- **Agent:** implem-phase-7 (sub-agent, id: abd64bc)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/cli/mod.rs` (~500 lines) - Cli struct, all command handlers, validation
+
+#### Files Modified
+- `src/main.rs` - Simplified to call cli::run()
+- `src/lib.rs` - Updated cli module declaration
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| CliError | Error enum wrapping StateError, ManagerError, IoError |
+| Cli | Clap-derived command-line argument struct |
+
+#### Commands Implemented
+| Command | Description |
+|---------|-------------|
+| (default) | Run all tasks until completion |
+| --continue | Resume from interrupted state using recovery |
+| --step | Execute one task only |
+| --status | Show progress summary with phase/task details |
+| --validate | Validate tasks.json against schema |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 111 passed (10 new CLI tests)
+
+- **Command:** `./target/debug/cm --help`
+- **Result:** PASS
+- **Output:** Shows all flags and options
+
+### Review
+- **Agent:** review-phase-7 (sub-agent, id: ae4bf27)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 7 - CLI Commands`
+- **Hash:** d1bc9c8
