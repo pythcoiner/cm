@@ -3,7 +3,7 @@
 //! This module provides functionality for spawning Claude agents as subprocesses,
 //! building prompts with task-specific context, and parsing JSON responses.
 
-use std::io::Read;
+use std::io::{Read, Write};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -58,6 +58,8 @@ pub struct AgentOutput {
     pub exit_code: Option<i32>,
     /// Duration of the agent execution.
     pub duration: Duration,
+    /// Session ID from the Claude CLI response (for --continue).
+    pub session_id: Option<String>,
 }
 
 /// Spawns and manages Claude agent processes.
@@ -126,8 +128,68 @@ impl AgentSpawner {
             })?;
 
         // Run the process in a separate thread
+        let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, timeout, stop_flag_clone)
+            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread)
+        });
+
+        Ok(AgentHandle {
+            thread_handle: Some(thread_handle),
+            stop_flag,
+            task_id: task_id_owned,
+            started_at,
+        })
+    }
+
+    /// Spawn a new agent process that continues an existing conversation.
+    ///
+    /// This is used to retry after a parse failure, asking the agent
+    /// to provide a properly formatted response.
+    ///
+    /// # Arguments
+    ///
+    /// * `session_id` - The session ID from the previous agent run
+    /// * `prompt` - The follow-up prompt (e.g., asking for proper format)
+    /// * `task_id` - The ID of the task this agent is executing
+    pub fn spawn_with_continue(
+        &self,
+        session_id: &str,
+        prompt: &str,
+        task_id: &str,
+    ) -> Result<AgentHandle, AgentError> {
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let started_at = Utc::now();
+        let timeout = self.timeout;
+        let task_id_owned = task_id.to_string();
+        let prompt_owned = prompt.to_string();
+        let session_id_owned = session_id.to_string();
+        let stop_flag_clone = stop_flag.clone();
+
+        // Spawn the child process with --continue flag
+        let mut child = Command::new("claude")
+            .args([
+                "--continue",
+                &session_id_owned,
+                "-p",
+                &prompt_owned,
+                "--output-format",
+                "json",
+            ])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    AgentError::CliNotFound
+                } else {
+                    AgentError::SpawnFailed(e.to_string())
+                }
+            })?;
+
+        // Run the process in a separate thread
+        let task_id_for_thread = task_id_owned.clone();
+        let thread_handle = thread::spawn(move || {
+            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread)
         });
 
         Ok(AgentHandle {
@@ -212,14 +274,19 @@ fn run_agent_thread(
     child: &mut Child,
     timeout: Duration,
     stop_flag: Arc<AtomicBool>,
+    task_id: &str,
 ) -> Result<AgentOutput, AgentError> {
     let start = Instant::now();
     let check_interval = Duration::from_millis(100);
+    let mut last_progress_secs = 0u64;
 
     // Wait for process to complete, checking for timeout and stop flag
     loop {
         // Check if we should stop
         if stop_flag.load(Ordering::SeqCst) {
+            // Clear progress line before returning
+            eprint!("\r{:80}\r", "");
+            std::io::stderr().flush().ok();
             let _ = child.kill();
             let _ = child.wait();
             return Err(AgentError::Interrupted);
@@ -227,9 +294,20 @@ fn run_agent_thread(
 
         // Check if timed out
         if start.elapsed() > timeout {
+            // Clear progress line before returning
+            eprint!("\r{:80}\r", "");
+            std::io::stderr().flush().ok();
             let _ = child.kill();
             let _ = child.wait();
             return Err(AgentError::Timeout);
+        }
+
+        // Update progress every second (static message, replaces previous)
+        let elapsed_secs = start.elapsed().as_secs();
+        if elapsed_secs > last_progress_secs {
+            eprint!("\r[Agent {}] running for {}s...", task_id, elapsed_secs);
+            std::io::stderr().flush().ok();
+            last_progress_secs = elapsed_secs;
         }
 
         // Check if process has completed
@@ -237,6 +315,13 @@ fn run_agent_thread(
             Ok(Some(status)) => {
                 // Process has exited, collect output
                 let duration = start.elapsed();
+
+                // Clear progress line and print completion
+                eprintln!(
+                    "\r[Agent {}] completed in {}s              ",
+                    task_id,
+                    duration.as_secs()
+                );
 
                 let mut stdout = String::new();
                 if let Some(mut stdout_handle) = child.stdout.take() {
@@ -252,11 +337,15 @@ fn run_agent_thread(
                         .map_err(|e| AgentError::OutputError(e.to_string()))?;
                 }
 
+                // Extract session_id from stdout if available
+                let session_id = response::ResponseParser::extract_session_id(&stdout);
+
                 return Ok(AgentOutput {
                     stdout,
                     stderr,
                     exit_code: status.code(),
                     duration,
+                    session_id,
                 });
             }
             Ok(None) => {
@@ -313,10 +402,12 @@ mod tests {
             stderr: "".to_string(),
             exit_code: Some(0),
             duration: Duration::from_secs(1),
+            session_id: Some("test-session".to_string()),
         };
 
         let debug_str = format!("{:?}", output);
         assert!(debug_str.contains("test output"));
         assert!(debug_str.contains("exit_code"));
+        assert!(debug_str.contains("session_id"));
     }
 }

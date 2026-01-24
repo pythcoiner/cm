@@ -49,6 +49,20 @@ struct ParsedResponse {
 }
 
 impl ResponseParser {
+    /// Extract session_id from raw JSON output, even if full parsing fails.
+    ///
+    /// This is useful for retry scenarios where we need the session ID
+    /// to continue the conversation but the full response parsing failed.
+    pub fn extract_session_id(raw_json: &str) -> Option<String> {
+        #[derive(Deserialize)]
+        struct MinimalOutput {
+            session_id: Option<String>,
+        }
+        serde_json::from_str::<MinimalOutput>(raw_json)
+            .ok()?
+            .session_id
+    }
+
     /// Parse raw JSON output from claude CLI into an AgentResponse.
     ///
     /// The parser attempts to:

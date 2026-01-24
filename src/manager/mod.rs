@@ -649,8 +649,35 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
 
-        // Parse the response
-        let response = ResponseParser::parse(&output.stdout)?;
+        // Parse the response, retrying with --continue if parse fails
+        let response = match ResponseParser::parse(&output.stdout) {
+            Ok(resp) => resp,
+            Err(AgentError::ParseError(msg)) => {
+                // Try to extract session_id for retry
+                if let Some(session_id) = &output.session_id {
+                    warn!("Parse failed, retrying with --continue: {}", msg);
+                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+
+                    let retry_prompt = "Your previous response could not be parsed correctly. \
+                        Please provide a summary of your changes. \
+                        If you made file changes, list them briefly.";
+
+                    let retry_handle = self
+                        .agent_spawner
+                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                    let retry_output = retry_handle.wait()?;
+
+                    // Try parsing again, fail if still bad
+                    ResponseParser::parse(&retry_output.stdout).map_err(|e| {
+                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        e
+                    })?
+                } else {
+                    return Err(AgentError::ParseError(msg).into());
+                }
+            }
+            Err(e) => return Err(e.into()),
+        };
         debug!(
             "Agent response: {}",
             &response.raw_response[..response.raw_response.len().min(500)]
@@ -782,8 +809,32 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
 
-        // Parse the response
-        let response = ResponseParser::parse(&output.stdout)?;
+        // Parse the response, retrying with --continue if parse fails
+        let response = match ResponseParser::parse(&output.stdout) {
+            Ok(resp) => resp,
+            Err(AgentError::ParseError(msg)) => {
+                if let Some(session_id) = &output.session_id {
+                    warn!("Parse failed, retrying with --continue: {}", msg);
+                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+
+                    let retry_prompt = "Your previous response could not be parsed correctly. \
+                        Please provide your review verdict and any issues found.";
+
+                    let retry_handle = self
+                        .agent_spawner
+                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                    let retry_output = retry_handle.wait()?;
+
+                    ResponseParser::parse(&retry_output.stdout).map_err(|e| {
+                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        e
+                    })?
+                } else {
+                    return Err(AgentError::ParseError(msg).into());
+                }
+            }
+            Err(e) => return Err(e.into()),
+        };
         debug!(
             "Agent response: {}",
             &response.raw_response[..response.raw_response.len().min(500)]
@@ -878,8 +929,32 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
 
-        // Parse the response
-        let response = ResponseParser::parse(&output.stdout)?;
+        // Parse the response, retrying with --continue if parse fails
+        let response = match ResponseParser::parse(&output.stdout) {
+            Ok(resp) => resp,
+            Err(AgentError::ParseError(msg)) => {
+                if let Some(session_id) = &output.session_id {
+                    warn!("Parse failed, retrying with --continue: {}", msg);
+                    eprintln!("[Agent {}] response parse failed, retrying...", task.id);
+
+                    let retry_prompt = "Your previous response could not be parsed correctly. \
+                        Please provide a summary of the fixes you made.";
+
+                    let retry_handle = self
+                        .agent_spawner
+                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                    let retry_output = retry_handle.wait()?;
+
+                    ResponseParser::parse(&retry_output.stdout).map_err(|e| {
+                        eprintln!("[Agent {}] retry also failed: {}", task.id, e);
+                        e
+                    })?
+                } else {
+                    return Err(AgentError::ParseError(msg).into());
+                }
+            }
+            Err(e) => return Err(e.into()),
+        };
         debug!(
             "Agent response: {}",
             &response.raw_response[..response.raw_response.len().min(500)]
