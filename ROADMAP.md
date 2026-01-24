@@ -319,28 +319,28 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 8: Claude Code Skill
 
-- [ ] **8.1** Create .claude/skills/cm.md
-  - [ ] Skill name and description
-  - [ ] Usage: /cm
+- [x] **8.1** Create .claude/skills/cm.md
+  - [x] Skill name and description
+  - [x] Usage: /cm
 
-- [ ] **8.2** Define interactive wizard flow
-  - [ ] Ask: What do you want to build?
-  - [ ] Ask: What is the scope/goal?
-  - [ ] Ask: Any reference implementation to analyze?
-  - [ ] Ask: What phases do you see?
-  - [ ] Confirm understanding before generating
+- [x] **8.2** Define interactive wizard flow
+  - [x] Ask: What do you want to build?
+  - [x] Ask: What is the scope/goal?
+  - [x] Ask: Any reference implementation to analyze?
+  - [x] Ask: What phases do you see?
+  - [x] Confirm understanding before generating
 
-- [ ] **8.3** Implement artifact generation
-  - [ ] Generate .cm/PLAN.md from conversation
-  - [ ] Generate .cm/ROADMAP.md with detailed tasks
-  - [ ] Generate .cm/tasks.json with all tasks and dependencies
-  - [ ] Initialize .cm/LOG.md
+- [x] **8.3** Implement artifact generation
+  - [x] Generate .cm/PLAN.md from conversation
+  - [x] Generate .cm/ROADMAP.md with detailed tasks
+  - [x] Generate .cm/tasks.json with all tasks and dependencies
+  - [x] Initialize .cm/LOG.md
 
-- [ ] **8.4** Create generation templates
-  - [ ] PLAN.md template structure
-  - [ ] ROADMAP.md checklist format
-  - [ ] tasks.json schema with depends_on
-  - [ ] LOG.md header template
+- [x] **8.4** Create generation templates
+  - [x] PLAN.md template structure
+  - [x] ROADMAP.md checklist format
+  - [x] tasks.json schema with depends_on
+  - [x] LOG.md header template
 
 ---
 

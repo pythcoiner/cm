@@ -503,3 +503,33 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 7 - CLI Commands`
 - **Hash:** d1bc9c8
+
+---
+
+## Phase 8: Claude Code Skill
+
+### Implementation
+- **Agent:** implem-phase-8 (sub-agent, id: a9031e1)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `.claude/skills/cm.md` (~16KB) - Interactive wizard skill file
+
+#### Contents
+- Frontmatter with name, description, usage
+- 6-step interactive wizard flow
+- PLAN.md template
+- ROADMAP.md template with checkboxes
+- tasks.json schema matching src/state/tasks.rs
+- LOG.md template
+- Example generation output
+- Best practices for task definitions
+
+### Review
+- **Agent:** review-phase-8 (sub-agent, id: aaeca4f)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 8 - Claude Code Skill`
+- **Hash:** e43dc64
