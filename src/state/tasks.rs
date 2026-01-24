@@ -27,6 +27,32 @@ pub struct TasksState {
     /// History of all agent invocations.
     #[serde(default)]
     pub agent_history: Vec<AgentInvocation>,
+    /// Timestamp when the state was interrupted by a shutdown signal.
+    /// This is set when a graceful shutdown occurs mid-execution.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interrupted_at: Option<DateTime<Utc>>,
+}
+
+impl TasksState {
+    /// Mark the state as interrupted at the current time.
+    ///
+    /// This should be called when a shutdown signal is received
+    /// to record when the interruption occurred.
+    pub fn mark_interrupted(&mut self) {
+        self.interrupted_at = Some(Utc::now());
+    }
+
+    /// Check if the state was previously interrupted.
+    pub fn was_interrupted(&self) -> bool {
+        self.interrupted_at.is_some()
+    }
+
+    /// Clear the interrupted marker.
+    ///
+    /// This should be called when resuming execution after an interruption.
+    pub fn clear_interrupted(&mut self) {
+        self.interrupted_at = None;
+    }
 }
 
 /// Project metadata.
@@ -369,6 +395,7 @@ mod tests {
             current_phase: Some("phase-1".to_string()),
             current_task: Some("phase-1.task-1".to_string()),
             agent_history: vec![],
+            interrupted_at: None,
         };
 
         let json = serde_json::to_string_pretty(&state).unwrap();
@@ -382,6 +409,38 @@ mod tests {
             deserialized.phases[0].tasks[0].status,
             TaskStatus::Completed
         );
+    }
+
+    #[test]
+    fn test_tasks_state_interrupted() {
+        let mut state = TasksState {
+            version: "1.0.0".to_string(),
+            project: Project {
+                name: "test-project".to_string(),
+                description: "A test project".to_string(),
+                created_at: None,
+            },
+            global_context: None,
+            phases: vec![],
+            current_phase: None,
+            current_task: None,
+            agent_history: vec![],
+            interrupted_at: None,
+        };
+
+        // Initially not interrupted
+        assert!(!state.was_interrupted());
+        assert!(state.interrupted_at.is_none());
+
+        // Mark as interrupted
+        state.mark_interrupted();
+        assert!(state.was_interrupted());
+        assert!(state.interrupted_at.is_some());
+
+        // Clear interrupted
+        state.clear_interrupted();
+        assert!(!state.was_interrupted());
+        assert!(state.interrupted_at.is_none());
     }
 
     #[test]

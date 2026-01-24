@@ -20,8 +20,10 @@ use crate::state::{
     TaskAttempt, TaskStatus, TaskType, TasksState, Verdict,
 };
 
+mod recovery;
 mod state;
 
+pub use recovery::{CheckpointId, RecoveryAction, RecoveryError, RecoveryManager, ShutdownHandler};
 pub use state::ManagerState;
 
 /// Errors that can occur during manager operations.

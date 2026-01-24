@@ -50,6 +50,8 @@ pub enum LogAction {
     TaskDeferred,
     /// An error occurred.
     Error,
+    /// A graceful shutdown was initiated.
+    Shutdown,
 }
 
 impl std::fmt::Display for LogAction {
@@ -64,6 +66,7 @@ impl std::fmt::Display for LogAction {
             LogAction::TaskComplete => write!(f, "TASK_COMPLETE"),
             LogAction::TaskDeferred => write!(f, "TASK_DEFERRED"),
             LogAction::Error => write!(f, "ERROR"),
+            LogAction::Shutdown => write!(f, "SHUTDOWN"),
         }
     }
 }
@@ -485,6 +488,61 @@ impl LogManager {
         let entry = LogEntry::new(LogAction::Error, details);
         self.append_entry(&entry)
     }
+
+    /// Log a graceful shutdown event.
+    ///
+    /// This records that a shutdown signal was received and the manager
+    /// is stopping gracefully. Optionally includes information about
+    /// the current phase/task that was interrupted.
+    ///
+    /// # Arguments
+    ///
+    /// * `current_phase` - The ID of the phase that was active during shutdown (if any)
+    /// * `current_task` - The ID of the task that was active during shutdown (if any)
+    /// * `reason` - Optional reason for the shutdown
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing to the log file fails.
+    pub fn log_shutdown(
+        &mut self,
+        current_phase: Option<&str>,
+        current_task: Option<&str>,
+        reason: Option<&str>,
+    ) -> Result<(), LogError> {
+        let mut details = String::from("### Graceful Shutdown\n\n");
+
+        details.push_str("**Status:** Manager shutting down gracefully.\n\n");
+
+        if let Some(phase) = current_phase {
+            details.push_str(&format!("**Interrupted Phase:** {}\n", phase));
+        }
+
+        if let Some(task) = current_task {
+            details.push_str(&format!("**Interrupted Task:** {}\n", task));
+        }
+
+        if let Some(r) = reason {
+            details.push_str(&format!("\n**Reason:** {}\n", r));
+        }
+
+        details.push_str(
+            "\nExecution can be resumed by running the manager again. \
+             The state has been saved and any in-progress tasks will be retried.",
+        );
+
+        let mut entry = LogEntry::new(LogAction::Shutdown, details);
+
+        if let Some(phase) = current_phase {
+            entry = entry.with_phase(phase.to_string());
+        }
+
+        if let Some(task) = current_task {
+            entry = entry.with_task(task.to_string());
+        }
+
+        self.append_entry(&entry)
+    }
 }
 
 /// Truncate content to a maximum length, adding an indicator if truncated.
@@ -517,6 +575,7 @@ mod tests {
         assert_eq!(LogAction::TaskComplete.to_string(), "TASK_COMPLETE");
         assert_eq!(LogAction::TaskDeferred.to_string(), "TASK_DEFERRED");
         assert_eq!(LogAction::Error.to_string(), "ERROR");
+        assert_eq!(LogAction::Shutdown.to_string(), "SHUTDOWN");
     }
 
     #[test]
@@ -786,5 +845,50 @@ mod tests {
         let format_error = LogError::FormatError("invalid format".to_string());
         assert!(format_error.to_string().contains("format error"));
         assert!(format_error.to_string().contains("invalid format"));
+    }
+
+    #[test]
+    fn test_log_shutdown() {
+        let file = NamedTempFile::new().unwrap();
+        let mut manager = LogManager::new(file.path().to_path_buf());
+
+        manager
+            .log_shutdown(
+                Some("phase-1"),
+                Some("task-1"),
+                Some("Received SIGINT"),
+            )
+            .unwrap();
+
+        let mut content = String::new();
+        std::fs::File::open(file.path())
+            .unwrap()
+            .read_to_string(&mut content)
+            .unwrap();
+
+        assert!(content.contains("SHUTDOWN"));
+        assert!(content.contains("Graceful Shutdown"));
+        assert!(content.contains("phase-1"));
+        assert!(content.contains("task-1"));
+        assert!(content.contains("Received SIGINT"));
+        assert!(content.contains("resumed"));
+    }
+
+    #[test]
+    fn test_log_shutdown_minimal() {
+        let file = NamedTempFile::new().unwrap();
+        let mut manager = LogManager::new(file.path().to_path_buf());
+
+        manager.log_shutdown(None, None, None).unwrap();
+
+        let mut content = String::new();
+        std::fs::File::open(file.path())
+            .unwrap()
+            .read_to_string(&mut content)
+            .unwrap();
+
+        assert!(content.contains("SHUTDOWN"));
+        assert!(content.contains("Graceful Shutdown"));
+        assert!(content.contains("Manager shutting down gracefully"));
     }
 }

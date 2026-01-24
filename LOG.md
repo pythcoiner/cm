@@ -374,3 +374,76 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 5 - Manager Core`
 - **Hash:** aff034f
+
+---
+
+## Phase 6: Recovery
+
+### Implementation
+- **Agent:** implem-phase-6 (sub-agent, id: aa1f408)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/manager/recovery.rs` (~600 lines) - RecoveryManager, ShutdownHandler, checkpointing
+
+#### Files Modified
+- `src/manager/mod.rs` - Added recovery module declaration and re-exports
+- `src/state/tasks.rs` - Added interrupted_at field
+- `src/log/mod.rs` - Added log_shutdown() method
+- `Cargo.toml` - Added optional ctrlc dependency
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| RecoveryError | Error enum for recovery operations |
+| CheckpointId | Timestamped checkpoint identifier |
+| RecoveryManager | Manages checkpoints and crash recovery |
+| RecoveryAction | Continue, Retry, Skip, Rollback actions |
+| ShutdownHandler | Graceful shutdown with signal handling |
+
+#### Methods Implemented
+| Method | Description |
+|--------|-------------|
+| checkpoint() | Save state to checkpoint file |
+| restore() | Load state from checkpoint |
+| list_checkpoints() | List all checkpoints |
+| latest_checkpoint() | Get most recent checkpoint |
+| recover_from_crash() | Determine recovery action |
+| cleanup_checkpoints() | Remove old checkpoints |
+| wait_for_shutdown() | Wait with timeout for shutdown |
+| log_shutdown() | Log shutdown event to LOG.md |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 101 passed (24 new recovery tests)
+
+### Review (1st attempt)
+- **Agent:** review-phase-6 (sub-agent, id: aeb8f9e)
+- **Issues Found:** 4 (Medium x3, Low x1)
+- **Verdict:** NEEDS_FIXES
+
+### Fix
+- **Agent:** fix-phase-6 (sub-agent, id: ab40460)
+- **Fixes Applied:**
+  - Added wait_for_shutdown() with timeout
+  - Added interrupted_at field to TasksState
+  - Added log_shutdown() to LogManager
+  - Improved signal handler fallback with warning
+
+### Review (2nd attempt)
+- **Agent:** re-review-phase-6 (sub-agent, id: ac4e5d9)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 6 - Recovery`
+- **Hash:** 2838bea

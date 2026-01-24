@@ -243,33 +243,33 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 6: Recovery
 
-- [ ] **6.1** Create src/manager/recovery.rs
-  - [ ] RecoveryManager struct
-  - [ ] RecoveryError enum
+- [x] **6.1** Create src/manager/recovery.rs
+  - [x] RecoveryManager struct
+  - [x] RecoveryError enum
 
-- [ ] **6.2** Implement checkpointing
-  - [ ] checkpoint() -> Result<CheckpointId>
-  - [ ] Save state before mutations
-  - [ ] Store in .cm/checkpoints/
+- [x] **6.2** Implement checkpointing
+  - [x] checkpoint() -> Result<CheckpointId>
+  - [x] Save state before mutations
+  - [x] Store in .cm/checkpoints/
 
-- [ ] **6.3** Implement restore
-  - [ ] restore(checkpoint_id) -> Result<()>
-  - [ ] Load state from checkpoint
+- [x] **6.3** Implement restore
+  - [x] restore(checkpoint_id) -> Result<()>
+  - [x] Load state from checkpoint
 
-- [ ] **6.4** Implement crash recovery
-  - [ ] recover_from_crash() -> Result<RecoveryAction>
-  - [ ] Detect incomplete task
-  - [ ] Determine recovery action (retry, skip, etc.)
+- [x] **6.4** Implement crash recovery
+  - [x] recover_from_crash() -> Result<RecoveryAction>
+  - [x] Detect incomplete task
+  - [x] Determine recovery action (retry, skip, etc.)
 
-- [ ] **6.5** Implement graceful shutdown
-  - [ ] Handle SIGINT/SIGTERM
-  - [ ] Wait for current agent (with timeout)
-  - [ ] Save state with interrupted marker
-  - [ ] Append shutdown to LOG.md
+- [x] **6.5** Implement graceful shutdown
+  - [x] Handle SIGINT/SIGTERM
+  - [x] Wait for current agent (with timeout)
+  - [x] Save state with interrupted marker
+  - [x] Append shutdown to LOG.md
 
-- [ ] **6.6** Verify recovery module
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
+- [x] **6.6** Verify recovery module
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
 
 ---
 
