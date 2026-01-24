@@ -931,4 +931,4 @@ Each phase entry should include:
 
 ### Commit
 - **Message:** `cm: Phase 15 - Deterministic Markdown Generation`
-- **Hash:** b3ffa7b
+- **Hash:** ddb9dd5
