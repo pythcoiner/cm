@@ -23,9 +23,7 @@ pub mod agent;
 pub mod build;
 
 /// LOG.md management for audit trail.
-pub mod log {
-    // TODO: Implement LOG.md append-only management
-}
+pub mod log;
 
 /// Terminal UI with ratatui for real-time progress display.
 pub mod tui {

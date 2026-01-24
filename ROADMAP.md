@@ -157,31 +157,31 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 **IMPORTANT:** cm (manager) owns LOG.md - agents never touch it.
 
-- [ ] **4.1** Create src/log/mod.rs
-  - [ ] LogError enum with thiserror
-  - [ ] LogManager struct
+- [x] **4.1** Create src/log/mod.rs
+  - [x] LogError enum with thiserror
+  - [x] LogManager struct
 
-- [ ] **4.2** Implement LogManager
-  - [ ] new(path) constructor
-  - [ ] append_entry(entry) -> Result<()>
-  - [ ] LogEntry struct (timestamp, phase, task, agent_id, action, details)
+- [x] **4.2** Implement LogManager
+  - [x] new(path) constructor
+  - [x] append_entry(entry) -> Result<()>
+  - [x] LogEntry struct (timestamp, phase, task, agent_id, action, details)
 
-- [ ] **4.3** Implement log formatting
-  - [ ] format_phase_start(phase) -> String
-  - [ ] format_agent_spawn(agent_type, task_id, prompt) -> String
-  - [ ] format_agent_response(response) -> String
-  - [ ] format_build_result(output) -> String
-  - [ ] format_review_result(verdict, issues) -> String
+- [x] **4.3** Implement log formatting
+  - [x] format_phase_start(phase) -> String
+  - [x] format_agent_spawn(agent_type, task_id, prompt) -> String
+  - [x] format_agent_response(response) -> String
+  - [x] format_build_result(output) -> String
+  - [x] format_review_result(verdict, issues) -> String
 
-- [ ] **4.4** Manager calls LogManager
-  - [ ] Log before spawning agent (prompt)
-  - [ ] Log after agent completes (response)
-  - [ ] Log build/test results
-  - [ ] Log task completion/deferral
+- [x] **4.4** Manager calls LogManager
+  - [x] Log before spawning agent (prompt)
+  - [x] Log after agent completes (response)
+  - [x] Log build/test results
+  - [x] Log task completion/deferral
 
-- [ ] **4.5** Verify log module
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
+- [x] **4.5** Verify log module
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
 
 ---
 
