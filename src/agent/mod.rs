@@ -280,11 +280,28 @@ fn run_agent_thread(
     let check_interval = Duration::from_millis(100);
     let mut last_progress_secs = 0u64;
 
+    // Spawn reader threads IMMEDIATELY to avoid pipe buffer overflow
+    // This reads stdout/stderr as data arrives, preventing truncation
+    let stdout_thread = child.stdout.take().map(|mut handle| {
+        thread::spawn(move || {
+            let mut output = String::new();
+            let _ = handle.read_to_string(&mut output);
+            output
+        })
+    });
+
+    let stderr_thread = child.stderr.take().map(|mut handle| {
+        thread::spawn(move || {
+            let mut output = String::new();
+            let _ = handle.read_to_string(&mut output);
+            output
+        })
+    });
+
     // Wait for process to complete, checking for timeout and stop flag
     loop {
         // Check if we should stop
         if stop_flag.load(Ordering::SeqCst) {
-            // Clear progress line before returning
             eprint!("\r{:80}\r", "");
             std::io::stderr().flush().ok();
             let _ = child.kill();
@@ -294,7 +311,6 @@ fn run_agent_thread(
 
         // Check if timed out
         if start.elapsed() > timeout {
-            // Clear progress line before returning
             eprint!("\r{:80}\r", "");
             std::io::stderr().flush().ok();
             let _ = child.kill();
@@ -302,7 +318,7 @@ fn run_agent_thread(
             return Err(AgentError::Timeout);
         }
 
-        // Update progress every second (static message, replaces previous)
+        // Update progress every second
         let elapsed_secs = start.elapsed().as_secs();
         if elapsed_secs > last_progress_secs {
             let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
@@ -314,7 +330,6 @@ fn run_agent_thread(
         // Check if process has completed
         match child.try_wait() {
             Ok(Some(status)) => {
-                // Process has exited, collect output
                 let duration = start.elapsed();
 
                 // Clear progress line and print completion
@@ -326,19 +341,13 @@ fn run_agent_thread(
                     duration.as_secs()
                 );
 
-                let mut stdout = String::new();
-                if let Some(mut stdout_handle) = child.stdout.take() {
-                    stdout_handle
-                        .read_to_string(&mut stdout)
-                        .map_err(|e| AgentError::OutputError(e.to_string()))?;
-                }
-
-                let mut stderr = String::new();
-                if let Some(mut stderr_handle) = child.stderr.take() {
-                    stderr_handle
-                        .read_to_string(&mut stderr)
-                        .map_err(|e| AgentError::OutputError(e.to_string()))?;
-                }
+                // Collect output from reader threads
+                let stdout = stdout_thread
+                    .map(|t| t.join().unwrap_or_default())
+                    .unwrap_or_default();
+                let stderr = stderr_thread
+                    .map(|t| t.join().unwrap_or_default())
+                    .unwrap_or_default();
 
                 // Extract session_id from stdout if available
                 let session_id = response::ResponseParser::extract_session_id(&stdout);
@@ -352,7 +361,6 @@ fn run_agent_thread(
                 });
             }
             Ok(None) => {
-                // Process still running, sleep and check again
                 thread::sleep(check_interval);
             }
             Err(e) => {
