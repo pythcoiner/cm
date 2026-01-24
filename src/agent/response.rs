@@ -15,22 +15,40 @@ use super::AgentError;
 /// malformed responses by extracting what it can.
 pub struct ResponseParser;
 
-/// Raw JSON structure from claude CLI output.
-///
-/// This represents the expected structure of claude CLI's JSON output mode.
-/// Some fields are not used directly but are needed for correct JSON parsing.
+/// Raw JSON structure from claude CLI output (legacy format).
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 struct ClaudeJsonOutput {
-    /// The text response from the model.
     #[serde(default)]
     result: String,
-    /// Cost information (if available).
     #[serde(default)]
     cost_usd: Option<f64>,
-    /// Session ID.
     #[serde(default)]
     session_id: Option<String>,
+}
+
+/// Streaming event from claude CLI JSON array output.
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct StreamingEvent {
+    #[serde(rename = "type")]
+    event_type: String,
+    #[serde(default)]
+    subtype: Option<String>,
+    #[serde(default)]
+    session_id: Option<String>,
+    #[serde(default)]
+    result: Option<String>,
+    #[serde(default)]
+    message: Option<StreamingMessage>,
+}
+
+/// Message content in streaming events.
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct StreamingMessage {
+    #[serde(default)]
+    content: Option<String>,
 }
 
 /// Structure for extracting file/command info from the response text.
@@ -79,29 +97,64 @@ impl ResponseParser {
 
     /// Parse raw JSON output from claude CLI into an AgentResponse.
     ///
-    /// The parser attempts to:
-    /// 1. Parse the outer claude CLI JSON structure
-    /// 2. Extract the result text
-    /// 3. Look for embedded JSON in the result that contains file/command info
-    ///
-    /// # Arguments
-    ///
-    /// * `raw_json` - The raw JSON output from the claude CLI
+    /// The parser handles two formats:
+    /// 1. Legacy format: `{"result": "...", "session_id": "..."}`
+    /// 2. Streaming format: `[{"type":"system",...}, {"type":"result","result":"..."}]`
     ///
     /// # Errors
     ///
     /// Returns `AgentError::ParseError` if the JSON cannot be parsed at all.
-    /// Note: Partial parsing is attempted even with malformed data.
     pub fn parse(raw_json: &str) -> Result<AgentResponse, AgentError> {
-        // Try to parse as claude CLI JSON output
+        let trimmed = raw_json.trim();
+
+        // Check if it's a JSON array (streaming format)
+        if trimmed.starts_with('[') {
+            return Self::parse_streaming_format(trimmed);
+        }
+
+        // Try legacy format
         let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
             AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
         })?;
 
-        // The result field contains the model's text response
         let raw_response = output.result;
+        let parsed = Self::extract_embedded_json(&raw_response);
 
-        // Try to find and parse embedded JSON in the response
+        Ok(AgentResponse {
+            files_created: parsed.files_created,
+            files_modified: parsed.files_modified,
+            commands_run: parsed.commands_run,
+            raw_response,
+        })
+    }
+
+    /// Parse streaming JSON array format from claude CLI.
+    fn parse_streaming_format(raw_json: &str) -> Result<AgentResponse, AgentError> {
+        let events: Vec<StreamingEvent> = serde_json::from_str(raw_json).map_err(|e| {
+            AgentError::ParseError(format!("failed to parse streaming output: {}", e))
+        })?;
+
+        // Look for result in events
+        let mut raw_response = String::new();
+
+        for event in &events {
+            // Check for "result" type event
+            if event.event_type == "result" {
+                if let Some(result) = &event.result {
+                    raw_response = result.clone();
+                    break;
+                }
+            }
+            // Also check for assistant messages with content
+            if event.event_type == "assistant" {
+                if let Some(msg) = &event.message {
+                    if let Some(content) = &msg.content {
+                        raw_response.push_str(content);
+                    }
+                }
+            }
+        }
+
         let parsed = Self::extract_embedded_json(&raw_response);
 
         Ok(AgentResponse {
@@ -299,5 +352,30 @@ mod tests {
         // Other fields should default to empty
         assert!(response.files_modified.is_empty());
         assert!(response.commands_run.is_empty());
+    }
+
+    #[test]
+    fn test_parse_streaming_format() {
+        let raw = r#"[
+            {"type":"system","subtype":"init","session_id":"abc123"},
+            {"type":"result","result":"I created the file.\n\n```json\n{\"files_created\": [\"src/foo.rs\"]}\n```","session_id":"abc123"}
+        ]"#;
+
+        let response = ResponseParser::parse(raw).unwrap();
+
+        assert_eq!(response.files_created, vec!["src/foo.rs"]);
+        assert!(response.raw_response.contains("I created the file"));
+    }
+
+    #[test]
+    fn test_parse_streaming_format_with_assistant_message() {
+        let raw = r#"[
+            {"type":"system","subtype":"init","session_id":"abc123"},
+            {"type":"assistant","message":{"content":"Done! Created src/bar.rs"}}
+        ]"#;
+
+        let response = ResponseParser::parse(raw).unwrap();
+
+        assert!(response.raw_response.contains("Done!"));
     }
 }
