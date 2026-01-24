@@ -12,13 +12,11 @@ ensuring independent verification and preventing context pollution.
 - **Agent context isolation** - No direct agent-to-agent communication
 - **Build verification** - Automatic cargo build + clippy checks
 - **Crash recovery** - Checkpointing with state restoration
+- **Real-time TUI** - Terminal UI for monitoring with `--tui`
+- **Config file support** - TOML configuration via `.cm/config.toml`
+- **Signal handling** - Graceful Ctrl+C shutdown with state preservation
 - **Audit log** - Append-only LOG.md tracks all actions
-
-### Planned Features
-
-- **Real-time TUI** - Terminal UI for monitoring (not yet wired up)
-- **Config file support** - `--config` flag (not yet implemented)
-- **Signal handling** - Graceful Ctrl+C shutdown (not yet enabled)
+- **Deterministic generation** - JSON is source of truth, MD files regenerated
 
 ## Installation
 
@@ -41,111 +39,132 @@ cargo build --release
 cargo install --path .
 ```
 
-## Usage
+## Quick Start
+
+### Install skills into your project
+
+```bash
+cm init              # Creates .claude/skills/{cm,feat,fix}.md
+```
+
+### Use the /cm skill in Claude Code
+
+```bash
+claude
+> /cm               # Interactive wizard to set up a new cm project
+```
+
+This creates:
+- `.cm/tasks.json` - Task definitions & state
+- `.cm/PLAN.md` - High-level project plan
+- `.cm/ROADMAP.md` - Detailed checklist
+- `.cm/LOG.md` - Execution log
+
+### Run cm
 
 ```bash
 cm                  # Run all tasks until completion
-cm --continue       # Resume from interrupted state
-cm --step           # Execute one task, then pause
-cm --status         # Show progress summary
-cm --validate       # Validate tasks.json schema
-cm --dry-run        # Preview without executing
-cm -v, --verbose    # Enable debug logging
-cm --state FILE     # Custom state file (default: .cm/tasks.json)
 ```
 
-## Project Setup
+## Usage
 
-Create a `.cm` directory in your project root with a `tasks.json` file:
+```bash
+# Execution
+cm                  # Run all tasks until completion
+cm --tui            # Run with terminal UI
+cm --continue       # Resume from interrupted state
+cm --step           # Execute one task, then pause
+cm --dry-run        # Preview without executing
+
+# Status
+cm --status         # Show progress summary
+cm --validate       # Validate tasks.json schema
+cm --regenerate     # Regenerate MD files from JSON
+
+# Options
+cm -v, --verbose    # Enable debug logging
+cm --config FILE    # Custom config file (default: .cm/config.toml)
+cm --state FILE     # Custom state file (default: .cm/tasks.json)
+cm --model MODEL    # Override model
+cm --timeout SECS   # Override agent timeout
+```
+
+## Skills
+
+`cm init` installs three Claude Code skills:
+
+| Skill | Usage | Description |
+|-------|-------|-------------|
+| `/cm` | `/cm` | Interactive wizard to set up a new cm project |
+| `/feat` | `/feat` | Add a new feature to an existing cm project |
+| `/fix` | `/fix` | Add a bug fix task to an existing cm project |
+
+## Configuration
+
+Create `.cm/config.toml` for persistent settings:
+
+```toml
+model = "claude-sonnet-4-5-20250929"
+timeout_secs = 300
+max_cycles = 5
+log_path = ".cm/LOG.md"
+```
+
+See [CONFIG.md](CONFIG.md) for all options.
+
+**Precedence:** CLI flags > config file > defaults
+
+## Project Structure
 
 ```
 your-project/
 ├── .cm/
-│   ├── tasks.json      # Task definitions & state
-│   ├── LOG.md          # Audit trail (auto-generated)
+│   ├── tasks.json      # Task definitions & state (source of truth)
+│   ├── roadmap.json    # Roadmap state (optional)
+│   ├── config.toml     # Configuration (optional)
+│   ├── PLAN.md         # High-level plan
+│   ├── ROADMAP.md      # Detailed checklist (generated)
+│   ├── LOG.md          # Audit trail (generated)
 │   └── checkpoints/    # Recovery snapshots (auto-generated)
+├── .claude/
+│   └── skills/         # Installed skills (from cm init)
 ├── src/
 └── Cargo.toml
 ```
 
-### tasks.json Format
+## TUI Controls
 
-```json
-{
-  "version": "1.0.0",
-  "project": {
-    "name": "my-project",
-    "description": "Project description"
-  },
-  "phases": [
-    {
-      "id": "phase-1",
-      "name": "Setup",
-      "status": "pending",
-      "tasks": [
-        {
-          "id": "task-1",
-          "name": "Create module structure",
-          "task_type": "implement",
-          "status": "pending",
-          "depends_on": [],
-          "context": {
-            "files_to_read": ["src/lib.rs"],
-            "code_style_excerpt": null,
-            "prior_review_issues": []
-          },
-          "instructions": "Create the basic module structure...",
-          "attempts": []
-        }
-      ]
-    }
-  ],
-  "current_phase": null,
-  "current_task": null,
-  "agent_history": []
-}
-```
-
-### Task Types
-
-- `implement` - Write new code
-- `review` - Review implemented code
-- `fix` - Fix issues from review
-- `test` - Write or run tests
-
-### Task Status
-
-- `pending` - Not yet started
-- `in_progress` - Currently executing
-- `completed` - Successfully finished
-- `deferred` - Skipped after max retry cycles
-
-## TUI Controls (Planned)
-
-> **Note:** The TUI is implemented but not yet wired into the CLI. This section
-> documents the planned interface.
-
-When running in interactive mode, these keyboard shortcuts will be available:
+When running with `--tui`:
 
 | Key | Action |
 |-----|--------|
-| `p` | Pause after current task completes |
+| `p` | Pause/resume after current task |
 | `i` | Interrupt immediately and save state |
 | `q` | Quit (same as interrupt) |
-| `Up/Down` | Scroll output view |
+| `↑/↓` | Scroll output view |
+| `PageUp/PageDown` | Scroll by page |
 
 ## How It Works
 
 1. **Task Selection** - Manager picks the next runnable task (respects dependencies)
 2. **Implementation** - Spawns IMPLEM agent with task-only context
 3. **Verification** - Runs `cargo build` and `cargo clippy`
-4. **Review** - Spawns REVIEW agent with fresh context (same files, no prior
-knowledge)
+4. **Review** - Spawns REVIEW agent with fresh context
 5. **Iteration** - If review finds issues, creates FIX task and re-reviews
-6. **Completion** - After approval, marks task complete and commits changes
+6. **Completion** - After approval, marks task complete
 
-Tasks are retried up to 5 times before being deferred. All actions are logged to
-`LOG.md`.
+Tasks are retried up to 5 times before being deferred. All actions are logged.
+
+## JSON as Source of Truth
+
+`cm` uses JSON files as the source of truth:
+- `tasks.json` - Task state and log records
+- `roadmap.json` - Roadmap structure
+
+Markdown files (LOG.md, ROADMAP.md) are **generated** from JSON:
+```bash
+cm --regenerate     # Regenerate all MD files from JSON
+```
 
 ## License
 
