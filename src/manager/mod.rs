@@ -32,6 +32,17 @@ mod state;
 pub use recovery::{CheckpointId, RecoveryAction, RecoveryError, RecoveryManager, ShutdownHandler};
 pub use state::ManagerState;
 
+/// Task selection mode from user prompt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TaskSelection {
+    /// Run a single task (the next runnable one)
+    Single,
+    /// Run all remaining tasks
+    All,
+    /// Quit without running
+    Quit,
+}
+
 /// Errors that can occur during manager operations.
 #[derive(Debug, Error)]
 pub enum ManagerError {
@@ -412,6 +423,103 @@ impl Manager {
 
         self.execute_task(&task_id)?;
         self.update_state()?;
+        Ok(())
+    }
+
+    /// Prompt the user to select what tasks to run.
+    ///
+    /// Shows pending tasks and asks for selection.
+    /// This is used in daemon mode (non-TUI).
+    pub fn prompt_task_selection(&self) -> Result<TaskSelection, ManagerError> {
+        use std::io::{self, BufRead, Write};
+
+        // Reload state to get fresh data
+        let state = load_state(&self.config.state_path)?;
+
+        // Show pending tasks
+        let pending: Vec<_> = state
+            .phases
+            .iter()
+            .flat_map(|p| &p.tasks)
+            .filter(|t| t.status == TaskStatus::Pending)
+            .collect();
+
+        if pending.is_empty() {
+            println!("No pending tasks.");
+            return Ok(TaskSelection::Quit);
+        }
+
+        println!("\nPending tasks ({}):", pending.len());
+        for (i, task) in pending.iter().take(10).enumerate() {
+            let blocked = if state.is_task_blocked(&task.id) {
+                " (blocked)"
+            } else {
+                ""
+            };
+            println!("  {}. {} - {}{}", i + 1, task.id, task.name, blocked);
+        }
+        if pending.len() > 10 {
+            println!("  ... and {} more", pending.len() - 10);
+        }
+
+        // Find next runnable task
+        if let Some(next) = state.next_runnable_task() {
+            println!("\nNext runnable: {} - {}", next.id, next.name);
+        }
+
+        // Prompt
+        print!("\n[s]ingle / [a]ll / [q]uit: ");
+        io::stdout()
+            .flush()
+            .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
+
+        let stdin = io::stdin();
+        let mut line = String::new();
+        stdin
+            .lock()
+            .read_line(&mut line)
+            .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
+
+        match line.trim().to_lowercase().as_str() {
+            "s" | "single" => Ok(TaskSelection::Single),
+            "a" | "all" => Ok(TaskSelection::All),
+            "q" | "quit" | "" => Ok(TaskSelection::Quit),
+            _ => {
+                println!("Invalid selection. Use 's', 'a', or 'q'.");
+                self.prompt_task_selection() // Retry
+            }
+        }
+    }
+
+    /// Run with interactive prompts (daemon mode).
+    ///
+    /// This method prompts the user before running tasks and loops until
+    /// the user quits or no more tasks are available.
+    pub fn run_interactive(&mut self) -> Result<(), ManagerError> {
+        loop {
+            match self.prompt_task_selection()? {
+                TaskSelection::Single => {
+                    if let Err(e) = self.step() {
+                        match e {
+                            ManagerError::NoRunnableTasks => {
+                                println!("No runnable tasks available.");
+                                break;
+                            }
+                            ManagerError::ShutdownRequested => break,
+                            _ => return Err(e),
+                        }
+                    }
+                }
+                TaskSelection::All => {
+                    self.run()?;
+                    break;
+                }
+                TaskSelection::Quit => {
+                    println!("Exiting.");
+                    break;
+                }
+            }
+        }
         Ok(())
     }
 

@@ -354,28 +354,28 @@ Status: **Complete** (3/3)
 
 ## Phase 22: TUI Default Mode + Interactive Task Selection
 
-Status: **Not Started** (0/5)
+Status: **Complete** (5/5)
 
-- [ ] Update CLI: TUI default, add --daemon flag
-  - [ ] Remove --tui flag
-  - [ ] Add --daemon flag
-  - [ ] Invert execution logic
-- [ ] Add task selection prompt to manager
-  - [ ] Show pending tasks before running
-  - [ ] Prompt: [s]ingle / [a]ll / [q]uit
-  - [ ] Never auto-implement without confirmation
-- [ ] Implement TUI task selection widget
-  - [ ] Task list with pending highlighted
-  - [ ] Keyboard controls: s/a/q/arrows
-  - [ ] Prompt bar at bottom
-- [ ] Implement daemon mode stdin prompt
-  - [ ] Print pending tasks to stdout
-  - [ ] Read selection from stdin
-  - [ ] Prompt again after task completes
-- [ ] Update tests for new default mode
-  - [ ] Update CLI tests for --daemon
-  - [ ] Update integration tests
-  - [ ] Verify all tests pass
+- [x] Update CLI: TUI default, add --daemon flag
+  - [x] Remove --tui flag
+  - [x] Add --daemon flag
+  - [x] Invert execution logic
+- [x] Add task selection prompt to manager
+  - [x] Show pending tasks before running
+  - [x] Prompt: [s]ingle / [a]ll / [q]uit
+  - [x] Never auto-implement without confirmation
+- [x] Implement TUI task selection widget
+  - [x] Task list with pending highlighted
+  - [x] Keyboard controls: s/a/q/arrows
+  - [x] Prompt bar at bottom
+- [x] Implement daemon mode stdin prompt
+  - [x] Print pending tasks to stdout
+  - [x] Read selection from stdin
+  - [x] Prompt again after task completes
+- [x] Update tests for new default mode
+  - [x] Update CLI tests for --daemon
+  - [x] Update integration tests
+  - [x] Verify all tests pass
 
 ---
 
@@ -406,5 +406,5 @@ Status: **Not Started** (0/5)
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Complete | 12/12 |
 | Phase 21: Agent Templates & Project Documentation | Complete | 14/14 |
-| Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **189/209** |
+| Phase 22: TUI Default Mode + Interactive Task Selection | Complete | 20/20 |
+| **Total** | | **209/209** |

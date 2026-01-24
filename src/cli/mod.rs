@@ -139,9 +139,9 @@ pub struct Cli {
     #[arg(long, value_name = "DIR")]
     pub working_dir: Option<PathBuf>,
 
-    /// Enable terminal UI mode.
+    /// Run in daemon mode (no TUI, stdin prompts).
     #[arg(long)]
-    pub tui: bool,
+    pub daemon: bool,
 
     /// Perform comprehensive sanity check on JSON files.
     #[arg(long)]
@@ -319,12 +319,13 @@ fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError
 
     let config = build_manager_config(cli)?;
 
-    if cli.tui {
-        execute_run_with_tui(config, shutdown_flag)
-    } else {
+    if cli.daemon {
+        // run without TUI (daemon mode with interactive prompts)
         let mut manager = Manager::new(config, shutdown_flag)?;
-        manager.run()?;
+        manager.run_interactive()?;
         Ok(())
+    } else {
+        execute_run_with_tui(config, shutdown_flag)
     }
 }
 
@@ -955,8 +956,15 @@ mod tests {
         assert!(!cli.status);
         assert!(!cli.validate);
         assert!(!cli.verbose);
+        assert!(!cli.daemon);
         assert!(cli.config.is_none());
         assert_eq!(cli.state, PathBuf::from(".cm/tasks.json"));
+    }
+
+    #[test]
+    fn test_cli_parse_daemon() {
+        let cli = Cli::parse_from(["cm", "--daemon"]);
+        assert!(cli.daemon);
     }
 
     #[test]
