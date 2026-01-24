@@ -7,11 +7,7 @@
 // These will be expanded into separate files/directories as implementation progresses
 
 /// Main orchestration loop, state machine, and crash recovery.
-pub mod manager {
-    // TODO: Implement orchestration loop
-    // TODO: Implement state machine
-    // TODO: Implement crash recovery
-}
+pub mod manager;
 
 /// tasks.json handling, Task/Phase structs, and JSON validation.
 pub mod state;

@@ -315,3 +315,62 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 4 - Log Module`
 - **Hash:** 1fcd7f2
+
+---
+
+## Phase 5: Manager Core
+
+### Implementation
+- **Agent:** implem-phase-5 (sub-agent, id: a07f177)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/manager/mod.rs` (~750 lines) - Manager, ManagerConfig, ManagerError
+- `src/manager/state.rs` (~50 lines) - ManagerState enum
+
+#### Files Modified
+- `src/lib.rs` - Updated manager module declaration to directory module
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| ManagerError | Error enum wrapping StateError, AgentError, BuildError, LogError |
+| ManagerConfig | Configuration with builder pattern |
+| Manager | Main orchestrator with all flows |
+| ManagerState | State machine: Idle, Executing, WaitingForAgent, Verifying |
+
+#### Methods Implemented
+| Method | Description |
+|--------|-------------|
+| new() | Create manager with config |
+| run() | Main orchestration loop |
+| step() | Single-step execution |
+| select_next_task() | Select next runnable task |
+| execute_task() | Dispatch to task-type handler |
+| execute_implem() | IMPLEM flow with build verification |
+| execute_review() | REVIEW flow with verdict extraction |
+| execute_fix() | FIX flow with issues |
+| execute_test() | TEST flow |
+| update_state() | Save state to disk |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 77 passed (9 new manager tests)
+
+### Review
+- **Agent:** review-phase-5 (sub-agent, id: abb2e34)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 5 - Manager Core`
+- **Hash:** aff034f

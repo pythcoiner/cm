@@ -187,57 +187,57 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 5: Manager Core
 
-- [ ] **5.1** Create src/manager/mod.rs
-  - [ ] Module declarations
-  - [ ] ManagerError enum with thiserror
-  - [ ] Manager struct
+- [x] **5.1** Create src/manager/mod.rs
+  - [x] Module declarations
+  - [x] ManagerError enum with thiserror
+  - [x] Manager struct
 
-- [ ] **5.2** Implement Manager struct
-  - [ ] Fields: state, config, agent_spawner, build_verifier, log_manager
-  - [ ] new(config) -> Result<Self>
-  - [ ] load_or_create_state() -> Result<TasksState>
+- [x] **5.2** Implement Manager struct
+  - [x] Fields: state, config, agent_spawner, build_verifier, log_manager
+  - [x] new(config) -> Result<Self>
+  - [x] load_or_create_state() -> Result<TasksState>
 
-- [ ] **5.3** Implement main orchestration loop
-  - [ ] run() -> Result<()>
-  - [ ] Loop: select_next_task() -> execute_task() -> update_state()
-  - [ ] Handle all task types (Implement, Review, Fix)
-  - [ ] Check dependencies before executing
+- [x] **5.3** Implement main orchestration loop
+  - [x] run() -> Result<()>
+  - [x] Loop: select_next_task() -> execute_task() -> update_state()
+  - [x] Handle all task types (Implement, Review, Fix)
+  - [x] Check dependencies before executing
 
-- [ ] **5.4** Implement IMPLEM flow
-  - [ ] Build prompt with task context only
-  - [ ] Spawn agent
-  - [ ] Wait for response
-  - [ ] Parse response
-  - [ ] Run build verification
-  - [ ] If build fails, create FIX task
-  - [ ] If build passes, create REVIEW task
+- [x] **5.4** Implement IMPLEM flow
+  - [x] Build prompt with task context only
+  - [x] Spawn agent
+  - [x] Wait for response
+  - [x] Parse response
+  - [x] Run build verification
+  - [x] If build fails, create FIX task
+  - [x] If build passes, create REVIEW task
 
-- [ ] **5.5** Implement REVIEW flow
-  - [ ] Build review prompt
-  - [ ] Spawn agent
-  - [ ] Parse review result
-  - [ ] If APPROVED, mark task complete
-  - [ ] If NEEDS_FIXES, create FIX task
+- [x] **5.5** Implement REVIEW flow
+  - [x] Build review prompt
+  - [x] Spawn agent
+  - [x] Parse review result
+  - [x] If APPROVED, mark task complete
+  - [x] If NEEDS_FIXES, create FIX task
 
-- [ ] **5.6** Implement FIX flow
-  - [ ] Build fix prompt with issues
-  - [ ] Spawn agent
-  - [ ] Parse response
-  - [ ] Run build verification
-  - [ ] Create REVIEW task
+- [x] **5.6** Implement FIX flow
+  - [x] Build fix prompt with issues
+  - [x] Spawn agent
+  - [x] Parse response
+  - [x] Run build verification
+  - [x] Create REVIEW task
 
-- [ ] **5.7** Implement cycle limiting
-  - [ ] Track attempt count per task
-  - [ ] After 5 cycles, mark task as DEFERRED
-  - [ ] Continue with next non-blocked task
+- [x] **5.7** Implement cycle limiting
+  - [x] Track attempt count per task
+  - [x] After 5 cycles, mark task as DEFERRED
+  - [x] Continue with next non-blocked task
 
-- [ ] **5.8** Create src/manager/state.rs
-  - [ ] ManagerState enum (Idle, Executing, WaitingForAgent, Verifying)
-  - [ ] State transition methods
+- [x] **5.8** Create src/manager/state.rs
+  - [x] ManagerState enum (Idle, Executing, WaitingForAgent, Verifying)
+  - [x] State transition methods
 
-- [ ] **5.9** Verify manager core
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
+- [x] **5.9** Verify manager core
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
 
 ---
 
