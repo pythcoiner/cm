@@ -6,25 +6,25 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 0: Project Setup
 
-- [ ] **0.1** Create Cargo.toml with workspace configuration
-  - [ ] Package metadata (name, version, edition, description)
-  - [ ] Dependencies: clap, serde, serde_json, thiserror, chrono, uuid, log, env_logger
-  - [ ] TUI dependencies: ratatui, crossterm
-  - [ ] Dev dependencies: tempfile, assert_cmd
-  - [ ] NO tokio - use std::thread, std::sync::mpsc, std::process
+- [x] **0.1** Create Cargo.toml with workspace configuration
+  - [x] Package metadata (name, version, edition, description)
+  - [x] Dependencies: clap, serde, serde_json, thiserror, chrono, uuid, log, env_logger
+  - [x] TUI dependencies: ratatui, crossterm
+  - [x] Dev dependencies: tempfile, assert_cmd
+  - [x] NO tokio - use std::thread, std::sync::mpsc, std::process
 
-- [ ] **0.2** Create src/lib.rs with module declarations
-  - [ ] Declare modules: manager, state, agent, build, log, tui, cli
-  - [ ] Re-export key types
+- [x] **0.2** Create src/lib.rs with module declarations
+  - [x] Declare modules: manager, state, agent, build, log, tui, cli
+  - [x] Re-export key types
 
-- [ ] **0.3** Create src/main.rs with CLI skeleton
-  - [ ] Clap derive for CLI struct
-  - [ ] Flags: --continue, --step, --status, --validate
-  - [ ] Options: --verbose, --config, --state
+- [x] **0.3** Create src/main.rs with CLI skeleton
+  - [x] Clap derive for CLI struct
+  - [x] Flags: --continue, --step, --status, --validate
+  - [x] Options: --verbose, --config, --state
 
-- [ ] **0.4** Verify initial build
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
+- [x] **0.4** Verify initial build
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
 
 ---
 
