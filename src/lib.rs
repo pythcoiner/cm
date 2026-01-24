@@ -14,11 +14,7 @@ pub mod manager {
 }
 
 /// tasks.json handling, Task/Phase structs, and JSON validation.
-pub mod state {
-    // TODO: Implement tasks.json loading/saving
-    // TODO: Implement Task, Phase, TaskStatus structs
-    // TODO: Implement JSON schema validation
-}
+pub mod state;
 
 /// Agent spawning, prompt building, and response parsing.
 pub mod agent {

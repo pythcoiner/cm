@@ -1,0 +1,414 @@
+//! Core types for tasks.json state management.
+//!
+//! This module contains all the data structures used to represent
+//! the state of a cm project, including tasks, phases, and agent invocations.
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+/// The root state structure representing the entire tasks.json file.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TasksState {
+    /// Schema version for tasks.json format.
+    pub version: String,
+    /// Project metadata.
+    pub project: Project,
+    /// Global context shared across all tasks.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_context: Option<GlobalContext>,
+    /// List of phases in the project.
+    pub phases: Vec<Phase>,
+    /// ID of the currently active phase.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_phase: Option<String>,
+    /// ID of the currently active task.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_task: Option<String>,
+    /// History of all agent invocations.
+    #[serde(default)]
+    pub agent_history: Vec<AgentInvocation>,
+}
+
+/// Project metadata.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Project {
+    /// Name of the project.
+    pub name: String,
+    /// Description of the project.
+    pub description: String,
+    /// When the project was created.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+/// Global context shared across all tasks.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlobalContext {
+    /// High-level summary of the plan.
+    pub plan_summary: String,
+}
+
+/// A phase containing multiple related tasks.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Phase {
+    /// Unique identifier for the phase.
+    pub id: String,
+    /// Human-readable name for the phase.
+    pub name: String,
+    /// Current status of the phase.
+    pub status: PhaseStatus,
+    /// Tasks within this phase.
+    pub tasks: Vec<Task>,
+}
+
+/// Status of a phase.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PhaseStatus {
+    /// Phase has not been started.
+    Pending,
+    /// Phase is currently being worked on.
+    InProgress,
+    /// Phase has been completed.
+    Completed,
+}
+
+/// A single task to be executed by an agent.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Task {
+    /// Unique identifier for the task.
+    pub id: String,
+    /// Human-readable name for the task.
+    pub name: String,
+    /// Type of task (implement, review, fix, test).
+    #[serde(rename = "type")]
+    pub task_type: TaskType,
+    /// Current status of the task.
+    pub status: TaskStatus,
+    /// IDs of tasks that must be completed before this one.
+    #[serde(default)]
+    pub depends_on: Vec<String>,
+    /// Context information for the task.
+    pub context: TaskContext,
+    /// Detailed instructions for the agent.
+    pub instructions: String,
+    /// History of execution attempts.
+    #[serde(default)]
+    pub attempts: Vec<TaskAttempt>,
+}
+
+/// Type of task.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TaskType {
+    /// Implementation task - create new code.
+    Implement,
+    /// Review task - review existing code.
+    Review,
+    /// Fix task - fix issues found in review.
+    Fix,
+    /// Test task - write or run tests.
+    Test,
+}
+
+/// Status of a task.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TaskStatus {
+    /// Task has not been started.
+    Pending,
+    /// Task is currently being worked on.
+    InProgress,
+    /// Task has been completed successfully.
+    Completed,
+    /// Task was deferred after too many failed attempts.
+    Deferred,
+}
+
+/// Context information provided to an agent for a task.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskContext {
+    /// Files the agent should read for context.
+    #[serde(default)]
+    pub files_to_read: Vec<String>,
+    /// Relevant excerpt from CODE_STYLE.md.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code_style_excerpt: Option<String>,
+    /// Issues from prior reviews that need to be addressed.
+    #[serde(default)]
+    pub prior_review_issues: Vec<String>,
+}
+
+/// Record of a single attempt to execute a task.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskAttempt {
+    /// Which attempt this is (1-based).
+    pub attempt_number: u32,
+    /// ID of the agent that executed this attempt.
+    pub agent_id: String,
+    /// When the attempt started.
+    pub started_at: DateTime<Utc>,
+    /// When the attempt completed (None if still running).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completed_at: Option<DateTime<Utc>>,
+    /// Status of the attempt.
+    pub status: AttemptStatus,
+    /// Response from the agent.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response: Option<AgentResponse>,
+}
+
+/// Status of a task attempt.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AttemptStatus {
+    /// Attempt completed successfully.
+    Success,
+    /// Attempt failed.
+    Failed,
+    /// Attempt timed out.
+    Timeout,
+}
+
+/// Response from an agent after executing a task.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentResponse {
+    /// Files created by the agent.
+    #[serde(default)]
+    pub files_created: Vec<String>,
+    /// Files modified by the agent.
+    #[serde(default)]
+    pub files_modified: Vec<String>,
+    /// Commands run by the agent.
+    #[serde(default)]
+    pub commands_run: Vec<String>,
+    /// Raw response text from the agent.
+    pub raw_response: String,
+}
+
+/// Result of a code review.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewResult {
+    /// Overall verdict of the review.
+    pub verdict: Verdict,
+    /// List of issues found.
+    #[serde(default)]
+    pub issues: Vec<ReviewIssue>,
+}
+
+/// A single issue found during code review.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewIssue {
+    /// Unique identifier for the issue.
+    pub id: String,
+    /// Severity of the issue.
+    pub severity: Severity,
+    /// Location in the code (file:line or description).
+    pub location: String,
+    /// Description of the problem.
+    pub problem: String,
+    /// Suggested fix for the issue.
+    pub suggested_fix: String,
+    /// Whether the issue has been resolved.
+    #[serde(default)]
+    pub resolved: bool,
+}
+
+/// Severity level of a review issue.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Severity {
+    /// Critical issue - must be fixed.
+    Critical,
+    /// High priority issue.
+    High,
+    /// Medium priority issue.
+    Medium,
+    /// Low priority issue.
+    Low,
+}
+
+/// Verdict of a code review.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Verdict {
+    /// Code is approved.
+    Approved,
+    /// Code needs fixes before approval.
+    NeedsFixes,
+}
+
+/// Record of an agent invocation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentInvocation {
+    /// Unique identifier for this invocation.
+    pub id: String,
+    /// ID of the task this invocation is for.
+    pub task_id: String,
+    /// Type of agent that was invoked.
+    pub agent_type: AgentType,
+    /// When the invocation started.
+    pub started_at: DateTime<Utc>,
+    /// When the invocation completed (None if still running).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completed_at: Option<DateTime<Utc>>,
+    /// Exit status of the agent process.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exit_status: Option<i32>,
+}
+
+/// Type of agent.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentType {
+    /// Main orchestration agent.
+    Main,
+    /// Implementation agent.
+    Implem,
+    /// Review agent.
+    Review,
+    /// Fix agent.
+    Fix,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_task_status_serialization() {
+        let status = TaskStatus::InProgress;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"in_progress\"");
+
+        let deserialized: TaskStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, TaskStatus::InProgress);
+    }
+
+    #[test]
+    fn test_phase_status_serialization() {
+        let status = PhaseStatus::Completed;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"completed\"");
+
+        let deserialized: PhaseStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, PhaseStatus::Completed);
+    }
+
+    #[test]
+    fn test_task_type_serialization() {
+        let task_type = TaskType::Implement;
+        let json = serde_json::to_string(&task_type).unwrap();
+        assert_eq!(json, "\"implement\"");
+
+        let deserialized: TaskType = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, TaskType::Implement);
+    }
+
+    #[test]
+    fn test_agent_type_serialization() {
+        let agent_type = AgentType::Implem;
+        let json = serde_json::to_string(&agent_type).unwrap();
+        assert_eq!(json, "\"implem\"");
+
+        let deserialized: AgentType = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, AgentType::Implem);
+    }
+
+    #[test]
+    fn test_severity_serialization() {
+        let severity = Severity::Critical;
+        let json = serde_json::to_string(&severity).unwrap();
+        assert_eq!(json, "\"critical\"");
+
+        let deserialized: Severity = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, Severity::Critical);
+    }
+
+    #[test]
+    fn test_verdict_serialization() {
+        let verdict = Verdict::NeedsFixes;
+        let json = serde_json::to_string(&verdict).unwrap();
+        assert_eq!(json, "\"needs_fixes\"");
+
+        let deserialized: Verdict = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, Verdict::NeedsFixes);
+    }
+
+    #[test]
+    fn test_tasks_state_round_trip() {
+        let state = TasksState {
+            version: "1.0.0".to_string(),
+            project: Project {
+                name: "test-project".to_string(),
+                description: "A test project".to_string(),
+                created_at: Some(Utc::now()),
+            },
+            global_context: Some(GlobalContext {
+                plan_summary: "Build something great".to_string(),
+            }),
+            phases: vec![Phase {
+                id: "phase-1".to_string(),
+                name: "Setup".to_string(),
+                status: PhaseStatus::InProgress,
+                tasks: vec![Task {
+                    id: "phase-1.task-1".to_string(),
+                    name: "Create module".to_string(),
+                    task_type: TaskType::Implement,
+                    status: TaskStatus::Completed,
+                    depends_on: vec![],
+                    context: TaskContext {
+                        files_to_read: vec!["src/lib.rs".to_string()],
+                        code_style_excerpt: Some("Use thiserror".to_string()),
+                        prior_review_issues: vec![],
+                    },
+                    instructions: "Create the module".to_string(),
+                    attempts: vec![],
+                }],
+            }],
+            current_phase: Some("phase-1".to_string()),
+            current_task: Some("phase-1.task-1".to_string()),
+            agent_history: vec![],
+        };
+
+        let json = serde_json::to_string_pretty(&state).unwrap();
+        let deserialized: TasksState = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.version, state.version);
+        assert_eq!(deserialized.project.name, state.project.name);
+        assert_eq!(deserialized.phases.len(), 1);
+        assert_eq!(deserialized.phases[0].tasks.len(), 1);
+        assert_eq!(
+            deserialized.phases[0].tasks[0].status,
+            TaskStatus::Completed
+        );
+    }
+
+    #[test]
+    fn test_task_context_defaults() {
+        let json = r#"{
+            "id": "test-task",
+            "name": "Test Task",
+            "type": "implement",
+            "status": "pending",
+            "context": {},
+            "instructions": "Do something"
+        }"#;
+
+        let task: Task = serde_json::from_str(json).unwrap();
+        assert!(task.depends_on.is_empty());
+        assert!(task.context.files_to_read.is_empty());
+        assert!(task.context.prior_review_issues.is_empty());
+        assert!(task.attempts.is_empty());
+    }
+
+    #[test]
+    fn test_attempt_status_serialization() {
+        let status = AttemptStatus::Timeout;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"timeout\"");
+
+        let deserialized: AttemptStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, AttemptStatus::Timeout);
+    }
+}

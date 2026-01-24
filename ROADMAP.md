@@ -30,54 +30,54 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 1: State Types
 
-- [ ] **1.1** Create src/state/mod.rs
-  - [ ] Module declarations
-  - [ ] StateError enum with thiserror
-  - [ ] load_state() function
-  - [ ] save_state() function
+- [x] **1.1** Create src/state/mod.rs
+  - [x] Module declarations
+  - [x] StateError enum with thiserror
+  - [x] load_state() function
+  - [x] save_state() function
 
-- [ ] **1.2** Create src/state/tasks.rs with core types
-  - [ ] TasksState struct (version, project, phases, current_phase, current_task, agent_history)
-  - [ ] Project struct (name, description, created_at)
-  - [ ] GlobalContext struct (plan_summary)
-  - [ ] Phase struct (id, name, status, tasks)
-  - [ ] PhaseStatus enum (Pending, InProgress, Completed)
+- [x] **1.2** Create src/state/tasks.rs with core types
+  - [x] TasksState struct (version, project, phases, current_phase, current_task, agent_history)
+  - [x] Project struct (name, description, created_at)
+  - [x] GlobalContext struct (plan_summary)
+  - [x] Phase struct (id, name, status, tasks)
+  - [x] PhaseStatus enum (Pending, InProgress, Completed)
 
-- [ ] **1.3** Create Task type
-  - [ ] Task struct (id, name, task_type, status, depends_on, context, instructions, attempts)
-  - [ ] TaskType enum (Implement, Review, Fix, Test)
-  - [ ] TaskStatus enum (Pending, InProgress, Completed, Deferred)
-  - [ ] TaskContext struct (files_to_read, code_style_excerpt, prior_review_issues)
+- [x] **1.3** Create Task type
+  - [x] Task struct (id, name, task_type, status, depends_on, context, instructions, attempts)
+  - [x] TaskType enum (Implement, Review, Fix, Test)
+  - [x] TaskStatus enum (Pending, InProgress, Completed, Deferred)
+  - [x] TaskContext struct (files_to_read, code_style_excerpt, prior_review_issues)
 
-- [ ] **1.4** Create TaskAttempt and related types
-  - [ ] TaskAttempt struct (attempt_number, agent_id, started_at, completed_at, status, response)
-  - [ ] AttemptStatus enum (Success, Failed, Timeout)
-  - [ ] AgentResponse struct (files_created, files_modified, commands_run, raw_response)
-  - [ ] ReviewResult struct (verdict, issues)
-  - [ ] ReviewIssue struct (id, severity, location, problem, suggested_fix, resolved)
-  - [ ] Severity enum (Critical, High, Medium, Low)
-  - [ ] Verdict enum (Approved, NeedsFixes)
+- [x] **1.4** Create TaskAttempt and related types
+  - [x] TaskAttempt struct (attempt_number, agent_id, started_at, completed_at, status, response)
+  - [x] AttemptStatus enum (Success, Failed, Timeout)
+  - [x] AgentResponse struct (files_created, files_modified, commands_run, raw_response)
+  - [x] ReviewResult struct (verdict, issues)
+  - [x] ReviewIssue struct (id, severity, location, problem, suggested_fix, resolved)
+  - [x] Severity enum (Critical, High, Medium, Low)
+  - [x] Verdict enum (Approved, NeedsFixes)
 
-- [ ] **1.5** Create AgentInvocation type
-  - [ ] AgentInvocation struct (id, task_id, agent_type, started_at, completed_at, exit_status)
-  - [ ] AgentType enum (Main, Implem, Review, Fix)
+- [x] **1.5** Create AgentInvocation type
+  - [x] AgentInvocation struct (id, task_id, agent_type, started_at, completed_at, exit_status)
+  - [x] AgentType enum (Main, Implem, Review, Fix)
 
-- [ ] **1.6** Implement Serialize/Deserialize for all types
-  - [ ] Derive serde traits
-  - [ ] Use rename_all = "snake_case" for enums
-  - [ ] DateTime<Utc> serialization
+- [x] **1.6** Implement Serialize/Deserialize for all types
+  - [x] Derive serde traits
+  - [x] Use rename_all = "snake_case" for enums
+  - [x] DateTime<Utc> serialization
 
-- [ ] **1.7** Add helper methods to TasksState
-  - [ ] current_phase() -> Option<&Phase>
-  - [ ] current_task() -> Option<&Task>
-  - [ ] next_runnable_task() -> Option<&Task>
-  - [ ] is_task_blocked(task_id) -> bool
-  - [ ] mark_task_status(task_id, status)
+- [x] **1.7** Add helper methods to TasksState
+  - [x] current_phase() -> Option<&Phase>
+  - [x] current_task() -> Option<&Task>
+  - [x] next_runnable_task() -> Option<&Task>
+  - [x] is_task_blocked(task_id) -> bool
+  - [x] mark_task_status(task_id, status)
 
-- [ ] **1.8** Verify state module
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Unit tests for serialization round-trip
+- [x] **1.8** Verify state module
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Unit tests for serialization round-trip
 
 ---
 
