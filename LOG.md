@@ -726,4 +726,4 @@ Each phase entry should include:
 
 ### Commit
 - **Message:** `cm: Phase 0.5 - Init and Skills`
-- **Hash:** 9b1c85f
+- **Hash:** 87bd3ed
