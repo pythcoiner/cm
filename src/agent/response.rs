@@ -27,29 +27,6 @@ struct ClaudeJsonOutput {
     session_id: Option<String>,
 }
 
-/// Streaming event from claude CLI JSON array output.
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct StreamingEvent {
-    #[serde(rename = "type")]
-    event_type: String,
-    #[serde(default)]
-    subtype: Option<String>,
-    #[serde(default)]
-    session_id: Option<String>,
-    #[serde(default)]
-    result: Option<String>,
-    #[serde(default)]
-    message: Option<StreamingMessage>,
-}
-
-/// Message content in streaming events.
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct StreamingMessage {
-    #[serde(default)]
-    content: Option<String>,
-}
 
 /// Structure for extracting file/command info from the response text.
 /// Some fields like `summary` are not used directly but are needed for correct JSON parsing.
@@ -129,28 +106,33 @@ impl ResponseParser {
     }
 
     /// Parse streaming JSON array format from claude CLI.
+    ///
+    /// Uses serde_json::Value for flexibility since events have many varying fields.
     fn parse_streaming_format(raw_json: &str) -> Result<AgentResponse, AgentError> {
-        let events: Vec<StreamingEvent> = serde_json::from_str(raw_json).map_err(|e| {
+        let events: Vec<serde_json::Value> = serde_json::from_str(raw_json).map_err(|e| {
             AgentError::ParseError(format!("failed to parse streaming output: {}", e))
         })?;
 
-        // Look for result in events
         let mut raw_response = String::new();
 
         for event in &events {
+            let event_type = event.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
             // Check for "result" type event
-            if event.event_type == "result" {
-                if let Some(result) = &event.result {
-                    raw_response = result.clone();
+            if event_type == "result" {
+                if let Some(result) = event.get("result").and_then(|v| v.as_str()) {
+                    raw_response = result.to_string();
                     break;
                 }
             }
             // Also check for assistant messages with content
-            if event.event_type == "assistant" {
-                if let Some(msg) = &event.message {
-                    if let Some(content) = &msg.content {
-                        raw_response.push_str(content);
-                    }
+            if event_type == "assistant" {
+                if let Some(content) = event
+                    .get("message")
+                    .and_then(|m| m.get("content"))
+                    .and_then(|c| c.as_str())
+                {
+                    raw_response.push_str(content);
                 }
             }
         }
