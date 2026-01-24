@@ -17,6 +17,20 @@ Before using this wizard, ensure:
 
 If prerequisites are not met, inform the user and suggest running `/cm` first.
 
+## CRITICAL: Scope Limitations
+
+This skill ONLY updates planning files:
+- `.cm/PLAN.md` - Add feature documentation
+- `.cm/roadmap.json` - Add roadmap items
+- `.cm/tasks.json` - Add task definitions
+
+This skill does NOT:
+- Implement any code
+- Run `cm run` or execute tasks
+- Make changes outside `.cm/` directory
+
+After the wizard completes, the user must manually run `cm run` to start implementation.
+
 ## Important: Interactive Flow
 
 You MUST follow this wizard flow step by step. Do NOT skip steps or modify files until you have gathered all the required information and received user confirmation.
@@ -360,7 +374,7 @@ After updating all files, inform the user:
 >
 > **Next steps:**
 > 1. Review the updated files to ensure accuracy
-> 2. Run `cm run` to start executing tasks
+> 2. When ready to implement, run `cm run` to start executing tasks
 >
 > Would you like to add another feature or make any adjustments?
 

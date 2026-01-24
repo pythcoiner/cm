@@ -294,21 +294,21 @@ Status: **Complete** (2/2)
 
 ## Phase 19: Skills No Auto-Implement
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Update assets/feat.md scope limitations
-  - [ ] Add CRITICAL: Scope Limitations section
-  - [ ] Update file update step to only edit JSON
-  - [ ] Remove cm run from next steps
-- [ ] Update assets/fix.md scope limitations
-  - [ ] Add CRITICAL: Scope Limitations section
-  - [ ] Update file update step to only edit JSON
-  - [ ] Remove cm run from next steps
-- [ ] Reinstall skills and verify
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify feat skill has scope limitations
-  - [ ] Verify fix skill has scope limitations
+- [x] Update assets/feat.md scope limitations
+  - [x] Add CRITICAL: Scope Limitations section
+  - [x] Update file update step to only edit JSON
+  - [x] Remove cm run from next steps
+- [x] Update assets/fix.md scope limitations
+  - [x] Add CRITICAL: Scope Limitations section
+  - [x] Update file update step to only edit JSON
+  - [x] Remove cm run from next steps
+- [x] Reinstall skills and verify
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify feat skill has scope limitations
+  - [x] Verify fix skill has scope limitations
 
 ---
 
@@ -403,8 +403,8 @@ Status: **Not Started** (0/5)
 | Phase 16: Sanity Check Workflow | Complete | 32/32 |
 | Phase 17: Concise One-at-a-Time Questions in Skills | Complete | 21/21 |
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
-| Phase 19: Skills No Auto-Implement | Not Started | 0/13 |
+| Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Not Started | 0/12 |
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **150/209** |
+| **Total** | | **163/209** |

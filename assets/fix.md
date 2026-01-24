@@ -17,6 +17,19 @@ Before using this wizard, ensure:
 
 If prerequisites are not met, inform the user and suggest running `/cm` first.
 
+## CRITICAL: Scope Limitations
+
+This skill ONLY updates planning files:
+- `.cm/tasks.json` - Add fix task definition
+- `.cm/ROADMAP.md` - Optionally add checkbox entry
+
+This skill does NOT:
+- Implement any code fixes
+- Run `cm run` or execute tasks
+- Make changes outside `.cm/` directory
+
+After the wizard completes, the user must manually run `cm run` to start the fix.
+
 ## Important: Interactive Flow
 
 You MUST follow this wizard flow step by step. Do NOT skip steps or modify files until you have gathered all the required information and received user confirmation.
@@ -290,9 +303,8 @@ After updating files, inform the user:
 > - `.cm/tasks.json` - Added fix task
 >
 > **Next steps:**
-> 1. Validation completed in Step 9
-> 2. Run `cm run` to execute tasks (fix will run at [position])
-> 3. Alternatively, run `cm --step` to execute just this fix
+> 1. Review the updated task definition
+> 2. When ready, run `cm run` to execute the fix (or `cm --step` for just this task)
 >
 > Would you like to add another bug fix?
 
