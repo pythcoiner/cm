@@ -37,4 +37,68 @@ Create src/state/validate.rs with comprehensive validation:
 
 **Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
+---
+
+[2026-01-24 12:30:00 UTC] **PHASE_COMPLETE** | Phase 16: Sanity Check Workflow
+
+### Phase Summary
+
+**Status:** Complete (6/6 tasks)
+
+### Implemented Features
+
+1. **src/state/validate.rs** - Comprehensive validation module
+   - `SanityError` enum with thiserror (JsonSyntaxError, SchemaError, DuplicateId, InvalidReference, OrphanedReference)
+   - `ValidationResult` struct with errors/warnings
+   - `validate_tasks_json()` - validates tasks.json schema and duplicates
+   - `validate_roadmap_json()` - validates roadmap.json schema and duplicates
+   - `validate_cross_references()` - validates Task.roadmap_item_id and RoadmapItem.linked_task_ids
+   - `validate_all()` - runs all validations on .cm directory
+
+2. **CLI --sanity-check flag** - New CLI command
+   - Added to src/cli/mod.rs
+   - Runs comprehensive validation
+   - Displays errors and warnings with counts
+   - Returns appropriate exit codes
+
+3. **Updated assets/cm.md skill workflow**
+   - Step 7: Validate Generated Files (cm --sanity-check)
+   - Step 8: Git Configuration (.gitignore option)
+   - Step 9: Generate Commit Message
+   - Step 10: Commit Changes
+
+4. **Updated assets/feat.md skill workflow**
+   - Step 9: Validate Changes (cm --sanity-check)
+   - Step 10: Completion (renumbered)
+
+5. **Updated assets/fix.md skill workflow**
+   - Step 8: Validate Changes (cm --sanity-check)
+   - Step 9: Completion (renumbered)
+
+### Tests Added
+
+14 new unit tests in src/state/validate.rs:
+- test_valid_tasks_json_passes
+- test_valid_roadmap_json_passes
+- test_invalid_json_syntax
+- test_missing_required_field
+- test_duplicate_task_id
+- test_duplicate_phase_id
+- test_invalid_cross_reference_task_to_roadmap
+- test_invalid_cross_reference_roadmap_to_task
+- test_validate_all_integration
+- test_validate_all_with_errors
+- test_validation_result_merge
+- test_validation_result_is_valid
+- test_roadmap_duplicate_item_id
+- test_missing_tasks_file
+
+1 new CLI test:
+- test_cli_parse_sanity_check
+
+### Verification
+
+- cargo build: PASS
+- cargo clippy: PASS (no warnings)
+- cargo test: PASS (188 unit tests + 27 integration tests)
 

@@ -234,7 +234,30 @@ Add new tasks to the appropriate phase:
 
 ---
 
-## Step 9: Completion
+## Step 9: Validate Changes
+
+After updating the files, run validation to ensure all JSON files are correct:
+
+```bash
+cm --sanity-check
+```
+
+Check the output:
+- If validation **passes**: Proceed to Step 10
+- If validation **fails**:
+  1. Review the error messages
+  2. Fix the issues in the JSON files (tasks.json or roadmap.json)
+  3. Re-run `cm --sanity-check`
+  4. Repeat until all errors are resolved
+
+**Common issues:**
+- Invalid cross-references (roadmap_item_id pointing to non-existent item)
+- Duplicate task IDs
+- Missing required fields in new tasks
+
+---
+
+## Step 10: Completion
 
 After updating all files, inform the user:
 
@@ -252,8 +275,7 @@ After updating all files, inform the user:
 >
 > **Next steps:**
 > 1. Review the updated files to ensure accuracy
-> 2. Run `cm --validate` to verify tasks.json schema
-> 3. Run `cm run` to start executing tasks
+> 2. Run `cm run` to start executing tasks
 >
 > Would you like to add another feature or make any adjustments?
 

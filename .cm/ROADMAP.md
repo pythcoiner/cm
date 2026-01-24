@@ -214,40 +214,40 @@ Status: **Complete** (8/8)
 
 ## Phase 16: Sanity Check Workflow
 
-Status: **Not Started** (0/6)
+Status: **Complete** (6/6)
 
-- [ ] Create src/state/validate.rs
-  - [ ] SanityError enum with thiserror
-  - [ ] JSON syntax validation
-  - [ ] Schema compliance validation
-  - [ ] Cross-reference validation (roadmap_item_id, linked_task_ids)
-  - [ ] Duplicate ID detection
-  - [ ] Orphaned reference detection
-- [ ] Add --sanity-check flag to CLI
-  - [ ] Add flag to Cli struct
-  - [ ] Implement execute_sanity_check()
-  - [ ] Display validation results with colors
-- [ ] Update assets/cm.md skill workflow
-  - [ ] Add Step 7: Run cm --sanity-check after generation
-  - [ ] Add iteration loop if validation fails
-  - [ ] Add Step 8: Ask about .gitignore (default no)
-  - [ ] Add Step 9: Auto-generate commit message
-  - [ ] Add Step 10: Ask user confirmation and commit
-- [ ] Add unit tests for validation
-  - [ ] Test valid JSON files pass
-  - [ ] Test invalid JSON syntax detected
-  - [ ] Test missing required fields detected
-  - [ ] Test invalid cross-references detected
-  - [ ] Test duplicate IDs detected
-  - [ ] Test orphaned references detected
-- [ ] Add sanity check to assets/feat.md
-  - [ ] Add Step 9: Validate Changes after file updates
-  - [ ] Run cm --sanity-check, fix errors, repeat until pass
-  - [ ] Renumber Step 9 (Completion) to Step 10
-- [ ] Add sanity check to assets/fix.md
-  - [ ] Add Step 8: Validate Changes after file updates
-  - [ ] Run cm --sanity-check, fix errors, repeat until pass
-  - [ ] Renumber Step 8 (Completion) to Step 9
+- [x] Create src/state/validate.rs
+  - [x] SanityError enum with thiserror
+  - [x] JSON syntax validation
+  - [x] Schema compliance validation
+  - [x] Cross-reference validation (roadmap_item_id, linked_task_ids)
+  - [x] Duplicate ID detection
+  - [x] Orphaned reference detection
+- [x] Add --sanity-check flag to CLI
+  - [x] Add flag to Cli struct
+  - [x] Implement execute_sanity_check()
+  - [x] Display validation results with colors
+- [x] Update assets/cm.md skill workflow
+  - [x] Add Step 7: Run cm --sanity-check after generation
+  - [x] Add iteration loop if validation fails
+  - [x] Add Step 8: Ask about .gitignore (default no)
+  - [x] Add Step 9: Auto-generate commit message
+  - [x] Add Step 10: Ask user confirmation and commit
+- [x] Add unit tests for validation
+  - [x] Test valid JSON files pass
+  - [x] Test invalid JSON syntax detected
+  - [x] Test missing required fields detected
+  - [x] Test invalid cross-references detected
+  - [x] Test duplicate IDs detected
+  - [x] Test orphaned references detected
+- [x] Add sanity check to assets/feat.md
+  - [x] Add Step 9: Validate Changes after file updates
+  - [x] Run cm --sanity-check, fix errors, repeat until pass
+  - [x] Renumber Step 9 (Completion) to Step 10
+- [x] Add sanity check to assets/fix.md
+  - [x] Add Step 8: Validate Changes after file updates
+  - [x] Run cm --sanity-check, fix errors, repeat until pass
+  - [x] Renumber Step 8 (Completion) to Step 9
 
 ---
 
@@ -400,11 +400,11 @@ Status: **Not Started** (0/5)
 | Phase 13: Wire TUI into CLI | Complete | 3/3 |
 | Phase 14: Enable Signal Handling | Complete | 2/2 |
 | Phase 15: Deterministic Markdown Generation | Complete | 8/8 |
-| Phase 16: Sanity Check Workflow | Not Started | 0/32 |
+| Phase 16: Sanity Check Workflow | Complete | 32/32 |
 | Phase 17: Concise One-at-a-Time Questions in Skills | Not Started | 0/21 |
 | Phase 18: Regenerate MD After Skills | Not Started | 0/6 |
 | Phase 19: Skills No Auto-Implement | Not Started | 0/13 |
 | Phase 20: Simplify Skill Input | Not Started | 0/12 |
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **91/209** |
+| **Total** | | **123/209** |

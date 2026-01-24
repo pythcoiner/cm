@@ -205,7 +205,30 @@ If the user wants, add a checkbox entry:
 
 ---
 
-## Step 8: Completion
+## Step 8: Validate Changes
+
+After updating the files, run validation to ensure all JSON files are correct:
+
+```bash
+cm --sanity-check
+```
+
+Check the output:
+- If validation **passes**: Proceed to Step 9
+- If validation **fails**:
+  1. Review the error messages
+  2. Fix the issues in tasks.json
+  3. Re-run `cm --sanity-check`
+  4. Repeat until all errors are resolved
+
+**Common issues:**
+- Duplicate task IDs
+- Invalid depends_on references
+- Missing required fields in new tasks
+
+---
+
+## Step 9: Completion
 
 After updating files, inform the user:
 
@@ -221,7 +244,7 @@ After updating files, inform the user:
 > - `.cm/tasks.json` - Added fix task
 >
 > **Next steps:**
-> 1. Run `cm --validate` to verify the update
+> 1. Validation completed in Step 8
 > 2. Run `cm run` to execute tasks (fix will run at [position])
 > 3. Alternatively, run `cm --step` to execute just this fix
 >

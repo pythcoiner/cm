@@ -147,10 +147,93 @@ After generation, inform the user:
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
 > - `.cm/LOG.md` - Execution logs (generated from tasks.json log_records)
 >
-> Next steps:
-> 1. Review `.cm/PLAN.md` and make any adjustments
-> 2. Run `cm run` to start executing tasks
-> 3. Use `cm --regenerate` to regenerate MD files from JSON if needed
+> Proceeding to validation...
+
+---
+
+## Step 7: Validate Generated Files
+
+After generating the files, run validation to ensure all JSON files are correct:
+
+```bash
+cm --sanity-check
+```
+
+Check the output:
+- If validation **passes**: Inform the user and proceed to Step 8
+- If validation **fails**:
+  1. Review the error messages
+  2. Fix the issues in the JSON files (tasks.json or roadmap.json)
+  3. Re-run `cm --sanity-check`
+  4. Repeat until all errors are resolved
+
+**Important:** Do NOT proceed to the next step until validation passes. Common issues include:
+- Invalid cross-references (roadmap_item_id pointing to non-existent item)
+- Duplicate IDs in tasks or roadmap items
+- Missing required fields
+
+---
+
+## Step 8: Git Configuration
+
+**Ask the user:**
+
+> Should I add `.cm/` to `.gitignore`?
+>
+> - **No (default)**: Keep `.cm/` tracked in git for collaboration and history
+> - **Yes**: Add `.cm/` to `.gitignore` to keep project files local only
+>
+> Recommendation: Keep it tracked unless you have a specific reason to exclude it.
+
+If the user chooses "yes":
+1. Create or update `.gitignore`
+2. Add `.cm/` on a new line
+
+---
+
+## Step 9: Generate Commit Message
+
+Generate a commit message for the initial setup:
+
+```
+cm: Initialize [project-name] with [N] phases and [M] tasks
+```
+
+**Show the user:**
+
+> Proposed commit message:
+> ```
+> cm: Initialize [project-name] with [N] phases and [M] tasks
+> ```
+>
+> Would you like to use this message, or provide your own?
+
+Wait for user to confirm or provide alternative.
+
+---
+
+## Step 10: Commit Changes
+
+**Ask the user:**
+
+> Ready to commit the `.cm/` directory with the message:
+> ```
+> [commit message]
+> ```
+>
+> Proceed with commit? (yes/no)
+
+If **yes**:
+1. Stage the `.cm/` directory: `git add .cm/`
+2. Commit with the message: `git commit -m "[message]"`
+3. Inform user: "Committed successfully!"
+
+If **no**:
+> No problem! You can commit manually later with:
+> ```bash
+> git add .cm/
+> git commit -m "cm: Initialize [project-name]"
+> ```
 
 ---
 

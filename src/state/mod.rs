@@ -11,6 +11,7 @@ use thiserror::Error;
 mod log_record;
 mod roadmap;
 mod tasks;
+mod validate;
 
 pub use log_record::{LogAction, LogData, LogRecord};
 pub use roadmap::{
@@ -20,6 +21,10 @@ pub use tasks::{
     AgentInvocation, AgentResponse, AgentType, AttemptStatus, GlobalContext, Phase, PhaseStatus,
     Project, ReviewIssue, ReviewResult, Severity, Task, TaskAttempt, TaskContext, TaskStatus,
     TaskType, TasksState, Verdict,
+};
+pub use validate::{
+    validate_all, validate_cross_references, validate_roadmap_json, validate_tasks_json,
+    SanityError, ValidationResult,
 };
 
 /// Errors that can occur during state operations.

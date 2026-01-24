@@ -18,7 +18,7 @@ use thiserror::Error;
 use crate::config::{ConfigError, ConfigFile};
 use crate::generate::{generate_log_md, generate_roadmap_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
-use crate::state::{load_roadmap, load_state, save_state, StateError, TaskStatus, TasksState};
+use crate::state::{load_roadmap, load_state, save_state, validate_all, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
@@ -142,6 +142,10 @@ pub struct Cli {
     /// Enable terminal UI mode.
     #[arg(long)]
     pub tui: bool,
+
+    /// Perform comprehensive sanity check on JSON files.
+    #[arg(long)]
+    pub sanity_check: bool,
 }
 
 /// Run the CLI application.
@@ -185,7 +189,9 @@ pub fn run() -> Result<(), CliError> {
     }
 
     // Dispatch based on flags
-    let result = if cli.regenerate {
+    let result = if cli.sanity_check {
+        execute_sanity_check(&cli)
+    } else if cli.regenerate {
         execute_regenerate(&cli)
     } else if cli.dry_run {
         execute_dry_run(&cli)
@@ -759,6 +765,52 @@ fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
     Ok(())
 }
 
+/// Execute the sanity-check mode.
+///
+/// Performs comprehensive validation of JSON files (tasks.json and roadmap.json).
+/// Checks JSON syntax, schema compliance, and cross-references.
+fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
+    info!("Sanity check mode: validating .cm directory");
+
+    // Determine the .cm directory from the state path
+    let cm_dir = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new(".cm"));
+
+    let result = validate_all(cm_dir);
+
+    // Print errors
+    if !result.errors.is_empty() {
+        println!("Errors ({}):", result.errors.len());
+        for error in &result.errors {
+            println!("  - {}", error);
+        }
+        println!();
+    }
+
+    // Print warnings
+    if !result.warnings.is_empty() {
+        println!("Warnings ({}):", result.warnings.len());
+        for warning in &result.warnings {
+            println!("  ! {}", warning);
+        }
+        println!();
+    }
+
+    // Summary
+    if result.is_valid() {
+        println!("Sanity check passed - all JSON files are valid");
+        Ok(())
+    } else {
+        println!("Sanity check failed - {} error(s) found", result.errors.len());
+        Err(CliError::ValidationFailed(format!(
+            "sanity check failed with {} error(s)",
+            result.errors.len()
+        )))
+    }
+}
+
 /// Execute the dry-run mode.
 ///
 /// Prints what would be done without executing any tasks.
@@ -929,6 +981,12 @@ mod tests {
     fn test_cli_parse_validate() {
         let cli = Cli::parse_from(["cm", "--validate"]);
         assert!(cli.validate);
+    }
+
+    #[test]
+    fn test_cli_parse_sanity_check() {
+        let cli = Cli::parse_from(["cm", "--sanity-check"]);
+        assert!(cli.sanity_check);
     }
 
     #[test]
