@@ -53,14 +53,28 @@ impl ResponseParser {
     ///
     /// This is useful for retry scenarios where we need the session ID
     /// to continue the conversation but the full response parsing failed.
+    /// Uses string search fallback when serde parsing fails.
     pub fn extract_session_id(raw_json: &str) -> Option<String> {
+        // Try serde first
         #[derive(Deserialize)]
         struct MinimalOutput {
             session_id: Option<String>,
         }
-        serde_json::from_str::<MinimalOutput>(raw_json)
-            .ok()?
-            .session_id
+        if let Ok(output) = serde_json::from_str::<MinimalOutput>(raw_json) {
+            if let Some(id) = output.session_id {
+                return Some(id);
+            }
+        }
+
+        // Fallback: simple string search for "session_id":"<value>"
+        let marker = "\"session_id\":\"";
+        if let Some(start) = raw_json.find(marker) {
+            let value_start = start + marker.len();
+            if let Some(end) = raw_json[value_start..].find('"') {
+                return Some(raw_json[value_start..value_start + end].to_string());
+            }
+        }
+        None
     }
 
     /// Parse raw JSON output from claude CLI into an AgentResponse.
