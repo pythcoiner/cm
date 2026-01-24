@@ -11,10 +11,10 @@ Copy and paste this prompt:
 ```
 I want to continue working on the cm (Claude Code Manager) crate. Please read:
 
-1. PLAN.md - Overall implementation plan and workflow rules
-2. ROADMAP.md - Detailed checklist with all phases
-3. LOG.md - Implementation log with history
-4. CODE_STYLE.md - Code style requirements
+1. .cm/PLAN.md - Overall implementation plan and workflow rules
+2. .cm/ROADMAP.md - Detailed checklist with all phases
+3. .cm/LOG.md - Implementation log with history
+4. .cm/CODE_STYLE.md - Code style requirements
 
 ## Critical Workflow Rules
 

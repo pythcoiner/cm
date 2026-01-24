@@ -1,0 +1,876 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "cm",
+    "description": "Automated agent coordination for software development - orchestrates Claude AI agents to execute multi-phase development tasks autonomously",
+    "created_at": "2026-01-24T00:00:00Z"
+  },
+  "global_context": {
+    "plan_summary": "Build a Rust CLI tool (cm) that orchestrates Claude AI agents for multi-phase development tasks. The manager mediates all agent communication - agents never interact directly. Uses IMPLEM/REVIEW/FIX cycle with context isolation. Supports TUI, crash recovery, config files, and deterministic markdown generation from JSON."
+  },
+  "phases": [
+    {
+      "id": "phase-0",
+      "name": "Project Setup",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-0.task-1",
+          "name": "Create Cargo.toml",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create Cargo.toml with all dependencies",
+          "attempts": [],
+          "roadmap_item_id": "0.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-0.5",
+      "name": "cm init + Skills",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-0.5.task-1",
+          "name": "Create assets directory with skills",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create assets/ with cm.md, feat.md, fix.md",
+          "attempts": [],
+          "roadmap_item_id": "0.5.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-1",
+      "name": "State Types",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-1.task-1",
+          "name": "Create state module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-0.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/lib.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/state/ with all types",
+          "attempts": [],
+          "roadmap_item_id": "1.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Agent Module",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-2.task-1",
+          "name": "Create agent module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-1.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/state/tasks.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/agent/ with spawner, prompt builder, response parser",
+          "attempts": [],
+          "roadmap_item_id": "2.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Build Module",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-3.task-1",
+          "name": "Create build module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-2.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/build/ with cargo and git runners",
+          "attempts": [],
+          "roadmap_item_id": "3.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Log Module",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-4.task-1",
+          "name": "Create log module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-3.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/log/ with LogManager",
+          "attempts": [],
+          "roadmap_item_id": "4.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Manager Core",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-5.task-1",
+          "name": "Create manager module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-4.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/state/tasks.rs",
+              "src/agent/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/manager/ with orchestration loop",
+          "attempts": [],
+          "roadmap_item_id": "5.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "Recovery",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-6.task-1",
+          "name": "Create recovery module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-5.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/manager/recovery.rs with checkpointing",
+          "attempts": [],
+          "roadmap_item_id": "6.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "CLI Commands",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-7.task-1",
+          "name": "Create CLI module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-6.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/main.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/cli/ with all commands",
+          "attempts": [],
+          "roadmap_item_id": "7.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Claude Code Skill",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-8.task-1",
+          "name": "Create /cm skill",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-7.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create .claude/skills/cm.md with wizard",
+          "attempts": [],
+          "roadmap_item_id": "8.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-9",
+      "name": "Integration Testing",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-9.task-1",
+          "name": "Create integration tests",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-8.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create tests/integration.rs",
+          "attempts": [],
+          "roadmap_item_id": "9.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-10",
+      "name": "Terminal UI",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-10.task-1",
+          "name": "Create TUI module",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-9.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/tui/ with ratatui",
+          "attempts": [],
+          "roadmap_item_id": "10.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-11",
+      "name": "Polish",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-11.task-1",
+          "name": "Add polish features",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-10.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Add --dry-run and --verbose modes",
+          "attempts": [],
+          "roadmap_item_id": "11.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-12",
+      "name": "Configuration File Support",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-12.task-1",
+          "name": "Add config support",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-11.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/config/ with TOML support",
+          "attempts": [],
+          "roadmap_item_id": "12.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-13",
+      "name": "Wire TUI into CLI",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-13.task-1",
+          "name": "Wire TUI into CLI",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-12.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Connect TUI to manager via channels",
+          "attempts": [],
+          "roadmap_item_id": "13.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-14",
+      "name": "Enable Signal Handling",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-14.task-1",
+          "name": "Enable signal handling",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-13.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Enable ctrlc and wire shutdown handler",
+          "attempts": [],
+          "roadmap_item_id": "14.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-15",
+      "name": "Deterministic Markdown Generation",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-15.task-1",
+          "name": "Implement deterministic generation",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [
+            "phase-14.task-1"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/generate/ with MD generators",
+          "attempts": [],
+          "roadmap_item_id": "15.1"
+        }
+      ]
+    },
+    {
+      "id": "phase-16",
+      "name": "Sanity Check Workflow",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-16.task-1",
+          "name": "Create src/state/validate.rs",
+          "type": "implement",
+          "status": "in_progress",
+          "depends_on": [
+            "phase-15.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/state/mod.rs",
+              "src/state/tasks.rs",
+              "src/state/roadmap.rs"
+            ],
+            "code_style_excerpt": "Use thiserror for SanityError enum. Follow existing patterns in StateError.",
+            "prior_review_issues": []
+          },
+          "instructions": "Create src/state/validate.rs with comprehensive validation:\n\n1. Create SanityError enum with thiserror:\n   - JsonSyntaxError(String) - invalid JSON\n   - SchemaError { file: String, field: String, message: String } - missing/invalid fields\n   - DuplicateId { file: String, id: String } - duplicate IDs\n   - InvalidReference { source_file: String, source_id: String, target_file: String, target_id: String } - broken cross-refs\n   - OrphanedReference { file: String, id: String, referenced_by: String } - unreachable items\n\n2. Create SanityResult struct with errors: Vec<SanityError> and warnings: Vec<String>\n\n3. Implement validate_tasks_json(path) -> Result<SanityResult, StateError>:\n   - Load and parse JSON\n   - Check required fields (version, project.name, project.description, phases)\n   - Check each phase has id, name, status, tasks\n   - Check each task has id, name, type, status, instructions\n   - Collect all task IDs, check for duplicates\n   - Validate depends_on references exist\n\n4. Implement validate_roadmap_json(path) -> Result<SanityResult, StateError>:\n   - Load and parse JSON\n   - Check required fields (version, title, phases)\n   - Check each phase has id, number, name, items\n   - Check each item has id, name, completed\n   - Collect all item IDs, check for duplicates\n\n5. Implement validate_cross_references(tasks_path, roadmap_path) -> Result<SanityResult, StateError>:\n   - Load both files\n   - For each task with roadmap_item_id, verify it exists in roadmap.json\n   - For each roadmap item with linked_task_ids, verify they exist in tasks.json\n   - Report orphaned references\n\n6. Implement sanity_check(cm_dir: &Path) -> Result<SanityResult, StateError>:\n   - Call all three validators\n   - Combine results\n   - Return aggregated SanityResult\n\n7. Add module to src/state/mod.rs: `mod validate;` and `pub use validate::*;`\n\n8. Ensure `cargo build` and `cargo clippy` pass",
+          "attempts": [],
+          "roadmap_item_id": "16.1"
+        },
+        {
+          "id": "phase-16.task-2",
+          "name": "Add --sanity-check flag to CLI",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-16.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/cli/mod.rs",
+              "src/state/validate.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Add --sanity-check CLI flag:\n\n1. Add to Cli struct:\n   ```rust\n   /// Validate tasks.json and roadmap.json for errors\n   #[arg(long)]\n   pub sanity_check: bool,\n   ```\n\n2. Implement execute_sanity_check(state_path: &Path) -> Result<(), CliError>:\n   - Derive cm_dir from state_path parent\n   - Call sanity_check(cm_dir)\n   - Display results with colors:\n     - Green checkmark for passed checks\n     - Red X for errors with details\n     - Yellow warning for warnings\n   - Print summary: N errors, M warnings\n   - Return Ok(()) if no errors, Err(ValidationFailed) if errors\n\n3. Add dispatch in run():\n   ```rust\n   if cli.sanity_check {\n       return execute_sanity_check(&state_path);\n   }\n   ```\n\n4. Ensure `cargo build` and `cargo clippy` pass",
+          "attempts": [],
+          "roadmap_item_id": "16.2"
+        },
+        {
+          "id": "phase-16.task-3",
+          "name": "Update assets/cm.md skill workflow",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-16.task-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "assets/cm.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/cm.md to add post-generation workflow:\n\n1. After Step 6 (Generate Artifacts), add:\n\n## Step 7: Validate Generated Files\n\nAfter generating files, run sanity check:\n\n```bash\ncm --sanity-check --state .cm/tasks.json\n```\n\nIf validation fails:\n- Review the errors reported\n- Fix the issues in the generated JSON files\n- Re-run sanity check\n- Repeat until all checks pass\n\n2. Add Step 8: Git Configuration\n\n**Ask the user:**\n\n> Should I add `.cm/` to .gitignore?\n>\n> - **Yes** - Add `.cm/` to .gitignore (project files won't be tracked)\n> - **No** (default) - Keep `.cm/` tracked in git\n\nWait for user response. If yes, append `.cm/` to .gitignore (create if needed).\n\n3. Add Step 9: Commit Changes\n\nGenerate commit message:\n\n```\ncm: Initialize project with /cm wizard\n\nCreated:\n- .cm/PLAN.md\n- .cm/roadmap.json\n- .cm/ROADMAP.md\n- .cm/tasks.json\n- .cm/LOG.md\n```\n\n**Ask the user:**\n\n> Ready to commit with this message:\n>\n> [show message]\n>\n> Proceed with commit? (yes/no)\n\nIf yes, run:\n```bash\ngit add .cm/\ngit commit -m \"[message]\"\n```\n\n4. Update Step 9 (now Step 10): Completion message to reflect new workflow\n\n5. Ensure the skill file is valid markdown",
+          "attempts": [],
+          "roadmap_item_id": "16.3"
+        },
+        {
+          "id": "phase-16.task-4",
+          "name": "Add unit tests for validation",
+          "type": "test",
+          "status": "pending",
+          "depends_on": [
+            "phase-16.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/state/validate.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Add unit tests for validation module:\n\n1. In src/state/validate.rs, add #[cfg(test)] mod tests { ... }\n\n2. Test valid files pass:\n   - Create valid tasks.json and roadmap.json in temp dir\n   - Call sanity_check()\n   - Assert no errors\n\n3. Test invalid JSON syntax:\n   - Write malformed JSON to file\n   - Call validate_tasks_json()\n   - Assert JsonSyntaxError\n\n4. Test missing required fields:\n   - Create tasks.json missing 'version' field\n   - Call validate_tasks_json()\n   - Assert SchemaError with field='version'\n\n5. Test duplicate IDs:\n   - Create tasks.json with two tasks having same id\n   - Call validate_tasks_json()\n   - Assert DuplicateId error\n\n6. Test invalid cross-references:\n   - Create task with roadmap_item_id pointing to nonexistent item\n   - Call validate_cross_references()\n   - Assert InvalidReference error\n\n7. Test orphaned references:\n   - Create roadmap item with linked_task_ids pointing to nonexistent task\n   - Call validate_cross_references()\n   - Assert OrphanedReference error (or InvalidReference, depending on design)\n\n8. Ensure `cargo test` passes with all new tests",
+          "attempts": [],
+          "roadmap_item_id": "16.4"
+        },
+        {
+          "id": "phase-16.task-5",
+          "name": "Add sanity check to assets/feat.md",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-16.task-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "assets/feat.md",
+              "assets/cm.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Add sanity check validation step to assets/feat.md after file updates:\n\n1. After Step 8 (Update Project Files), add new Step 9: Validate Changes\n\n2. Step 9 content:\n   - Run `cm --sanity-check --state .cm/tasks.json`\n   - If validation fails:\n     - Review the reported errors\n     - Fix the JSON formatting issues in the affected files\n     - Re-run sanity check\n     - Repeat until all checks pass\n   - Only proceed to completion once sanity check passes\n\n3. Renumber current Step 9 (Completion) to Step 10\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "16.5"
+        },
+        {
+          "id": "phase-16.task-6",
+          "name": "Add sanity check to assets/fix.md",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-16.task-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "assets/fix.md",
+              "assets/cm.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Add sanity check validation step to assets/fix.md after file updates:\n\n1. After Step 7 (Update Project Files), add new Step 8: Validate Changes\n\n2. Step 8 content:\n   - Run `cm --sanity-check --state .cm/tasks.json`\n   - If validation fails:\n     - Review the reported errors\n     - Fix the JSON formatting issues in the affected files\n     - Re-run sanity check\n     - Repeat until all checks pass\n   - Only proceed to completion once sanity check passes\n\n3. Renumber current Step 8 (Completion) to Step 9\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "16.6"
+        }
+      ]
+    },
+    {
+      "id": "phase-17",
+      "name": "Concise One-at-a-Time Questions in Skills",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-17.task-1",
+          "name": "Refactor assets/cm.md questions",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-16.task-3"],
+          "context": {
+            "files_to_read": ["assets/cm.md"]
+          },
+          "instructions": "Refactor cm.md to ask questions one at a time with concise context:\n\n1. Split Step 1 (Project Definition) into 3 separate questions:\n   - Q1: Project name? (e.g., `my-app`)\n   - Q2: One-sentence description?\n   - Q3: What problem does this solve?\n\n2. Split Step 2 (Scope and Goals) into 4 separate questions:\n   - Q4: Success criteria - how will we know when complete?\n   - Q5: Key features?\n   - Q6: Any constraints? (or \"none\")\n   - Q7: What's out of scope? (or \"none\")\n\n3. Keep Step 3 (Reference Implementation) as single optional question\n\n4. Keep Step 4 (Phase Breakdown) as single question\n\n5. Keep Step 5 (Confirmation) as single summary block\n\nFormat guidelines:\n- One question per step\n- Concise context (1-2 sentences max)\n- Examples inline using (e.g., ...)\n- Each question ends with \"Wait for response.\"\n- Allow \"skip\" or \"none\" for optional questions\n\nEnsure valid markdown.",
+          "roadmap_item_id": "17.1"
+        },
+        {
+          "id": "phase-17.task-2",
+          "name": "Refactor assets/feat.md questions",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-17.task-1"],
+          "context": {
+            "files_to_read": ["assets/feat.md"]
+          },
+          "instructions": "Refactor feat.md to ask questions one at a time:\n\n1. Split Step 1 (Feature Overview) into 3 questions:\n   - Q1: Feature name? (e.g., `user-auth`)\n   - Q2: One-sentence description?\n   - Q3: User story? (As a..., I want..., so that...)\n\n2. Split Step 2 (Requirements) into 4 questions:\n   - Q4: What should this feature do? (functional)\n   - Q5: Performance/security needs? (or \"none\")\n   - Q6: UI/UX considerations? (or \"none\")\n   - Q7: Data requirements? (or \"none\")\n\n3. Keep Step 3 (Technical Analysis) - auto-analysis + single question\n\n4. Keep Step 4 (Task Breakdown) - suggestion + single question\n\n5. Split Step 5 (Integration) into 4 questions:\n   - Q10: Entry points - where will users access this?\n   - Q11: Dependencies on existing tasks?\n   - Q12: What tests are needed?\n   - Q13: Documentation updates needed?\n\n6. Keep Step 6 (Phase Placement) as single question with options\n\n7. Keep Step 7 (Confirmation) as single summary block\n\nSame format guidelines as cm.md.",
+          "roadmap_item_id": "17.2"
+        },
+        {
+          "id": "phase-17.task-3",
+          "name": "Refactor assets/fix.md questions",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-17.task-2"],
+          "context": {
+            "files_to_read": ["assets/fix.md"]
+          },
+          "instructions": "Refactor fix.md to ask questions one at a time:\n\n1. Split Step 1 (Bug Description) into 4 questions:\n   - Q1: Bug summary? (one sentence)\n   - Q2: What's the observed behavior?\n   - Q3: What's the expected behavior?\n   - Q4: How to reproduce? (or \"unknown\")\n\n2. Split Step 2 (Classification) into 2 questions:\n   - Q5: Severity? (critical/high/medium/low)\n   - Q6: Category? (crash/incorrect/performance/ui/other)\n\n3. Keep Step 3 (Investigation) - auto-analysis + confirmation\n\n4. Keep Step 4 (Fix Approach) - proposal + confirmation\n\n5. Keep Step 5 (Task Placement) - options + single question\n\n6. Keep Step 6 (Confirmation) as single summary block\n\nSame format guidelines as cm.md.",
+          "roadmap_item_id": "17.3"
+        },
+        {
+          "id": "phase-17.task-4",
+          "name": "Rebuild and verify skills",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-17.task-3"],
+          "context": {
+            "files_to_read": []
+          },
+          "instructions": "Rebuild cm and verify all skills work:\n\n1. Build release binary:\n   cargo build --release\n\n2. Reinstall skills:\n   cm init --force\n\n3. Manual verification:\n   - Test /cm skill: run through full wizard\n   - Test /feat skill: add a test feature\n   - Test /fix skill: add a test bug fix\n\n4. Verify each skill asks questions one at a time\n\n5. Verify confirmation summaries still show all info as single block",
+          "roadmap_item_id": "17.4"
+        }
+      ]
+    },
+    {
+      "id": "phase-18",
+      "name": "Regenerate MD After Skills",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-18.task-1",
+          "name": "Update assets/feat.md with regeneration step",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-16.task-5"],
+          "context": {
+            "files_to_read": ["assets/feat.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/feat.md to run cm --regenerate after modifying project files:\n\n1. Locate the step that updates project files (Step 8: Update Project Files)\n\n2. After updating all files (PLAN.md, ROADMAP.md/roadmap.json, tasks.json), add a new substep:\n\n### 8.4 Regenerate Markdown Files\n\nAfter updating all project files, regenerate the markdown documentation:\n\n```bash\ncm --regenerate\n```\n\nThis ensures ROADMAP.md and LOG.md stay in sync with the JSON source of truth.\n\n3. This step should come BEFORE the sanity check step (which was added in Phase 16)\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "18.1"
+        },
+        {
+          "id": "phase-18.task-2",
+          "name": "Update assets/fix.md with regeneration step",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-16.task-6"],
+          "context": {
+            "files_to_read": ["assets/fix.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/fix.md to run cm --regenerate after modifying project files:\n\n1. Locate the step that updates project files (Step 7: Update Project Files)\n\n2. After updating tasks.json and optionally ROADMAP.md, add a new substep:\n\n### 7.4 Regenerate Markdown Files\n\nAfter updating project files, regenerate the markdown documentation:\n\n```bash\ncm --regenerate\n```\n\nThis ensures ROADMAP.md and LOG.md stay in sync with the JSON source of truth.\n\n3. This step should come BEFORE the sanity check step (which was added in Phase 16)\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "18.2"
+        }
+      ]
+    },
+    {
+      "id": "phase-19",
+      "name": "Skills No Auto-Implement",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-19.task-1",
+          "name": "Update assets/feat.md scope limitations",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-18.task-1"],
+          "context": {
+            "files_to_read": ["assets/feat.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/feat.md to enforce scope limitations:\n\n1. Add after 'Important: Interactive Flow' section:\n\n## CRITICAL: Scope Limitations\n\nThis skill ONLY:\n- Modifies `.cm/tasks.json` and `.cm/roadmap.json`\n- Runs `cm --regenerate` to update MD files from JSON\n\n**You MUST NOT:**\n- Execute any tasks you create\n- Run `cm run` or `cm --step`\n- Start implementing the feature\n- Directly edit PLAN.md, ROADMAP.md, or LOG.md (these are generated)\n\n2. Update Step 8 (Update Project Files) to only edit JSON files:\n   - 8.1 Update tasks.json\n   - 8.2 Update roadmap.json\n   - 8.3 Run cm --regenerate\n   - Remove direct PLAN.md and ROADMAP.md editing\n\n3. Update Step 9 (Completion) next steps:\n   - Remove 'Run cm run to start executing tasks'\n   - Add note: 'This wizard only creates task definitions. Implementation is not started automatically.'\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "19.1"
+        },
+        {
+          "id": "phase-19.task-2",
+          "name": "Update assets/fix.md scope limitations",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-18.task-2"],
+          "context": {
+            "files_to_read": ["assets/fix.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/fix.md to enforce scope limitations:\n\n1. Add after 'Important: Interactive Flow' section:\n\n## CRITICAL: Scope Limitations\n\nThis skill ONLY:\n- Modifies `.cm/tasks.json` and optionally `.cm/roadmap.json`\n- Runs `cm --regenerate` to update MD files from JSON\n\n**You MUST NOT:**\n- Execute any tasks you create\n- Run `cm run` or `cm --step`\n- Start implementing the fix\n- Directly edit PLAN.md, ROADMAP.md, or LOG.md (these are generated)\n\n2. Update Step 7 (Update Project Files) to clarify only JSON files are edited:\n   - 7.1 Generate Task ID\n   - 7.2 Add Fix Task to tasks.json\n   - 7.3 Optionally Update roadmap.json\n   - 7.4 Run cm --regenerate\n\n3. Update Step 8 (Completion) next steps:\n   - Remove 'Run cm run to execute tasks'\n   - Remove 'run cm --step to execute just this fix'\n   - Add note: 'This wizard only creates task definitions. Implementation is not started automatically.'\n\n4. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "19.2"
+        },
+        {
+          "id": "phase-19.task-3",
+          "name": "Reinstall skills and verify",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-19.task-1", "phase-19.task-2"],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Reinstall skills and verify changes:\n\n1. Build the binary:\n   cargo build\n\n2. Reinstall skills:\n   cargo run -- init --force\n\n3. Verify .claude/skills/feat/SKILL.md contains:\n   - CRITICAL: Scope Limitations section\n   - No 'cm run' in completion step\n   - Only JSON editing instructions\n\n4. Verify .claude/skills/fix/SKILL.md contains:\n   - CRITICAL: Scope Limitations section\n   - No 'cm run' or 'cm --step' in completion step\n   - Only JSON editing instructions\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "19.3"
+        }
+      ]
+    },
+    {
+      "id": "phase-20",
+      "name": "Simplify Skill Input",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-20.task-1",
+          "name": "Simplify assets/feat.md input",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-19.task-3"],
+          "context": {
+            "files_to_read": ["assets/feat.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Simplify assets/feat.md Step 1 to only ask for a description:\n\n1. Replace Step 1 (Feature Overview) with:\n\n## Step 1: Feature Description\n\n**Ask the user:**\n\n> What feature do you want to add? Describe it briefly.\n\nWait for the user's response before proceeding.\n\nThe skill will derive a feature name/ID from the description for task IDs.\n\n2. Remove user story references from:\n   - Step 7 (Confirmation) summary block\n   - Step 8 (Update Project Files) PLAN.md template\n   - Task templates section\n\n3. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "20.1"
+        },
+        {
+          "id": "phase-20.task-2",
+          "name": "Simplify assets/fix.md input",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-19.task-3"],
+          "context": {
+            "files_to_read": ["assets/fix.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Simplify assets/fix.md Step 1 to only ask for a description:\n\n1. Replace Step 1 (Bug Description) with:\n\n## Step 1: Bug Description\n\n**Ask the user:**\n\n> What bug needs to be fixed? Describe it briefly.\n\nWait for the user's response before proceeding.\n\nThe skill will derive details from the description or ask follow-up questions only if needed for investigation.\n\n2. Remove detailed bullet points asking for:\n   - Summary\n   - Observed behavior\n   - Expected behavior\n   - Reproduction steps\n\n3. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "20.2"
+        },
+        {
+          "id": "phase-20.task-3",
+          "name": "Reinstall and verify simplified skills",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-20.task-1", "phase-20.task-2"],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Reinstall skills and verify simplified input:\n\n1. Build: cargo build\n\n2. Reinstall: cargo run -- init --force\n\n3. Verify .claude/skills/feat/SKILL.md Step 1:\n   - Only asks for description\n   - No feature name prompt\n   - No user story prompt\n\n4. Verify .claude/skills/fix/SKILL.md Step 1:\n   - Only asks for description\n   - No summary/observed/expected/repro prompts\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "20.3"
+        }
+      ]
+    },
+    {
+      "id": "phase-21",
+      "name": "Agent Templates & Project Documentation",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-21.task-1",
+          "name": "Add agent templates generation to /cm skill",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-20.task-3"],
+          "context": {
+            "files_to_read": ["assets/cm.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/cm.md to generate agent template files:\n\n1. Add new step to generate .cm/agents/ directory with:\n   - MANAGER.md - Instructions for manager/orchestrator agent\n   - IMPLEMENTER.md - Instructions for implementation agents\n   - REVIEWER.md - Instructions for review agents\n\n2. MANAGER.md template should include:\n   - Role: Orchestrate task execution\n   - Responsibilities: Task selection, dependency checking, state management\n   - Context: What information is provided to the manager\n\n3. IMPLEMENTER.md template should include:\n   - Role: Implement tasks\n   - Responsibilities: Write code, follow instructions, verify builds\n   - Context: Task-specific context only, no global knowledge\n\n4. REVIEWER.md template should include:\n   - Role: Review implementations\n   - Responsibilities: Check correctness, style, completeness\n   - Context: Same context as implementer, fresh perspective\n\n5. Add file generation in the artifact generation step\n\n6. Ensure valid markdown syntax",
+          "attempts": [],
+          "roadmap_item_id": "21.1"
+        },
+        {
+          "id": "phase-21.task-2",
+          "name": "Add STRUCTURE.md and ACTIONS.md generation",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-21.task-1"],
+          "context": {
+            "files_to_read": ["assets/cm.md"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update assets/cm.md to generate project documentation:\n\n1. Add questions to gather structure info:\n   - What are the main modules/components?\n   - What is the architecture? (layers, services, etc.)\n\n2. Add questions to gather actions info:\n   - What are the main user actions/features?\n   - What is the navigation/flow? (CLI commands, API endpoints, UI flows)\n\n3. Generate .cm/STRUCTURE.md with:\n   - Module/component list with descriptions\n   - Architecture diagram (ASCII or description)\n   - Key files per module\n\n4. Generate .cm/ACTIONS.md with:\n   - Feature list with descriptions\n   - User journeys/flows\n   - Entry points (commands, endpoints, UI elements)\n\n5. Only generate these files if user provides enough info (skip if minimal project)\n\n6. Update completion message to list new files",
+          "attempts": [],
+          "roadmap_item_id": "21.2"
+        },
+        {
+          "id": "phase-21.task-3",
+          "name": "Reinstall and verify new /cm outputs",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-21.task-2"],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Reinstall skills and verify new file generation:\n\n1. Build: cargo build\n\n2. Reinstall: cargo run -- init --force\n\n3. Verify .claude/skills/cm/SKILL.md includes:\n   - Agent templates generation step\n   - STRUCTURE.md generation step\n   - ACTIONS.md generation step\n\n4. Test /cm skill generates:\n   - .cm/agents/MANAGER.md\n   - .cm/agents/IMPLEMENTER.md\n   - .cm/agents/REVIEWER.md\n   - .cm/STRUCTURE.md (when applicable)\n   - .cm/ACTIONS.md (when applicable)\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "21.3"
+        }
+      ]
+    },
+    {
+      "id": "phase-22",
+      "name": "TUI Default Mode + Interactive Task Selection",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-22.task-1",
+          "name": "Update CLI: TUI default, add --daemon flag",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-21.task-3"],
+          "context": {
+            "files_to_read": ["src/cli/mod.rs"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update CLI to make TUI the default mode:\n\n1. Remove --tui flag from Cli struct\n\n2. Add --daemon flag:\n   /// Run in daemon mode (stdin/stdout instead of TUI)\n   #[arg(long)]\n   pub daemon: bool,\n\n3. Invert execution logic:\n   - Before: if cli.tui { run_with_tui() } else { run_without_tui() }\n   - After: if cli.daemon { run_without_tui() } else { run_with_tui() }\n\n4. Update help text to reflect new behavior\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "22.1"
+        },
+        {
+          "id": "phase-22.task-2",
+          "name": "Add task selection prompt to manager",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-22.task-1"],
+          "context": {
+            "files_to_read": ["src/manager/mod.rs"],
+            "prior_review_issues": []
+          },
+          "instructions": "Add interactive task selection before running tasks:\n\n1. Before auto-running tasks, show pending tasks:\n   Pending tasks:\n     1. [phase-X.task-1] Task name\n     2. [phase-X.task-2] Another task\n\n2. Prompt user for action:\n   How would you like to proceed?\n     [s] Run single task (next pending)\n     [a] Run all pending tasks\n     [q] Quit\n\n3. Handle user input:\n   - 's': run only the next pending task, then prompt again\n   - 'a': run all pending tasks sequentially\n   - 'q': exit without running\n\n4. Never auto-implement without user confirmation\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "22.2"
+        },
+        {
+          "id": "phase-22.task-3",
+          "name": "Implement TUI task selection widget",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-22.task-2"],
+          "context": {
+            "files_to_read": ["src/tui/mod.rs", "src/tui/widgets.rs"],
+            "prior_review_issues": []
+          },
+          "instructions": "Implement task selection in TUI mode:\n\n1. On startup, show task list with pending tasks highlighted\n\n2. Add keyboard controls:\n   - 's' or Enter: run single task (selected/next pending)\n   - 'a': run all pending tasks\n   - 'q' or Esc: quit\n   - Arrow keys: navigate task list\n\n3. Show prompt bar at bottom:\n   [s] Single  [a] All  [q] Quit\n\n4. After task completes, return to selection (don't auto-continue)\n\n5. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "22.3"
+        },
+        {
+          "id": "phase-22.task-4",
+          "name": "Implement daemon mode stdin prompt",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-22.task-2"],
+          "context": {
+            "files_to_read": ["src/cli/mod.rs", "src/manager/mod.rs"],
+            "prior_review_issues": []
+          },
+          "instructions": "Implement task selection in daemon mode (stdin/stdout):\n\n1. Print pending tasks to stdout\n\n2. Print prompt:\n   How would you like to proceed? [s]ingle / [a]ll / [q]uit:\n\n3. Read single character from stdin\n\n4. Handle input same as TUI mode:\n   - 's': run single task\n   - 'a': run all tasks\n   - 'q': quit\n\n5. After task completes, prompt again (don't auto-continue)\n\n6. Ensure cargo build and cargo clippy pass",
+          "attempts": [],
+          "roadmap_item_id": "22.4"
+        },
+        {
+          "id": "phase-22.task-5",
+          "name": "Update tests for new default mode",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-22.task-3", "phase-22.task-4"],
+          "context": {
+            "files_to_read": ["tests/"],
+            "prior_review_issues": []
+          },
+          "instructions": "Update tests for new behavior:\n\n1. Update CLI tests:\n   - Remove --tui flag tests\n   - Add --daemon flag tests\n   - Verify TUI is default\n\n2. Update integration tests:\n   - Tests should use --daemon flag for non-interactive testing\n   - Or mock stdin for task selection\n\n3. Ensure all tests pass with cargo test",
+          "attempts": [],
+          "roadmap_item_id": "22.5"
+        }
+      ]
+    }
+  ],
+  "agent_history": [
+    {
+      "id": "fa612269-6164-4edb-946f-37f44be52a72",
+      "task_id": "phase-16.task-1",
+      "agent_type": "implem",
+      "started_at": "2026-01-24T11:06:39.496260891Z"
+    }
+  ],
+  "log_records": [
+    {
+      "id": "ede09f40-9aeb-4ee5-974f-77b726c0eaa9",
+      "timestamp": "2026-01-24T11:06:39.496260180Z",
+      "action": "agent_spawn",
+      "task_id": "phase-16.task-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Create src/state/validate.rs\n\n### Instructions\n\nCreate src/state/validate.rs with comprehensive validation:\n\n1. Create SanityError enum with thiserror:\n   - JsonSyntaxError(String) - invalid JSON\n   - SchemaError { file: String, field: String, message: String } - missing/invalid fields\n   - DuplicateId { file: String, id: String } - duplicate IDs\n   - InvalidReference { source_file: String, source_id: String, target_file: String, target_id: String } - broken cross-refs\n   - OrphanedReference { file: String, id: String, referenced_by: String } - unreachable items\n\n2. Create SanityResult struct with errors: Vec<SanityError> and warnings: Vec<String>\n\n3. Implement validate_tasks_json(path) -> Result<SanityResult, StateError>:\n   - Load and parse JSON\n   - Check required fields (version, project.name, project.description, phases)\n   - Check each phase has id, name, status, tasks\n   - Check each task has id, name, type, status, instructions\n   - Collect all task IDs, check for duplicates\n   - Validate depends_on references exist\n\n4. Implement validate_roadmap_json(path) -> Result<SanityResult, StateError>:\n   - Load and parse JSON\n   - Check required fields (version, title, phases)\n   - Check each phase has id, number, name, items\n   - Check each item has id, name, completed\n   - Collect all item IDs, check for duplicates\n\n5. Implement validate_cross_references(tasks_path, roadmap_path) -> Result<SanityResult, StateError>:\n   - Load both files\n   - For each task with roadmap_item_id, verify it exists in roadmap.json\n   - For each roadmap item with linked_task_ids, verify they exist in tasks.json\n   - Report orphaned references\n\n6. Implement sanity_check(cm_dir: &Path) -> Result<SanityResult, StateError>:\n   - Call all three validators\n   - Combine results\n   - Return aggregated SanityResult\n\n7. Add module to src/state/mod.rs: `mod validate;` and `pub use validate::*;`\n\n8. Ensure `cargo bu\n\n... [truncated, 570 more bytes]"
+      }
+    },
+    {
+      "id": "38ae46e7-1d4e-4c89-aece-fd16ed79e647",
+      "timestamp": "2026-01-24T11:06:45.512830575Z",
+      "action": "error",
+      "data": {
+        "type": "error",
+        "message": "Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0"
+      }
+    }
+  ]
+}

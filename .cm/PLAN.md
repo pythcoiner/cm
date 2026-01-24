@@ -1,0 +1,284 @@
+# Claude Code Manager (cm)
+
+> Automated agent coordination for software development - orchestrates Claude AI agents to execute multi-phase development tasks autonomously.
+
+## Overview
+
+Claude Code Manager (cm) is a Rust CLI tool that automates coordination between Claude agents for software development tasks. The manager mediates all agent communication - agents never interact directly with each other, ensuring context isolation and independent verification.
+
+The tool follows a strict IMPLEM → REVIEW → FIX cycle where implementation agents receive only task-specific context, review agents verify the work with fresh context, and fix agents address any issues found. This prevents context pollution and ensures each agent works independently.
+
+cm supports crash recovery through checkpointing, real-time monitoring via a terminal UI, and deterministic markdown generation where JSON files serve as the source of truth.
+
+## Goals
+
+- Orchestrate multi-phase development tasks with dependent tasks
+- Ensure agent context isolation (no direct agent-to-agent communication)
+- Provide automatic build verification (cargo build + clippy)
+- Enable crash recovery with checkpointing and state restoration
+- Offer real-time TUI for monitoring execution
+- Support TOML configuration files
+- Handle graceful Ctrl+C shutdown with state preservation
+- Maintain JSON as source of truth with deterministic MD generation
+
+## Success Criteria
+
+- [x] Can define phases with dependent tasks in tasks.json
+- [x] Agents receive only task-specific context, never global knowledge
+- [x] Build verification runs after each implementation
+- [x] State is checkpointed before mutations for recovery
+- [x] TUI shows real-time progress with keyboard controls
+- [x] Configuration can be set via CLI, config file, or defaults
+- [x] Ctrl+C saves state and exits gracefully
+- [x] MD files are regenerated deterministically from JSON
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    cm (Rust binary)                     │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │
+│  │   State     │  │   Agent     │  │   Build         │ │
+│  │   Manager   │  │   Spawner   │  │   Verifier      │ │
+│  │ tasks.json  │  │ claude -p   │  │ cargo/git       │ │
+│  └─────────────┘  └─────────────┘  └─────────────────┘ │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
+┌──────▼──────┐     ┌──────▼──────┐     ┌──────▼──────┐
+│ IMPLEM Agent│     │REVIEW Agent │     │  FIX Agent  │
+│ Task ctx    │     │ Same ctx    │     │ Ctx+issues  │
+│ only        │     │ as IMPLEM   │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+### Components
+
+1. **State Manager** - Handles tasks.json loading, saving, and state transitions
+2. **Agent Spawner** - Spawns claude CLI processes with isolated context
+3. **Build Verifier** - Runs cargo build/clippy/test for verification
+4. **Log Manager** - Creates LogRecords for append-only audit trail
+5. **Recovery Manager** - Handles checkpointing and crash recovery
+6. **TUI** - Terminal UI with ratatui for real-time monitoring
+
+### Data Flow
+
+1. Manager loads state from tasks.json
+2. Selects next runnable task (respects dependencies)
+3. Builds prompt with task-only context
+4. Spawns agent via claude CLI
+5. Parses response and runs build verification
+6. Creates review task or marks complete
+7. Saves state and regenerates MD files
+
+## Modules
+
+### State Module (`src/state/`)
+
+**Purpose:** Define and manage all state types
+
+**Key files:**
+- `mod.rs` - State loading/saving, StateError
+- `tasks.rs` - TasksState, Task, Phase, TaskStatus types
+- `log_record.rs` - LogRecord, LogAction, LogData types
+- `roadmap.rs` - RoadmapState, RoadmapPhase, RoadmapItem types
+
+**Dependencies:** serde, chrono, uuid
+
+### Agent Module (`src/agent/`)
+
+**Purpose:** Spawn and manage Claude agent processes
+
+**Key files:**
+- `mod.rs` - AgentSpawner, AgentHandle, AgentError
+- `prompt.rs` - PromptBuilder for IMPLEM/REVIEW/FIX prompts
+- `response.rs` - ResponseParser for JSON output
+
+**Dependencies:** std::process, std::thread
+
+### Build Module (`src/build/`)
+
+**Purpose:** Run cargo and git commands for verification
+
+**Key files:**
+- `mod.rs` - BuildVerifier, BuildError
+- `cargo.rs` - CargoRunner for build/clippy/test
+- `git.rs` - GitRunner for status/add/commit
+
+**Dependencies:** std::process
+
+### Manager Module (`src/manager/`)
+
+**Purpose:** Main orchestration loop
+
+**Key files:**
+- `mod.rs` - Manager, ManagerConfig, orchestration loop
+- `state.rs` - ManagerState enum
+- `recovery.rs` - RecoveryManager, ShutdownHandler
+
+**Dependencies:** state, agent, build, log modules
+
+### TUI Module (`src/tui/`)
+
+**Purpose:** Terminal UI for monitoring
+
+**Key files:**
+- `mod.rs` - App, run_tui, terminal setup
+- `layout.rs` - Split view layout
+- `widgets.rs` - TaskList, Stream, Controls widgets
+
+**Dependencies:** ratatui, crossterm
+
+### Generate Module (`src/generate/`)
+
+**Purpose:** Deterministic markdown generation
+
+**Key files:**
+- `mod.rs` - GenerateError, regenerate functions
+- `log_md.rs` - Generate LOG.md from LogRecords
+- `roadmap_md.rs` - Generate ROADMAP.md from RoadmapState
+
+**Dependencies:** state module
+
+## Phases
+
+### Phase 0: Project Setup
+
+**Goal:** Initialize project structure with Cargo.toml and module stubs
+
+**Deliverables:**
+- Cargo.toml with all dependencies
+- src/lib.rs with module declarations
+- src/main.rs with CLI skeleton
+
+### Phase 0.5: cm init + Skills
+
+**Goal:** Enable users to install cm skills into any project
+
+**Deliverables:**
+- assets/{cm,feat,fix}.md skill files
+- src/skill.rs with include_str! embedding
+- src/cli/init.rs with init command
+
+### Phase 1-4: Core Types
+
+**Goal:** Implement state, agent, build, and log modules
+
+**Deliverables:**
+- All type definitions with serde
+- Agent spawning and response parsing
+- Build verification with cargo
+- Append-only logging
+
+### Phase 5-6: Manager and Recovery
+
+**Goal:** Main orchestration loop with crash recovery
+
+**Deliverables:**
+- Manager with IMPLEM/REVIEW/FIX flows
+- Checkpointing before mutations
+- Graceful shutdown handling
+
+### Phase 7-8: CLI and Skills
+
+**Goal:** Complete CLI and Claude Code skill
+
+**Deliverables:**
+- All CLI flags and commands
+- /cm interactive wizard skill
+
+### Phase 9-11: Testing and Polish
+
+**Goal:** Integration tests and polish features
+
+**Deliverables:**
+- 27 integration tests
+- Terminal UI with ratatui
+- --dry-run and --verbose modes
+
+### Phase 12-15: Configuration and Generation
+
+**Goal:** Config file support and deterministic generation
+
+**Deliverables:**
+- TOML configuration
+- TUI wired into CLI
+- Signal handling
+- JSON as source of truth
+
+### Phase 16: Sanity Check Workflow
+
+**Goal:** Validate JSON files and improve /cm skill workflow
+
+**Deliverables:**
+- `--sanity-check` CLI flag for JSON validation
+- Validation module (src/state/validate.rs)
+- Updated /cm skill with post-generation workflow
+- Unit tests for all validation types
+
+**Validation checks:**
+- Valid JSON syntax
+- Schema compliance (required fields, correct types)
+- Cross-references (roadmap_item_id ↔ roadmap.json, linked_task_ids ↔ tasks.json)
+- Duplicate ID detection
+- Orphaned reference detection
+
+**Skill workflow additions:**
+1. After generating JSON files, run `cm --sanity-check`
+2. If validation fails, iterate until JSON is valid
+3. Ask user if .cm/ should be added to .gitignore (default: no)
+4. Auto-generate commit message, ask user for confirmation
+5. Commit changes
+
+### Phase 18: Regenerate MD After Skills
+
+**Goal:** Ensure markdown files stay in sync when using /feat or /fix skills
+
+**Deliverables:**
+- Updated feat.md with `cm --regenerate` step after file modifications
+- Updated fix.md with `cm --regenerate` step after file modifications
+
+**Workflow:**
+After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --regenerate` to update the markdown documentation (ROADMAP.md, LOG.md) before proceeding to completion.
+
+## Technical Decisions
+
+### Error Handling
+
+**Context:** Need consistent error handling across modules
+**Decision:** Use thiserror for all error enums, never anyhow
+**Rationale:** Type-safe errors with proper context propagation
+
+### Persistence
+
+**Context:** Need reliable state persistence for crash recovery
+**Decision:** JSON files as source of truth, MD files generated
+**Rationale:** JSON is machine-readable, MD is human-readable view
+
+### Agent Spawning
+
+**Context:** Need to run Claude agents with isolated context
+**Decision:** Use `claude -p "prompt" --output-format json`
+**Rationale:** CLI is stable interface, JSON output is parseable
+
+### Threading
+
+**Context:** TUI needs main thread, manager needs to run concurrently
+**Decision:** Use std::thread and std::sync::mpsc, no async
+**Rationale:** Simpler mental model, TUI requires main thread
+
+## Out of Scope
+
+- Async/await (use std::thread instead)
+- Direct agent-to-agent communication
+- Global context leaking into agent prompts
+- Tokio or other async runtimes
+
+## References
+
+- [clap documentation](https://docs.rs/clap)
+- [serde documentation](https://serde.rs)
+- [ratatui documentation](https://docs.rs/ratatui)
+- [Claude CLI](https://github.com/anthropics/claude-code)
