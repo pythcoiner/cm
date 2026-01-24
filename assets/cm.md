@@ -1,7 +1,6 @@
 ---
 name: cm
 description: Interactive wizard for setting up cm (Claude Code Manager) projects
-usage: /cm
 ---
 
 # CM Project Wizard

@@ -1,7 +1,6 @@
 ---
 name: feat
 description: Interactive wizard for adding new features to an existing cm project
-usage: /feat
 ---
 
 # Feature Wizard

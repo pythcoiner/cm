@@ -1,7 +1,6 @@
 ---
 name: fix
 description: Interactive wizard for adding bug fix tasks to an existing cm project
-usage: /fix
 ---
 
 # Bug Fix Wizard

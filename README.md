@@ -44,7 +44,7 @@ cargo install --path .
 ### Install skills into your project
 
 ```bash
-cm init              # Creates .claude/skills/{cm,feat,fix}.md
+cm init              # Creates .claude/skills/{cm,feat,fix}/SKILL.md
 ```
 
 ### Use the /cm skill in Claude Code
@@ -127,7 +127,13 @@ your-project/
 │   ├── LOG.md          # Audit trail (generated)
 │   └── checkpoints/    # Recovery snapshots (auto-generated)
 ├── .claude/
-│   └── skills/         # Installed skills (from cm init)
+│   └── skills/
+│       ├── cm/
+│       │   └── SKILL.md
+│       ├── feat/
+│       │   └── SKILL.md
+│       └── fix/
+│           └── SKILL.md
 ├── src/
 └── Cargo.toml
 ```

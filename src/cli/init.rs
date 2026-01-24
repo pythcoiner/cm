@@ -12,22 +12,24 @@ use crate::skill::{CM_SKILL, FEAT_SKILL, FIX_SKILL};
 
 /// Skill file definition.
 struct SkillFile {
-    name: &'static str,
+    /// Directory name under .claude/skills/ (e.g., "cm" for .claude/skills/cm/)
+    dir_name: &'static str,
+    /// Content of the SKILL.md file
     content: &'static str,
 }
 
 /// All skill files to write.
 const SKILLS: &[SkillFile] = &[
     SkillFile {
-        name: "cm.md",
+        dir_name: "cm",
         content: CM_SKILL,
     },
     SkillFile {
-        name: "feat.md",
+        dir_name: "feat",
         content: FEAT_SKILL,
     },
     SkillFile {
-        name: "fix.md",
+        dir_name: "fix",
         content: FIX_SKILL,
     },
 ];
@@ -62,14 +64,21 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
 
     // Write each skill file
     for skill in SKILLS {
-        let file_path = skills_dir.join(skill.name);
+        let skill_dir = skills_dir.join(skill.dir_name);
+        let file_path = skill_dir.join("SKILL.md");
 
         if file_path.exists() && !force {
             println!(
-                "Skipping {} (already exists, use --force to overwrite)",
-                skill.name
+                "Skipping {}/SKILL.md (already exists, use --force to overwrite)",
+                skill.dir_name
             );
             continue;
+        }
+
+        // Create the skill directory if it doesn't exist
+        if !skill_dir.exists() {
+            info!("Creating directory: {:?}", skill_dir);
+            fs::create_dir_all(&skill_dir)?;
         }
 
         info!("Writing skill file: {:?}", file_path);
@@ -111,8 +120,18 @@ mod tests {
         let skills_dir = tmp.path().join(".claude/skills");
 
         for skill in SKILLS {
-            let file_path = skills_dir.join(skill.name);
-            assert!(file_path.exists(), "Expected {} to exist", skill.name);
+            let skill_dir = skills_dir.join(skill.dir_name);
+            let file_path = skill_dir.join("SKILL.md");
+            assert!(
+                skill_dir.exists(),
+                "Expected {}/SKILL.md directory to exist",
+                skill.dir_name
+            );
+            assert!(
+                file_path.exists(),
+                "Expected {}/SKILL.md to exist",
+                skill.dir_name
+            );
             let content = fs::read_to_string(&file_path).unwrap();
             assert_eq!(content, skill.content);
         }
@@ -124,15 +143,16 @@ mod tests {
 
         // Create directory and a file with different content
         let skills_dir = tmp.path().join(".claude/skills");
-        fs::create_dir_all(&skills_dir).unwrap();
-        let cm_path = skills_dir.join("cm.md");
+        let cm_dir = skills_dir.join("cm");
+        fs::create_dir_all(&cm_dir).unwrap();
+        let cm_path = cm_dir.join("SKILL.md");
         let original_content = "original content";
         fs::write(&cm_path, original_content).unwrap();
 
         // Run init without force
         execute_init_in_dir(tmp.path(), false).unwrap();
 
-        // Check that cm.md was not overwritten
+        // Check that cm/SKILL.md was not overwritten
         let content = fs::read_to_string(&cm_path).unwrap();
         assert_eq!(content, original_content);
     }
@@ -143,14 +163,15 @@ mod tests {
 
         // Create directory and a file with different content
         let skills_dir = tmp.path().join(".claude/skills");
-        fs::create_dir_all(&skills_dir).unwrap();
-        let cm_path = skills_dir.join("cm.md");
+        let cm_dir = skills_dir.join("cm");
+        fs::create_dir_all(&cm_dir).unwrap();
+        let cm_path = cm_dir.join("SKILL.md");
         fs::write(&cm_path, "original content").unwrap();
 
         // Run init with force
         execute_init_in_dir(tmp.path(), true).unwrap();
 
-        // Check that cm.md was overwritten
+        // Check that cm/SKILL.md was overwritten
         let content = fs::read_to_string(&cm_path).unwrap();
         assert_eq!(content, CM_SKILL);
     }
@@ -166,7 +187,7 @@ mod tests {
         // Check files still exist and have correct content
         let skills_dir = tmp.path().join(".claude/skills");
         for skill in SKILLS {
-            let file_path = skills_dir.join(skill.name);
+            let file_path = skills_dir.join(skill.dir_name).join("SKILL.md");
             let content = fs::read_to_string(&file_path).unwrap();
             assert_eq!(content, skill.content);
         }
