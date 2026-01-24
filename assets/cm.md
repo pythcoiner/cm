@@ -1,6 +1,7 @@
 ---
 name: cm
-description: Interactive wizard for setting up cm (Claude Code Manager) projects
+description: Interactive wizard for setting up cm (Claude Code Manager) projects (project)
+user-invocable: true
 ---
 
 # CM Project Wizard

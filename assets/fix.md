@@ -1,6 +1,7 @@
 ---
 name: fix
-description: Interactive wizard for adding bug fix tasks to an existing cm project
+description: Interactive wizard for adding bug fix tasks to an existing cm project (project)
+user-invocable: true
 ---
 
 # Bug Fix Wizard

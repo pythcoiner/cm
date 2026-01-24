@@ -1,6 +1,7 @@
 ---
 name: feat
-description: Interactive wizard for adding new features to an existing cm project
+description: Interactive wizard for adding new features to an existing cm project (project)
+user-invocable: true
 ---
 
 # Feature Wizard
