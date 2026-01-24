@@ -16,8 +16,9 @@ use log::{debug, info, warn};
 use thiserror::Error;
 
 use crate::config::{ConfigError, ConfigFile};
+use crate::generate::{generate_log_md, generate_roadmap_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
-use crate::state::{load_state, save_state, StateError, TaskStatus, TasksState};
+use crate::state::{load_roadmap, load_state, save_state, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
@@ -65,6 +66,10 @@ pub enum CliError {
     /// TUI error.
     #[error("tui error: {0}")]
     TuiError(String),
+
+    /// Markdown generation error.
+    #[error("generate error: {0}")]
+    GenerateError(#[from] GenerateError),
 }
 
 /// Claude Code Manager - Automated agent coordination for software development.
@@ -101,6 +106,10 @@ pub struct Cli {
     /// Dry run - print what would be done without executing.
     #[arg(long)]
     pub dry_run: bool,
+
+    /// Regenerate markdown files from JSON state.
+    #[arg(long)]
+    pub regenerate: bool,
 
     /// Path to config file.
     #[arg(long, value_name = "FILE")]
@@ -176,7 +185,9 @@ pub fn run() -> Result<(), CliError> {
     }
 
     // Dispatch based on flags
-    let result = if cli.dry_run {
+    let result = if cli.regenerate {
+        execute_regenerate(&cli)
+    } else if cli.dry_run {
         execute_dry_run(&cli)
     } else if cli.status {
         execute_status(&cli)
@@ -690,6 +701,64 @@ fn status_icon(status: &TaskStatus) -> &'static str {
     }
 }
 
+/// Execute the regenerate mode.
+///
+/// Regenerates markdown files (LOG.md, ROADMAP.md) from JSON state files.
+fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
+    info!("Regenerate mode: regenerating markdown files from JSON");
+
+    let mut files_regenerated = 0;
+
+    // Regenerate LOG.md from tasks.json log_records
+    let state = load_state(&cli.state)?;
+    let log_path = cli
+        .log_path
+        .clone()
+        .unwrap_or_else(|| {
+            cli.state
+                .parent()
+                .unwrap_or(std::path::Path::new("."))
+                .join("LOG.md")
+        });
+
+    let log_content = generate_log_md(&state.log_records);
+    write_md_file(&log_content, &log_path)?;
+    println!("Regenerated: {:?} ({} records)", log_path, state.log_records.len());
+    files_regenerated += 1;
+
+    // Regenerate ROADMAP.md from roadmap.json if it exists
+    let roadmap_json_path = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .join("roadmap.json");
+
+    if roadmap_json_path.exists() {
+        let roadmap = load_roadmap(&roadmap_json_path)?;
+        let roadmap_md_path = cli
+            .state
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .join("ROADMAP.md");
+
+        let roadmap_content = generate_roadmap_md(&roadmap);
+        write_md_file(&roadmap_content, &roadmap_md_path)?;
+        println!(
+            "Regenerated: {:?} ({} phases, {}/{} items)",
+            roadmap_md_path,
+            roadmap.phases.len(),
+            roadmap.completed_items(),
+            roadmap.total_items()
+        );
+        files_regenerated += 1;
+    } else {
+        println!("Skipped ROADMAP.md: {:?} not found", roadmap_json_path);
+    }
+
+    println!("\n{} file(s) regenerated.", files_regenerated);
+    Ok(())
+}
+
 /// Execute the dry-run mode.
 ///
 /// Prints what would be done without executing any tasks.
@@ -762,6 +831,7 @@ mod tests {
                         },
                         instructions: "Do task 1".to_string(),
                         attempts: vec![],
+                        roadmap_item_id: None,
                     }],
                 },
                 Phase {
@@ -782,6 +852,7 @@ mod tests {
                             },
                             instructions: "Do task 2".to_string(),
                             attempts: vec![],
+                            roadmap_item_id: None,
                         },
                         Task {
                             id: "task-3".to_string(),
@@ -796,6 +867,7 @@ mod tests {
                             },
                             instructions: "Do task 3".to_string(),
                             attempts: vec![],
+                            roadmap_item_id: None,
                         },
                         Task {
                             id: "task-4".to_string(),
@@ -810,6 +882,7 @@ mod tests {
                             },
                             instructions: "Do task 4".to_string(),
                             attempts: vec![],
+                            roadmap_item_id: None,
                         },
                     ],
                 },
@@ -817,6 +890,7 @@ mod tests {
             current_phase: Some("phase-2".to_string()),
             current_task: Some("task-3".to_string()),
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         }
     }

@@ -39,6 +39,7 @@ fn create_minimal_state() -> TasksState {
         current_phase: None,
         current_task: None,
         agent_history: vec![],
+        log_records: vec![],
         interrupted_at: None,
     }
 }
@@ -72,11 +73,13 @@ fn create_state_with_task() -> TasksState {
                 },
                 instructions: "Implement the test feature".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             }],
         }],
         current_phase: Some("phase-1".to_string()),
         current_task: None,
         agent_history: vec![],
+        log_records: vec![],
         interrupted_at: None,
     }
 }
@@ -109,6 +112,7 @@ fn create_state_with_dependencies() -> TasksState {
                     },
                     instructions: "Do Task A".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 },
                 Task {
                     id: "task-b".to_string(),
@@ -123,6 +127,7 @@ fn create_state_with_dependencies() -> TasksState {
                     },
                     instructions: "Do Task B (depends on A)".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 },
                 Task {
                     id: "task-c".to_string(),
@@ -137,12 +142,14 @@ fn create_state_with_dependencies() -> TasksState {
                     },
                     instructions: "Review Task B output".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 },
             ],
         }],
         current_phase: Some("phase-1".to_string()),
         current_task: None,
         agent_history: vec![],
+        log_records: vec![],
         interrupted_at: None,
     }
 }
@@ -183,6 +190,7 @@ fn test_basic_state_flow() {
             },
             instructions: "Do the task".to_string(),
             attempts: vec![],
+            roadmap_item_id: None,
         }],
     });
 
@@ -647,6 +655,7 @@ fn test_task_types() {
                 },
                 instructions: "Implement something".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             },
             Task {
                 id: "t2".to_string(),
@@ -661,6 +670,7 @@ fn test_task_types() {
                 },
                 instructions: "Review the implementation".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             },
             Task {
                 id: "t3".to_string(),
@@ -675,6 +685,7 @@ fn test_task_types() {
                 },
                 instructions: "Fix the issues".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             },
             Task {
                 id: "t4".to_string(),
@@ -689,6 +700,7 @@ fn test_task_types() {
                 },
                 instructions: "Write tests".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             },
         ],
     });
@@ -829,6 +841,7 @@ fn test_multi_phase_workflow() {
                 },
                 instructions: "Phase 1 task".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             }],
         },
         Phase {
@@ -849,6 +862,7 @@ fn test_multi_phase_workflow() {
                     },
                     instructions: "Phase 2 task 1".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 },
                 Task {
                     id: "p2-t2".to_string(),
@@ -863,6 +877,7 @@ fn test_multi_phase_workflow() {
                     },
                     instructions: "Phase 2 task 2".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 },
             ],
         },

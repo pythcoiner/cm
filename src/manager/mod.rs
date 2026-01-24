@@ -19,6 +19,7 @@ use crate::tui::{ManagerEvent, TuiCommand};
 
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier};
+use crate::generate::{generate_log_md, write_md_file, GenerateError};
 use crate::log::{LogError, LogManager};
 use crate::state::{
     load_state, save_state, AgentInvocation, AgentType, AttemptStatus, StateError, Task,
@@ -49,6 +50,10 @@ pub enum ManagerError {
     /// An error occurred while writing to the log.
     #[error("log error: {0}")]
     LogError(#[from] LogError),
+
+    /// An error occurred during markdown generation.
+    #[error("generate error: {0}")]
+    GenerateError(#[from] GenerateError),
 
     /// A task is not runnable due to dependencies or status.
     #[error("task not runnable: {0}")]
@@ -246,9 +251,12 @@ impl Manager {
                     info!("Task {} completed successfully", task_id);
                 }
                 Err(e) => {
-                    error!("Task {} failed: {}", task_id, e);
-                    self.log_manager
-                        .log_error(&format!("Task {} failed: {}", task_id, e))?;
+                    let error_msg = format!("Task {} failed: {}", task_id, e);
+                    error!("{}", error_msg);
+                    self.log_manager.log_error(&error_msg)?;
+                    self.state
+                        .log_records
+                        .push(LogManager::create_error_record(&error_msg));
 
                     // Don't propagate the error; continue with next task
                     // The task will be marked as failed/deferred in execute_task
@@ -295,7 +303,7 @@ impl Manager {
         self.manager_state = ManagerState::Executing;
 
         // Send initial state to TUI
-        let _ = event_tx.send(ManagerEvent::StateUpdated(self.state.clone()));
+        let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
 
         let mut paused = false;
 
@@ -359,13 +367,13 @@ impl Manager {
                     });
                 }
                 Err(e) => {
-                    error!("Task {} failed: {}", task_id, e);
-                    let _ = event_tx.send(ManagerEvent::Error(format!(
-                        "Task {} failed: {}",
-                        task_id, e
-                    )));
-                    self.log_manager
-                        .log_error(&format!("Task {} failed: {}", task_id, e))?;
+                    let error_msg = format!("Task {} failed: {}", task_id, e);
+                    error!("{}", error_msg);
+                    let _ = event_tx.send(ManagerEvent::Error(error_msg.clone()));
+                    self.log_manager.log_error(&error_msg)?;
+                    self.state
+                        .log_records
+                        .push(LogManager::create_error_record(&error_msg));
 
                     // Don't propagate the error; continue with next task
                     // The task will be marked as failed/deferred in execute_task
@@ -376,7 +384,7 @@ impl Manager {
             self.update_state()?;
 
             // Send updated state to TUI
-            let _ = event_tx.send(ManagerEvent::StateUpdated(self.state.clone()));
+            let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
 
             // Check for shutdown signal after task completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
@@ -437,11 +445,12 @@ impl Manager {
                 "Task {} has exceeded max cycles ({}), deferring",
                 task_id, self.config.max_cycles
             );
+            let reason = format!("Exceeded maximum cycles ({})", self.config.max_cycles);
             self.state.mark_task_status(task_id, TaskStatus::Deferred)?;
-            self.log_manager.log_task_deferred(
-                task_id,
-                &format!("Exceeded maximum cycles ({})", self.config.max_cycles),
-            )?;
+            self.log_manager.log_task_deferred(task_id, &reason)?;
+            self.state
+                .log_records
+                .push(LogManager::create_task_deferred_record(task_id, &reason));
             return Err(ManagerError::MaxCyclesExceeded(task_id.to_string()));
         }
 
@@ -472,9 +481,12 @@ impl Manager {
         let prompt = PromptBuilder::build_implem_prompt(task);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
-        // Log agent spawn
+        // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Implem, &task.id, &prompt)?;
+        self.state.log_records.push(
+            LogManager::create_agent_spawn_record(&AgentType::Implem, &task.id, &prompt),
+        );
 
         // Generate agent ID
         let agent_id = Uuid::new_v4().to_string();
@@ -522,13 +534,17 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for task {}", task.id);
-                self.log_manager.log_build_result(&crate::build::BuildOutput {
+                let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
                     warnings: vec![],
                     stdout: String::new(),
                     stderr: String::new(),
-                })?;
+                };
+                self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
 
                 // Record successful attempt
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
@@ -536,6 +552,9 @@ impl Manager {
                 // Mark task as completed
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
                 self.log_manager.log_task_complete(&task.id)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_task_complete_record(&task.id));
             }
             Err(e) => {
                 warn!("Build verification failed for task {}: {}", task.id, e);
@@ -558,6 +577,9 @@ impl Manager {
                     },
                 };
                 self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
 
                 // Record failed attempt
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, Some(response))?;
@@ -592,9 +614,12 @@ impl Manager {
         let prompt = PromptBuilder::build_review_prompt(task, &code_to_review);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
-        // Log agent spawn
+        // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Review, &task.id, &prompt)?;
+        self.state.log_records.push(
+            LogManager::create_agent_spawn_record(&AgentType::Review, &task.id, &prompt),
+        );
 
         // Generate agent ID
         let agent_id = Uuid::new_v4().to_string();
@@ -640,6 +665,9 @@ impl Manager {
 
         // Log review result
         self.log_manager.log_review_result(&verdict, &[])?;
+        self.state
+            .log_records
+            .push(LogManager::create_review_result_record(&verdict, &[]));
 
         match verdict {
             Verdict::Approved => {
@@ -647,6 +675,9 @@ impl Manager {
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
                 self.log_manager.log_task_complete(&task.id)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_task_complete_record(&task.id));
             }
             Verdict::NeedsFixes => {
                 warn!("Review found issues for task {}", task.id);
@@ -679,9 +710,12 @@ impl Manager {
         let prompt = PromptBuilder::build_fix_prompt(task, &issues);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
-        // Log agent spawn
+        // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Fix, &task.id, &prompt)?;
+        self.state.log_records.push(
+            LogManager::create_agent_spawn_record(&AgentType::Fix, &task.id, &prompt),
+        );
 
         // Generate agent ID
         let agent_id = Uuid::new_v4().to_string();
@@ -729,13 +763,17 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for fix task {}", task.id);
-                self.log_manager.log_build_result(&crate::build::BuildOutput {
+                let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
                     warnings: vec![],
                     stdout: String::new(),
                     stderr: String::new(),
-                })?;
+                };
+                self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
 
                 // Record successful attempt
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
@@ -743,6 +781,9 @@ impl Manager {
                 // Mark task as completed
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
                 self.log_manager.log_task_complete(&task.id)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_task_complete_record(&task.id));
             }
             Err(e) => {
                 warn!("Build verification failed for fix task {}: {}", task.id, e);
@@ -756,6 +797,9 @@ impl Manager {
                     stderr: e.to_string(),
                 };
                 self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
 
                 // Record failed attempt
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, Some(response))?;
@@ -778,10 +822,22 @@ impl Manager {
         self.execute_implem(task)
     }
 
-    /// Save the current state to disk.
+    /// Save the current state to disk and regenerate LOG.md.
     fn update_state(&mut self) -> Result<(), ManagerError> {
         save_state(&self.state, &self.config.state_path)?;
         debug!("State saved to {:?}", self.config.state_path);
+
+        // Regenerate LOG.md from log_records
+        self.regenerate_log_md()?;
+
+        Ok(())
+    }
+
+    /// Regenerate LOG.md from the log_records in state.
+    fn regenerate_log_md(&self) -> Result<(), ManagerError> {
+        let content = generate_log_md(&self.state.log_records);
+        write_md_file(&content, &self.config.log_path)?;
+        debug!("LOG.md regenerated at {:?}", self.config.log_path);
         Ok(())
     }
 

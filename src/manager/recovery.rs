@@ -523,11 +523,13 @@ mod tests {
                     },
                     instructions: "Do task 1".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 }],
             }],
             current_phase: Some("phase-1".to_string()),
             current_task: None,
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         }
     }

@@ -125,13 +125,16 @@ Wait for explicit user confirmation before generating files.
 
 ## Step 6: Generate Artifacts
 
-Once confirmed, generate all four files in the `.cm/` directory:
+Once confirmed, generate all files in the `.cm/` directory:
 
 1. Create the `.cm/` directory if it doesn't exist
 2. Generate `PLAN.md` using the PLAN.md Template below
-3. Generate `ROADMAP.md` using the ROADMAP.md Template below
-4. Generate `tasks.json` using the tasks.json Schema below
-5. Generate `LOG.md` using the LOG.md Template below
+3. Generate `roadmap.json` using the roadmap.json Schema below
+4. Generate `ROADMAP.md` from roadmap.json (or use template for initial creation)
+5. Generate `tasks.json` using the tasks.json Schema below
+6. Generate `LOG.md` as empty template (will be regenerated from tasks.json log_records)
+
+**Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (LOG.md, ROADMAP.md) can be regenerated from JSON at any time using `cm --regenerate`.
 
 After generation, inform the user:
 
@@ -139,13 +142,15 @@ After generation, inform the user:
 >
 > Created files:
 > - `.cm/PLAN.md` - Review and refine the high-level plan
-> - `.cm/ROADMAP.md` - Track progress with checkboxes
+> - `.cm/roadmap.json` - Source of truth for roadmap progress
+> - `.cm/ROADMAP.md` - Human-readable roadmap (generated from roadmap.json)
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
-> - `.cm/LOG.md` - Will contain execution logs
+> - `.cm/LOG.md` - Execution logs (generated from tasks.json log_records)
 >
 > Next steps:
 > 1. Review `.cm/PLAN.md` and make any adjustments
 > 2. Run `cm run` to start executing tasks
+> 3. Use `cm --regenerate` to regenerate MD files from JSON if needed
 
 ---
 
@@ -348,6 +353,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 | current_phase | string | No | ID of active phase |
 | current_task | string | No | ID of active task |
 | agent_history | AgentInvocation[] | No | History of agent runs |
+| log_records | LogRecord[] | No | Structured log records for LOG.md generation |
 
 **Project**
 | Field | Type | Required | Description |
@@ -380,6 +386,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 | context | TaskContext | Yes | Context for the agent |
 | instructions | string | Yes | Detailed instructions |
 | attempts | TaskAttempt[] | No | Execution history |
+| roadmap_item_id | string | No | ID of linked roadmap item (for roadmap sync) |
 
 **TaskContext**
 | Field | Type | Required | Description |
@@ -404,6 +411,65 @@ For review/fix cycles, extend with a suffix:
 - Tasks can only depend on tasks from the same phase or earlier phases
 - Do not create circular dependencies
 - Use dependencies to ensure proper ordering (e.g., implementation before testing)
+
+### roadmap.json Schema
+
+The `roadmap.json` file is the source of truth for ROADMAP.md:
+
+```json
+{
+  "version": "1.0.0",
+  "title": "Project Name",
+  "phases": [
+    {
+      "id": "phase-1",
+      "number": "1",
+      "name": "Phase Name",
+      "items": [
+        {
+          "id": "item-1",
+          "name": "Item Name",
+          "completed": false,
+          "sub_items": [
+            { "name": "Sub-item name", "completed": false }
+          ],
+          "linked_task_ids": ["phase-1.task-1"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**RoadmapState (root)**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| version | string | Yes | Schema version (use "1.0.0") |
+| title | string | Yes | Project title |
+| phases | RoadmapPhase[] | Yes | List of phases |
+
+**RoadmapPhase**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique phase ID |
+| number | string | Yes | Phase number (e.g., "1", "2", "0.5") |
+| name | string | Yes | Phase name |
+| items | RoadmapItem[] | Yes | Items in this phase |
+
+**RoadmapItem**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique item ID |
+| name | string | Yes | Item name |
+| completed | boolean | Yes | Whether item is completed |
+| sub_items | RoadmapSubItem[] | No | Sub-items |
+| linked_task_ids | string[] | No | IDs of linked tasks |
+
+**RoadmapSubItem**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Sub-item name |
+| completed | boolean | Yes | Whether sub-item is completed |
 
 ### LOG.md Template
 

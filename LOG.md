@@ -880,4 +880,55 @@ Each phase entry should include:
 
 ### Commit
 - **Message:** `cm: Phase 14 - Enable Signal Handling`
-- **Hash:** 5b244db
+- **Hash:** 8ec0d4b
+
+---
+
+## Phase 15: Deterministic Markdown Generation
+
+### Implementation
+- **Agent:** implem-phase-15 (sub-agent, id: a99525c)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/state/log_record.rs` (~150 lines) - LogRecord, LogAction, LogData types
+- `src/state/roadmap.rs` (~150 lines) - RoadmapState, RoadmapPhase, RoadmapItem types
+- `src/generate/mod.rs` (~50 lines) - Generate module, GenerateError
+- `src/generate/log_md.rs` (~200 lines) - LOG.md generation from LogRecords
+- `src/generate/roadmap_md.rs` (~150 lines) - ROADMAP.md generation from RoadmapState
+
+#### Files Modified
+- `src/state/mod.rs` - Added log_record and roadmap modules
+- `src/state/tasks.rs` - Added log_records and roadmap_item_id fields
+- `src/log/mod.rs` - Added LogRecord creation methods
+- `src/manager/mod.rs` - Added regenerate_log_md(), auto-regeneration
+- `src/cli/mod.rs` - Added --regenerate flag
+- `src/lib.rs` - Added pub mod generate
+- `assets/cm.md` - Updated skill docs with new schema
+
+#### Features
+- JSON as source of truth (tasks.json, roadmap.json)
+- Deterministic MD generation (same input = same output)
+- --regenerate CLI flag for manual regeneration
+- Auto-regeneration after state save
+- Backward compatible with #[serde(default)]
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 200 tests passed (173 unit + 27 integration)
+
+### Review
+- **Agent:** review-phase-15 (sub-agent, id: a5b29c5)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 15 - Deterministic Markdown Generation`
+- **Hash:** b3ffa7b

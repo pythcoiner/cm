@@ -573,59 +573,59 @@ The ctrlc feature is optional and disabled. Graceful Ctrl+C shutdown requires it
 Refactor so JSON is source of truth, MD files are generated views.
 Principle: cm only edits *.json, always regenerates *.md
 
-- [ ] **15.1** Create LogRecord struct
-  - [ ] Create src/state/log_record.rs
-  - [ ] LogRecord with id, timestamp, action, phase_id, task_id, agent_id, data
-  - [ ] LogData enum: PhaseStart, TaskStart, AgentSpawn, AgentComplete, BuildResult, ReviewResult, TaskComplete, TaskDeferred, Error, Shutdown
-  - [ ] Derive Serialize/Deserialize
+- [x] **15.1** Create LogRecord struct
+  - [x] Create src/state/log_record.rs
+  - [x] LogRecord with id, timestamp, action, phase_id, task_id, agent_id, data
+  - [x] LogData enum: PhaseStart, TaskStart, AgentSpawn, AgentComplete, BuildResult, ReviewResult, TaskComplete, TaskDeferred, Error, Shutdown
+  - [x] Derive Serialize/Deserialize
 
-- [ ] **15.2** Extend TasksState with log_records
-  - [ ] Add `log_records: Vec<LogRecord>` to TasksState
-  - [ ] Add `#[serde(default)]` for backward compatibility
-  - [ ] Update src/state/mod.rs with module declaration
+- [x] **15.2** Extend TasksState with log_records
+  - [x] Add `log_records: Vec<LogRecord>` to TasksState
+  - [x] Add `#[serde(default)]` for backward compatibility
+  - [x] Update src/state/mod.rs with module declaration
 
-- [ ] **15.3** Create roadmap.json schema
-  - [ ] Create src/state/roadmap.rs
-  - [ ] RoadmapState with version, title, phases
-  - [ ] RoadmapPhase with id, number, name, items
-  - [ ] RoadmapItem with id, name, completed, sub_items, linked_task_ids
-  - [ ] RoadmapSubItem with name, completed
-  - [ ] load_roadmap() and save_roadmap() functions
+- [x] **15.3** Create roadmap.json schema
+  - [x] Create src/state/roadmap.rs
+  - [x] RoadmapState with version, title, phases
+  - [x] RoadmapPhase with id, number, name, items
+  - [x] RoadmapItem with id, name, completed, sub_items, linked_task_ids
+  - [x] RoadmapSubItem with name, completed
+  - [x] load_roadmap() and save_roadmap() functions
 
-- [ ] **15.4** Add roadmap link to Task
-  - [ ] Add `roadmap_item_id: Option<String>` to Task struct
-  - [ ] Bidirectional: Task links to RoadmapItem, RoadmapItem links to Tasks
+- [x] **15.4** Add roadmap link to Task
+  - [x] Add `roadmap_item_id: Option<String>` to Task struct
+  - [x] Bidirectional: Task links to RoadmapItem, RoadmapItem links to Tasks
 
-- [ ] **15.5** Create markdown generators
-  - [ ] Create src/generate/mod.rs
-  - [ ] Create src/generate/log_md.rs: generate_log_md(&[LogRecord]) -> String
-  - [ ] Create src/generate/roadmap_md.rs: generate_roadmap_md(&RoadmapState) -> String
-  - [ ] Add `pub mod generate;` to src/lib.rs
+- [x] **15.5** Create markdown generators
+  - [x] Create src/generate/mod.rs
+  - [x] Create src/generate/log_md.rs: generate_log_md(&[LogRecord]) -> String
+  - [x] Create src/generate/roadmap_md.rs: generate_roadmap_md(&RoadmapState) -> String
+  - [x] Add `pub mod generate;` to src/lib.rs
 
-- [ ] **15.6** Refactor LogManager
-  - [ ] Remove direct LOG.md file writing
-  - [ ] log_* methods create LogRecord and append to state.log_records
-  - [ ] Return created LogRecord for immediate use
+- [x] **15.6** Refactor LogManager
+  - [x] Remove direct LOG.md file writing
+  - [x] log_* methods create LogRecord and append to state.log_records
+  - [x] Return created LogRecord for immediate use
 
-- [ ] **15.7** Integrate regeneration into Manager
-  - [ ] After save_state(), call regenerate_all()
-  - [ ] Regenerate LOG.md from state.log_records
-  - [ ] Regenerate ROADMAP.md from roadmap.json
-  - [ ] Ensures MD files are always in sync with JSON
+- [x] **15.7** Integrate regeneration into Manager
+  - [x] After save_state(), call regenerate_all()
+  - [x] Regenerate LOG.md from state.log_records
+  - [x] Regenerate ROADMAP.md from roadmap.json
+  - [x] Ensures MD files are always in sync with JSON
 
-- [ ] **15.8** Add --regenerate CLI flag
-  - [ ] New flag: cm --regenerate
-  - [ ] Regenerates all .md files from .json without executing tasks
-  - [ ] Useful for manual sync or after JSON edits
+- [x] **15.8** Add --regenerate CLI flag
+  - [x] New flag: cm --regenerate
+  - [x] Regenerates all .md files from .json without executing tasks
+  - [x] Useful for manual sync or after JSON edits
 
-- [ ] **15.9** Migration tooling
-  - [ ] Parse existing ROADMAP.md to create roadmap.json
-  - [ ] Update .claude/skills/cm.md to generate JSON files
-  - [ ] Generate tasks.json with roadmap_item_id links
+- [x] **15.9** Migration tooling
+  - [x] Parse existing ROADMAP.md to create roadmap.json
+  - [x] Update .claude/skills/cm.md to generate JSON files
+  - [x] Generate tasks.json with roadmap_item_id links
 
-- [ ] **15.10** Verify deterministic generation
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] `cm --regenerate` produces correct LOG.md format
-  - [ ] `cm --regenerate` produces correct ROADMAP.md format
-  - [ ] Full execution cycle updates both JSON and MD correctly
+- [x] **15.10** Verify deterministic generation
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] `cm --regenerate` produces correct LOG.md format
+  - [x] `cm --regenerate` produces correct ROADMAP.md format
+  - [x] Full execution cycle updates both JSON and MD correctly

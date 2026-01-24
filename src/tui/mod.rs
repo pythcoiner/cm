@@ -130,7 +130,7 @@ pub enum ManagerEvent {
     /// An error occurred.
     Error(String),
     /// The tasks state has been updated.
-    StateUpdated(TasksState),
+    StateUpdated(Box<TasksState>),
 }
 
 /// Create channels for communication between the TUI and manager.
@@ -333,7 +333,7 @@ fn run_event_loop_with_channels(
                     app.add_stream_line(StreamLine::Error(err));
                 }
                 ManagerEvent::StateUpdated(state) => {
-                    app.update_state(state);
+                    app.update_state(*state);
                 }
             }
         }
@@ -386,11 +386,13 @@ mod tests {
                     },
                     instructions: "Do task 1".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 }],
             }],
             current_phase: Some("phase-1".to_string()),
             current_task: Some("task-1".to_string()),
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         }
     }

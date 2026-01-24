@@ -8,8 +8,14 @@ use std::path::{Path, PathBuf};
 
 use thiserror::Error;
 
+mod log_record;
+mod roadmap;
 mod tasks;
 
+pub use log_record::{LogAction, LogData, LogRecord};
+pub use roadmap::{
+    load_roadmap, save_roadmap, RoadmapItem, RoadmapPhase, RoadmapState, RoadmapSubItem,
+};
 pub use tasks::{
     AgentInvocation, AgentResponse, AgentType, AttemptStatus, GlobalContext, Phase, PhaseStatus,
     Project, ReviewIssue, ReviewResult, Severity, Task, TaskAttempt, TaskContext, TaskStatus,
@@ -215,6 +221,7 @@ mod tests {
                         },
                         instructions: "Do task 1".to_string(),
                         attempts: vec![],
+                        roadmap_item_id: None,
                     },
                     Task {
                         id: "task-2".to_string(),
@@ -229,6 +236,7 @@ mod tests {
                         },
                         instructions: "Do task 2".to_string(),
                         attempts: vec![],
+                        roadmap_item_id: None,
                     },
                     Task {
                         id: "task-3".to_string(),
@@ -243,12 +251,14 @@ mod tests {
                         },
                         instructions: "Do task 3".to_string(),
                         attempts: vec![],
+                        roadmap_item_id: None,
                     },
                 ],
             }],
             current_phase: Some("phase-1".to_string()),
             current_task: Some("task-1".to_string()),
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         }
     }

@@ -12,7 +12,10 @@ use chrono::{DateTime, Utc};
 use thiserror::Error;
 
 use crate::build::BuildOutput;
-use crate::state::{AgentResponse, AgentType, Phase, ReviewIssue, Verdict};
+use crate::state::{
+    AgentResponse, AgentType, LogAction as StateLogAction, LogData, LogRecord, Phase, ReviewIssue,
+    Verdict,
+};
 
 /// Maximum length for prompts and responses before truncation.
 const MAX_CONTENT_LENGTH: usize = 2000;
@@ -543,6 +546,166 @@ impl LogManager {
 
         self.append_entry(&entry)
     }
+
+    // -------------------------------------------------------------------------
+    // LogRecord creation methods
+    //
+    // These methods create LogRecord objects that can be stored in TasksState
+    // for deterministic LOG.md generation.
+    // -------------------------------------------------------------------------
+
+    /// Create a LogRecord for a phase start event.
+    pub fn create_phase_start_record(phase: &Phase) -> LogRecord {
+        LogRecord::new(
+            StateLogAction::PhaseStart,
+            LogData::PhaseStart {
+                name: phase.name.clone(),
+            },
+        )
+        .with_phase_id(phase.id.clone())
+    }
+
+    /// Create a LogRecord for an agent spawn event.
+    pub fn create_agent_spawn_record(
+        agent_type: &AgentType,
+        task_id: &str,
+        prompt: &str,
+    ) -> LogRecord {
+        let prompt_preview = truncate_content(prompt, MAX_CONTENT_LENGTH);
+        LogRecord::new(
+            StateLogAction::AgentSpawn,
+            LogData::AgentSpawn {
+                agent_type: format!("{:?}", agent_type).to_lowercase(),
+                prompt_preview,
+            },
+        )
+        .with_task_id(task_id.to_string())
+    }
+
+    /// Create a LogRecord for an agent complete event.
+    pub fn create_agent_complete_record(
+        task_id: &str,
+        agent_id: &str,
+        exit_code: i32,
+        duration_secs: u64,
+    ) -> LogRecord {
+        LogRecord::new(
+            StateLogAction::AgentComplete,
+            LogData::AgentComplete {
+                exit_code,
+                duration_secs,
+            },
+        )
+        .with_task_id(task_id.to_string())
+        .with_agent_id(agent_id.to_string())
+    }
+
+    /// Create a LogRecord for a build result event.
+    pub fn create_build_result_record(output: &BuildOutput) -> LogRecord {
+        let errors: Vec<String> = output
+            .errors
+            .iter()
+            .map(|e| {
+                if let Some(ref loc) = e.location {
+                    format!("{}: {}", loc, e.message)
+                } else {
+                    e.message.clone()
+                }
+            })
+            .collect();
+
+        let warnings: Vec<String> = output
+            .warnings
+            .iter()
+            .map(|w| {
+                if let Some(ref loc) = w.location {
+                    format!("{}: {}", loc, w.message)
+                } else {
+                    w.message.clone()
+                }
+            })
+            .collect();
+
+        LogRecord::new(
+            StateLogAction::BuildResult,
+            LogData::BuildResult {
+                success: output.success,
+                errors,
+                warnings,
+            },
+        )
+    }
+
+    /// Create a LogRecord for a review result event.
+    pub fn create_review_result_record(verdict: &Verdict, issues: &[ReviewIssue]) -> LogRecord {
+        let verdict_str = match verdict {
+            Verdict::Approved => "approved".to_string(),
+            Verdict::NeedsFixes => "needs_fixes".to_string(),
+        };
+
+        LogRecord::new(
+            StateLogAction::ReviewResult,
+            LogData::ReviewResult {
+                verdict: verdict_str,
+                issues_count: issues.len(),
+            },
+        )
+    }
+
+    /// Create a LogRecord for a task complete event.
+    pub fn create_task_complete_record(task_id: &str) -> LogRecord {
+        LogRecord::new(
+            StateLogAction::TaskComplete,
+            LogData::TaskComplete {
+                status: "completed".to_string(),
+            },
+        )
+        .with_task_id(task_id.to_string())
+    }
+
+    /// Create a LogRecord for a task deferred event.
+    pub fn create_task_deferred_record(task_id: &str, reason: &str) -> LogRecord {
+        LogRecord::new(
+            StateLogAction::TaskDeferred,
+            LogData::TaskDeferred {
+                reason: reason.to_string(),
+            },
+        )
+        .with_task_id(task_id.to_string())
+    }
+
+    /// Create a LogRecord for an error event.
+    pub fn create_error_record(message: &str) -> LogRecord {
+        LogRecord::new(
+            StateLogAction::Error,
+            LogData::Error {
+                message: message.to_string(),
+            },
+        )
+    }
+
+    /// Create a LogRecord for a shutdown event.
+    pub fn create_shutdown_record(
+        current_phase: Option<&str>,
+        current_task: Option<&str>,
+        reason: Option<&str>,
+    ) -> LogRecord {
+        let reason_str = reason.unwrap_or("User requested shutdown").to_string();
+        let mut record = LogRecord::new(
+            StateLogAction::Shutdown,
+            LogData::Shutdown { reason: reason_str },
+        );
+
+        if let Some(phase) = current_phase {
+            record = record.with_phase_id(phase.to_string());
+        }
+
+        if let Some(task) = current_task {
+            record = record.with_task_id(task.to_string());
+        }
+
+        record
+    }
 }
 
 /// Truncate content to a maximum length, adding an indicator if truncated.
@@ -652,6 +815,7 @@ mod tests {
                 },
                 instructions: "Do something".to_string(),
                 attempts: vec![],
+                roadmap_item_id: None,
             }],
         };
 

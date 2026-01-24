@@ -21,6 +21,9 @@ pub mod build;
 /// LOG.md management for audit trail.
 pub mod log;
 
+/// Deterministic markdown generation from JSON state.
+pub mod generate;
+
 /// Terminal UI with ratatui for real-time progress display.
 pub mod tui;
 

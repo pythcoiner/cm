@@ -6,6 +6,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use super::log_record::LogRecord;
+
 /// The root state structure representing the entire tasks.json file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TasksState {
@@ -27,6 +29,9 @@ pub struct TasksState {
     /// History of all agent invocations.
     #[serde(default)]
     pub agent_history: Vec<AgentInvocation>,
+    /// Structured log records for deterministic LOG.md generation.
+    #[serde(default)]
+    pub log_records: Vec<LogRecord>,
     /// Timestamp when the state was interrupted by a shutdown signal.
     /// This is set when a graceful shutdown occurs mid-execution.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -121,6 +126,9 @@ pub struct Task {
     /// History of execution attempts.
     #[serde(default)]
     pub attempts: Vec<TaskAttempt>,
+    /// ID of the linked roadmap item (for roadmap synchronization).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub roadmap_item_id: Option<String>,
 }
 
 /// Type of task.
@@ -390,11 +398,13 @@ mod tests {
                     },
                     instructions: "Create the module".to_string(),
                     attempts: vec![],
+                    roadmap_item_id: None,
                 }],
             }],
             current_phase: Some("phase-1".to_string()),
             current_task: Some("phase-1.task-1".to_string()),
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         };
 
@@ -425,6 +435,7 @@ mod tests {
             current_phase: None,
             current_task: None,
             agent_history: vec![],
+            log_records: vec![],
             interrupted_at: None,
         };
 

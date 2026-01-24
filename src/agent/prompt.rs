@@ -229,6 +229,7 @@ mod tests {
             },
             instructions: "Implement the foo function that does bar".to_string(),
             attempts: vec![],
+            roadmap_item_id: None,
         }
     }
 
