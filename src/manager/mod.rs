@@ -656,9 +656,8 @@ impl Manager {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 // Log the parse failure and raw response
                 eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                let preview_len = output.stdout.len().min(500);
-                eprintln!("[{} AGENT] {} raw response (first {} chars):", now, task.id, preview_len);
-                eprintln!("{}", &output.stdout[..preview_len]);
+                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("{}", &output.stdout);
 
                 // Try to extract session_id for retry
                 if let Some(session_id) = &output.session_id {
@@ -823,9 +822,8 @@ impl Manager {
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                let preview_len = output.stdout.len().min(500);
-                eprintln!("[{} AGENT] {} raw response (first {} chars):", now, task.id, preview_len);
-                eprintln!("{}", &output.stdout[..preview_len]);
+                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("{}", &output.stdout);
 
                 if let Some(session_id) = &output.session_id {
                     eprintln!("[{} AGENT] {} retrying with --continue...", now, task.id);
@@ -950,9 +948,8 @@ impl Manager {
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                let preview_len = output.stdout.len().min(500);
-                eprintln!("[{} AGENT] {} raw response (first {} chars):", now, task.id, preview_len);
-                eprintln!("{}", &output.stdout[..preview_len]);
+                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("{}", &output.stdout);
 
                 if let Some(session_id) = &output.session_id {
                     eprintln!("[{} AGENT] {} retrying with --continue...", now, task.id);

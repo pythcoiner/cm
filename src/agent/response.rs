@@ -360,4 +360,27 @@ mod tests {
 
         assert!(response.raw_response.contains("Done!"));
     }
+
+    #[test]
+    fn test_parse_streaming_format_with_many_fields() {
+        // Realistic streaming output with many extra fields
+        let raw = r#"[
+            {"type":"system","subtype":"init","cwd":"/home/user/cm","session_id":"73363420-7203-43c5-92f7-7cf0ddbcdfa2","tools":["Task","Bash","Glob","Grep","Read","Edit","Write"],"mcp_servers":[],"model":"claude-sonnet-4-5-20250929","permissionMode":"default","slash_commands":["feat","cm","fix"]},
+            {"type":"assistant","message":{"id":"msg_123","type":"message","role":"assistant","content":[{"type":"text","text":"I'll create the file now."}],"model":"claude-sonnet-4-5-20250929","stop_reason":"end_turn","stop_sequence":null},"session_id":"73363420-7203-43c5-92f7-7cf0ddbcdfa2"},
+            {"type":"result","subtype":"success","cost_usd":0.05,"is_error":false,"duration_ms":5000,"duration_api_ms":4500,"num_turns":1,"result":"I created the validation module.\n\n```json\n{\"files_created\": [\"src/state/validate.rs\"], \"files_modified\": [\"src/state/mod.rs\"]}\n```","session_id":"73363420-7203-43c5-92f7-7cf0ddbcdfa2"}
+        ]"#;
+
+        let response = ResponseParser::parse(raw).unwrap();
+
+        assert_eq!(response.files_created, vec!["src/state/validate.rs"]);
+        assert_eq!(response.files_modified, vec!["src/state/mod.rs"]);
+        assert!(response.raw_response.contains("validation module"));
+    }
+
+    #[test]
+    fn test_extract_session_id_from_streaming() {
+        let raw = r#"[{"type":"system","session_id":"abc-123-def"},{"type":"result","result":"done"}]"#;
+        let session_id = ResponseParser::extract_session_id(raw);
+        assert_eq!(session_id, Some("abc-123-def".to_string()));
+    }
 }
