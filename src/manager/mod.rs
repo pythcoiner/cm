@@ -5,7 +5,9 @@
 //! build verifier, and log manager to execute tasks in the correct order.
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender};
+use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::Utc;
@@ -59,6 +61,10 @@ pub enum ManagerError {
     /// All tasks are blocked or completed.
     #[error("no runnable tasks available")]
     NoRunnableTasks,
+
+    /// Shutdown was requested via signal.
+    #[error("shutdown requested")]
+    ShutdownRequested,
 }
 
 /// Configuration for the Manager.
@@ -146,6 +152,8 @@ pub struct Manager {
     log_manager: LogManager,
     /// Current execution state.
     manager_state: ManagerState,
+    /// Shutdown flag for graceful termination.
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 impl Manager {
@@ -157,13 +165,14 @@ impl Manager {
     /// # Arguments
     ///
     /// * `config` - Configuration for the manager
+    /// * `shutdown_flag` - Atomic flag for graceful shutdown
     ///
     /// # Errors
     ///
     /// Returns an error if:
     /// - The state file cannot be loaded
     /// - The state file is invalid
-    pub fn new(config: ManagerConfig) -> Result<Self, ManagerError> {
+    pub fn new(config: ManagerConfig, shutdown_flag: Arc<AtomicBool>) -> Result<Self, ManagerError> {
         let state = load_state(&config.state_path)?;
         let agent_spawner = AgentSpawner::new(config.model.clone(), config.timeout);
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
@@ -178,6 +187,7 @@ impl Manager {
             build_verifier,
             log_manager,
             manager_state: ManagerState::Idle,
+            shutdown_flag,
         })
     }
 
@@ -194,21 +204,31 @@ impl Manager {
     /// Run the main orchestration loop.
     ///
     /// This loop:
-    /// 1. Selects the next runnable task
-    /// 2. Executes the task
-    /// 3. Saves state
-    /// 4. Repeats until no more tasks are runnable
+    /// 1. Checks for shutdown signal
+    /// 2. Selects the next runnable task
+    /// 3. Executes the task
+    /// 4. Saves state
+    /// 5. Repeats until no more tasks are runnable or shutdown is requested
     ///
     /// # Errors
     ///
     /// Returns an error if:
     /// - Task execution fails
     /// - State cannot be saved
+    /// - Shutdown was requested
     pub fn run(&mut self) -> Result<(), ManagerError> {
         info!("Starting manager run loop");
         self.manager_state = ManagerState::Executing;
 
         loop {
+            // Check for shutdown signal before selecting next task
+            if self.shutdown_flag.load(Ordering::SeqCst) {
+                info!("Shutdown signal received, saving state and exiting gracefully");
+                self.update_state()?;
+                self.manager_state = ManagerState::Idle;
+                return Err(ManagerError::ShutdownRequested);
+            }
+
             // Select next task
             let task_id = match self.select_next_task() {
                 Some(task) => task.id.clone(),
@@ -237,6 +257,13 @@ impl Manager {
 
             // Save state after each task
             self.update_state()?;
+
+            // Check for shutdown signal after task completion
+            if self.shutdown_flag.load(Ordering::SeqCst) {
+                info!("Shutdown signal received after task completion, exiting gracefully");
+                self.manager_state = ManagerState::Idle;
+                return Err(ManagerError::ShutdownRequested);
+            }
         }
 
         self.manager_state = ManagerState::Idle;
@@ -258,6 +285,7 @@ impl Manager {
     /// Returns an error if:
     /// - Task execution fails
     /// - State cannot be saved
+    /// - Shutdown was requested
     pub fn run_with_channels(
         &mut self,
         event_tx: Sender<ManagerEvent>,
@@ -272,6 +300,14 @@ impl Manager {
         let mut paused = false;
 
         loop {
+            // Check for shutdown signal
+            if self.shutdown_flag.load(Ordering::SeqCst) {
+                info!("Shutdown signal received, saving state and exiting gracefully");
+                self.update_state()?;
+                self.manager_state = ManagerState::Idle;
+                return Err(ManagerError::ShutdownRequested);
+            }
+
             // Check for TUI commands (non-blocking)
             while let Ok(cmd) = cmd_rx.try_recv() {
                 match cmd {
@@ -341,6 +377,13 @@ impl Manager {
 
             // Send updated state to TUI
             let _ = event_tx.send(ManagerEvent::StateUpdated(self.state.clone()));
+
+            // Check for shutdown signal after task completion
+            if self.shutdown_flag.load(Ordering::SeqCst) {
+                info!("Shutdown signal received after task completion, exiting gracefully");
+                self.manager_state = ManagerState::Idle;
+                return Err(ManagerError::ShutdownRequested);
+            }
         }
 
         self.manager_state = ManagerState::Idle;
@@ -891,6 +934,9 @@ mod tests {
 
         let err = ManagerError::NoRunnableTasks;
         assert!(err.to_string().contains("no runnable tasks"));
+
+        let err = ManagerError::ShutdownRequested;
+        assert!(err.to_string().contains("shutdown requested"));
     }
 
     #[test]

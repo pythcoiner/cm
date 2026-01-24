@@ -841,3 +841,43 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 13 - Wire TUI into CLI`
 - **Hash:** 9bd4009
+
+---
+
+## Phase 14: Enable Signal Handling
+
+### Implementation
+- **Agent:** implem-phase-14 (sub-agent, id: aaa3ba5)
+- **Started:** 2026-01-24
+
+#### Files Modified
+- `Cargo.toml` - ctrlc now non-optional
+- `src/manager/recovery.rs` - Removed cfg guards from ShutdownHandler
+- `src/cli/mod.rs` - Signal handler registration, shutdown flag passing
+- `src/manager/mod.rs` - Added shutdown_flag field, ShutdownRequested error, checks in loops
+
+#### Features
+- Graceful Ctrl+C shutdown with state preservation
+- Arc<AtomicBool> shutdown flag passed to Manager
+- State saved before exit
+- ManagerError::ShutdownRequested returned on signal
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 170 tests passed
+
+### Review
+- **Agent:** review-phase-14 (sub-agent, id: ab46491)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 14 - Enable Signal Handling`
+- **Hash:** 5b244db

@@ -7,6 +7,8 @@
 mod init;
 
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 use std::time::Duration;
 
 use clap::{Parser, Subcommand};
@@ -14,7 +16,7 @@ use log::{debug, info, warn};
 use thiserror::Error;
 
 use crate::config::{ConfigError, ConfigFile};
-use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager};
+use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_state, save_state, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
 
@@ -154,6 +156,11 @@ pub fn run() -> Result<(), CliError> {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     }
 
+    // Register signal handlers for graceful shutdown
+    let shutdown_handler = ShutdownHandler::new();
+    shutdown_handler.register_signal_handlers();
+    let shutdown_flag = shutdown_handler.shutdown_flag();
+
     info!("Claude Code Manager starting...");
     debug!("CLI arguments: {:?}", cli);
 
@@ -176,11 +183,11 @@ pub fn run() -> Result<(), CliError> {
     } else if cli.validate {
         execute_validate(&cli)
     } else if cli.step {
-        execute_step(&cli)
+        execute_step(&cli, shutdown_flag.clone())
     } else if cli.resume {
-        execute_continue(&cli)
+        execute_continue(&cli, shutdown_flag.clone())
     } else {
-        execute_run(&cli)
+        execute_run(&cli, shutdown_flag.clone())
     };
 
     match &result {
@@ -290,15 +297,15 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
 /// Execute the default run mode.
 ///
 /// Runs all tasks until completion or error.
-fn execute_run(cli: &Cli) -> Result<(), CliError> {
+fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     info!("Run mode: executing all tasks from {:?}", cli.state);
 
     let config = build_manager_config(cli)?;
 
     if cli.tui {
-        execute_run_with_tui(config)
+        execute_run_with_tui(config, shutdown_flag)
     } else {
-        let mut manager = Manager::new(config)?;
+        let mut manager = Manager::new(config, shutdown_flag)?;
         manager.run()?;
         Ok(())
     }
@@ -307,7 +314,7 @@ fn execute_run(cli: &Cli) -> Result<(), CliError> {
 /// Execute run mode with the terminal UI.
 ///
 /// Spawns the manager in a background thread and runs the TUI on the main thread.
-fn execute_run_with_tui(config: ManagerConfig) -> Result<(), CliError> {
+fn execute_run_with_tui(config: ManagerConfig, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     use std::sync::mpsc;
     use std::thread;
 
@@ -322,7 +329,7 @@ fn execute_run_with_tui(config: ManagerConfig) -> Result<(), CliError> {
 
     // Spawn manager in background thread
     let manager_handle = thread::spawn(move || -> Result<(), ManagerError> {
-        let mut manager = Manager::new(config)?;
+        let mut manager = Manager::new(config, shutdown_flag)?;
         manager.run_with_channels(event_tx, cmd_rx)
     });
 
@@ -343,7 +350,7 @@ fn execute_run_with_tui(config: ManagerConfig) -> Result<(), CliError> {
 ///
 /// Resumes from interrupted state, using recovery manager to determine
 /// the appropriate action.
-fn execute_continue(cli: &Cli) -> Result<(), CliError> {
+fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     info!("Continue mode: resuming from {:?}", cli.state);
 
     let state = load_state(&cli.state)?;
@@ -382,7 +389,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             // Now run with the cleaned state
             let config = build_manager_config(cli)?;
 
-            let mut manager = Manager::new(config)?;
+            let mut manager = Manager::new(config, shutdown_flag)?;
             manager.run()?;
         }
         RecoveryAction::Rollback(checkpoint_id) => {
@@ -399,7 +406,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             // Now run with the restored state
             let config = build_manager_config(cli)?;
 
-            let mut manager = Manager::new(config)?;
+            let mut manager = Manager::new(config, shutdown_flag)?;
             manager.run()?;
         }
         RecoveryAction::Skip => {
@@ -423,7 +430,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             // Now run with the remaining tasks
             let config = build_manager_config(cli)?;
 
-            let mut manager = Manager::new(config)?;
+            let mut manager = Manager::new(config, shutdown_flag)?;
             manager.run()?;
         }
     }
@@ -434,12 +441,12 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
 /// Execute the step mode.
 ///
 /// Executes one task only, then pauses.
-fn execute_step(cli: &Cli) -> Result<(), CliError> {
+fn execute_step(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     info!("Step mode: executing one task from {:?}", cli.state);
 
     let config = build_manager_config(cli)?;
 
-    let mut manager = Manager::new(config)?;
+    let mut manager = Manager::new(config, shutdown_flag)?;
     manager.step()?;
 
     Ok(())

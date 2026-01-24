@@ -552,19 +552,19 @@ The TUI module exists but is not connected to the execution path.
 
 The ctrlc feature is optional and disabled. Graceful Ctrl+C shutdown requires it.
 
-- [ ] **14.1** Enable ctrlc by default
-  - [ ] Change Cargo.toml: ctrlc = "3.4" (remove optional)
-  - [ ] Or add default feature that includes ctrlc
+- [x] **14.1** Enable ctrlc by default
+  - [x] Change Cargo.toml: ctrlc = "3.4" (remove optional)
+  - [x] Or add default feature that includes ctrlc
 
-- [ ] **14.2** Wire signal handler in CLI
-  - [ ] Call ShutdownHandler::register_signal_handlers() at startup
-  - [ ] Pass shutdown flag to Manager
-  - [ ] Check flag in orchestration loop
+- [x] **14.2** Wire signal handler in CLI
+  - [x] Call ShutdownHandler::register_signal_handlers() at startup
+  - [x] Pass shutdown flag to Manager
+  - [x] Check flag in orchestration loop
 
-- [ ] **14.3** Verify signal handling
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Manual test: Ctrl+C during execution saves state
+- [x] **14.3** Verify signal handling
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Manual test: Ctrl+C during execution saves state
 
 ---
 

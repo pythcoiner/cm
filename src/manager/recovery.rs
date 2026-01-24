@@ -409,28 +409,11 @@ impl ShutdownHandler {
     pub fn register_signal_handlers(&self) {
         let flag = self.shutdown_flag.clone();
 
-        // Use ctrlc crate if available, otherwise use a simple approach
-        #[cfg(feature = "ctrlc")]
-        {
-            ctrlc::set_handler(move || {
-                info!("Received shutdown signal");
-                flag.store(true, Ordering::SeqCst);
-            })
-            .expect("Failed to set Ctrl+C handler");
-        }
-
-        // Fallback: warn that signal handling is not available
-        #[cfg(not(feature = "ctrlc"))]
-        {
-            warn!(
-                "Signal handling is not available: the 'ctrlc' feature is not enabled. \
-                 Graceful shutdown via Ctrl+C will not work. Enable the 'ctrlc' feature \
-                 in Cargo.toml to enable signal handling, or use request_shutdown() \
-                 programmatically."
-            );
-            // Keep the flag reference to avoid unused variable warning
-            let _ = flag;
-        }
+        ctrlc::set_handler(move || {
+            info!("Received shutdown signal");
+            flag.store(true, Ordering::SeqCst);
+        })
+        .expect("Failed to set Ctrl+C handler");
 
         debug!("Signal handlers registered");
     }
