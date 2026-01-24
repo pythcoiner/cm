@@ -333,22 +333,22 @@ Status: **Complete** (3/3)
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Add agent templates generation to /cm skill
-  - [ ] Generate .cm/agents/MANAGER.md
-  - [ ] Generate .cm/agents/IMPLEMENTER.md
-  - [ ] Generate .cm/agents/REVIEWER.md
-- [ ] Add STRUCTURE.md and ACTIONS.md generation
-  - [ ] Add questions for structure info
-  - [ ] Add questions for actions info
-  - [ ] Generate .cm/STRUCTURE.md
-  - [ ] Generate .cm/ACTIONS.md
-- [ ] Reinstall and verify new /cm outputs
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify agent templates generated
-  - [ ] Verify STRUCTURE.md and ACTIONS.md generated
+- [x] Add agent templates generation to /cm skill
+  - [x] Generate .cm/agents/MANAGER.md
+  - [x] Generate .cm/agents/IMPLEMENTER.md
+  - [x] Generate .cm/agents/REVIEWER.md
+- [x] Add STRUCTURE.md and ACTIONS.md generation
+  - [x] Add questions for structure info
+  - [x] Add questions for actions info
+  - [x] Generate .cm/STRUCTURE.md
+  - [x] Generate .cm/ACTIONS.md
+- [x] Reinstall and verify new /cm outputs
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify agent templates generated
+  - [x] Verify STRUCTURE.md and ACTIONS.md generated
 
 ---
 
@@ -405,6 +405,6 @@ Status: **Not Started** (0/5)
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Complete | 12/12 |
-| Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
+| Phase 21: Agent Templates & Project Documentation | Complete | 14/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| **Total** | | **175/209** |
+| **Total** | | **189/209** |

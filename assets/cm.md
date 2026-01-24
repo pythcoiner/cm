@@ -138,7 +138,35 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 5: Confirmation
+## Step 5: Project Structure
+
+**Ask the user:**
+
+> **Describe the project structure:**
+>
+> - What are the main directories? (e.g., src/, tests/, docs/)
+> - What is the entry point? (e.g., main.rs, index.ts)
+> - Any key configuration files? (e.g., Cargo.toml, package.json)
+
+Wait for the user's response before proceeding.
+
+---
+
+## Step 6: Build & Test Actions
+
+**Ask the user:**
+
+> **What commands should be used for:**
+>
+> - Building the project? (e.g., `cargo build`, `npm run build`)
+> - Running tests? (e.g., `cargo test`, `npm test`)
+> - Linting/checking? (e.g., `cargo clippy`, `npm run lint`)
+
+Wait for the user's response before proceeding.
+
+---
+
+## Step 7: Confirmation
 
 **Present a summary to the user:**
 
@@ -162,13 +190,23 @@ Wait for the user's response before proceeding.
 > - `.cm/tasks.json` - Machine-readable task definitions
 > - `.cm/LOG.md` - Execution log (empty template)
 >
+> **Project Structure:**
+> - Directories: [list]
+> - Entry point: [file]
+> - Config files: [list]
+>
+> **Build & Test:**
+> - Build: `[command]`
+> - Test: `[command]`
+> - Lint: `[command]`
+>
 > Does this look correct? Reply "yes" to generate the files, or provide corrections.
 
 Wait for explicit user confirmation before generating files.
 
 ---
 
-## Step 6: Generate Artifacts
+## Step 8: Generate Artifacts
 
 Once confirmed, generate all files in the `.cm/` directory:
 
@@ -178,6 +216,11 @@ Once confirmed, generate all files in the `.cm/` directory:
 4. Generate `ROADMAP.md` from roadmap.json (or use template for initial creation)
 5. Generate `tasks.json` using the tasks.json Schema below
 6. Generate `LOG.md` as empty template (will be regenerated from tasks.json log_records)
+7. Generate `.cm/agents/MANAGER.md` using the Manager Agent Template below
+8. Generate `.cm/agents/IMPLEMENTER.md` using the Implementer Agent Template below
+9. Generate `.cm/agents/REVIEWER.md` using the Reviewer Agent Template below
+10. Generate `.cm/STRUCTURE.md` from project structure info
+11. Generate `.cm/ACTIONS.md` from build/test commands
 
 **Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (LOG.md, ROADMAP.md) can be regenerated from JSON at any time using `cm --regenerate`.
 
@@ -191,12 +234,17 @@ After generation, inform the user:
 > - `.cm/ROADMAP.md` - Human-readable roadmap (generated from roadmap.json)
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
 > - `.cm/LOG.md` - Execution logs (generated from tasks.json log_records)
+> - `.cm/agents/MANAGER.md` - Manager agent instructions
+> - `.cm/agents/IMPLEMENTER.md` - Implementer agent instructions
+> - `.cm/agents/REVIEWER.md` - Reviewer agent instructions
+> - `.cm/STRUCTURE.md` - Project structure documentation
+> - `.cm/ACTIONS.md` - Build and test commands
 >
 > Proceeding to validation...
 
 ---
 
-## Step 7: Validate Generated Files
+## Step 9: Validate Generated Files
 
 After generating the files, run validation to ensure all JSON files are correct:
 
@@ -205,7 +253,7 @@ cm --sanity-check
 ```
 
 Check the output:
-- If validation **passes**: Inform the user and proceed to Step 8
+- If validation **passes**: Inform the user and proceed to Step 10
 - If validation **fails**:
   1. Review the error messages
   2. Fix the issues in the JSON files (tasks.json or roadmap.json)
@@ -219,7 +267,7 @@ Check the output:
 
 ---
 
-## Step 8: Git Configuration
+## Step 10: Git Configuration
 
 **Ask the user:**
 
@@ -236,7 +284,7 @@ If the user chooses "yes":
 
 ---
 
-## Step 9: Generate Commit Message
+## Step 11: Generate Commit Message
 
 Generate a commit message for the initial setup:
 
@@ -257,7 +305,7 @@ Wait for user to confirm or provide alternative.
 
 ---
 
-## Step 10: Commit Changes
+## Step 12: Commit Changes
 
 **Ask the user:**
 
@@ -638,6 +686,110 @@ Each entry follows this format:
 [Entries will be appended below during execution]
 
 ---
+```
+
+### MANAGER.md Template
+
+```markdown
+# Manager Agent
+
+This agent coordinates the implementation process for [Project Name].
+
+## Role
+- Plan and sequence tasks
+- Spawn implementation and review agents
+- Track progress against roadmap
+- Make architectural decisions
+
+## Key Files
+- `.cm/tasks.json` - Task definitions
+- `.cm/ROADMAP.md` - Progress tracking
+- `.cm/PLAN.md` - Project plan
+
+## Guidelines
+1. Never implement code directly
+2. Always verify builds after implementations
+3. Follow the IMPLEM -> REVIEW -> FIX cycle
+4. Update roadmap after each phase completion
+```
+
+### IMPLEMENTER.md Template
+
+```markdown
+# Implementer Agent
+
+This agent implements code changes for [Project Name].
+
+## Role
+- Write new code based on task instructions
+- Modify existing code as directed
+- Follow project code style
+- Ensure builds pass
+
+## Key Files
+[List from STRUCTURE.md]
+
+## Guidelines
+1. Read context files before implementing
+2. Follow existing code patterns
+3. Run `[build command]` before completing
+4. Run `[lint command]` to check style
+```
+
+### REVIEWER.md Template
+
+```markdown
+# Reviewer Agent
+
+This agent reviews code changes for [Project Name].
+
+## Role
+- Review implementations for correctness
+- Check code style compliance
+- Identify bugs and issues
+- Suggest improvements
+
+## Guidelines
+1. Check all changed files
+2. Verify requirements are met
+3. Run tests: `[test command]`
+4. Report issues with specific locations
+```
+
+### STRUCTURE.md Template
+
+```markdown
+# Project Structure
+
+## Directories
+[List main directories and their purposes]
+
+## Entry Points
+[Main entry points]
+
+## Configuration
+[Key config files]
+```
+
+### ACTIONS.md Template
+
+```markdown
+# Build & Test Actions
+
+## Build
+```bash
+[build command]
+```
+
+## Test
+```bash
+[test command]
+```
+
+## Lint
+```bash
+[lint command]
+```
 ```
 
 ---
