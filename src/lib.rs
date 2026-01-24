@@ -20,10 +20,7 @@ pub mod state;
 pub mod agent;
 
 /// Build verification: cargo build/clippy/test and git operations.
-pub mod build {
-    // TODO: Implement cargo build/clippy/test verification
-    // TODO: Implement git commit/status operations
-}
+pub mod build;
 
 /// LOG.md management for audit trail.
 pub mod log {

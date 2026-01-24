@@ -123,33 +123,33 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 3: Build Module
 
-- [ ] **3.1** Create src/build/mod.rs
-  - [ ] Module declarations
-  - [ ] BuildError enum with thiserror
-  - [ ] BuildVerifier struct
+- [x] **3.1** Create src/build/mod.rs
+  - [x] Module declarations
+  - [x] BuildError enum with thiserror
+  - [x] BuildVerifier struct
 
-- [ ] **3.2** Create src/build/cargo.rs
-  - [ ] CargoRunner struct
-  - [ ] build() -> Result<BuildOutput>
-  - [ ] clippy() -> Result<ClippyOutput>
-  - [ ] test() -> Result<TestOutput>
-  - [ ] Parse cargo output for errors/warnings
+- [x] **3.2** Create src/build/cargo.rs
+  - [x] CargoRunner struct
+  - [x] build() -> Result<BuildOutput>
+  - [x] clippy() -> Result<ClippyOutput>
+  - [x] test() -> Result<TestOutput>
+  - [x] Parse cargo output for errors/warnings
 
-- [ ] **3.3** Create src/build/git.rs
-  - [ ] GitRunner struct
-  - [ ] status() -> Result<GitStatus>
-  - [ ] commit(message) -> Result<CommitId>
-  - [ ] add(files) -> Result<()>
+- [x] **3.3** Create src/build/git.rs
+  - [x] GitRunner struct
+  - [x] status() -> Result<GitStatus>
+  - [x] commit(message) -> Result<CommitId>
+  - [x] add(files) -> Result<()>
 
-- [ ] **3.4** Implement BuildVerifier
-  - [ ] new() constructor
-  - [ ] verify_build() -> Result<()>
-  - [ ] verify_clippy() -> Result<()>
-  - [ ] Run build then clippy, collect all errors
+- [x] **3.4** Implement BuildVerifier
+  - [x] new() constructor
+  - [x] verify_build() -> Result<()>
+  - [x] verify_clippy() -> Result<()>
+  - [x] Run build then clippy, collect all errors
 
-- [ ] **3.5** Verify build module
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
+- [x] **3.5** Verify build module
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
 
 ---
 
