@@ -27,5 +27,8 @@ pub mod tui;
 /// CLI argument parsing with clap.
 pub mod cli;
 
+/// Configuration file support.
+pub mod config;
+
 /// Embedded skill files for cm init command.
 pub mod skill;

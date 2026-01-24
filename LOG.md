@@ -727,3 +727,64 @@ Each phase entry should include:
 ### Commit
 - **Message:** `cm: Phase 0.5 - Init and Skills`
 - **Hash:** 87bd3ed
+
+---
+
+## Phase 12: Configuration File Support
+
+### Implementation
+- **Agent:** implem-phase-12 (sub-agent, id: a299800)
+- **Started:** 2026-01-24
+
+#### Files Created
+- `src/config/mod.rs` (~250 lines) - ConfigFile struct, ConfigError, load functions, 10 unit tests
+- `CONFIG.md` (~100 lines) - Documentation with examples and precedence rules
+
+#### Files Modified
+- `Cargo.toml` - Added `toml = "0.8"` dependency
+- `src/lib.rs` - Added `pub mod config;`
+- `src/cli/mod.rs` - Added new CLI flags, build_manager_config(), updated execute_* functions
+
+#### Types Implemented
+| Type | Description |
+|------|-------------|
+| ConfigFile | Struct with optional fields for all config options |
+| ConfigError | Error enum: NotFound, IoError, ParseError |
+
+#### Functions Implemented
+| Function | Location | Description |
+|----------|----------|-------------|
+| ConfigFile::load() | config/mod.rs | Load config from explicit path |
+| ConfigFile::load_default() | config/mod.rs | Load from .cm/config.toml if exists |
+| build_manager_config() | cli/mod.rs | Merge config file with CLI args |
+
+#### CLI Flags Added
+| Flag | Description |
+|------|-------------|
+| --model | Claude model to use |
+| --timeout | Agent timeout in seconds |
+| --max-cycles | Max review cycles before deferring |
+| --log-path | Path to LOG.md |
+| --working-dir | Working directory |
+
+### Build
+- **Command:** `cargo build`
+- **Result:** PASS
+- **Errors:** None
+
+- **Command:** `cargo clippy`
+- **Result:** PASS
+- **Warnings:** None
+
+- **Command:** `cargo test`
+- **Result:** PASS
+- **Tests:** 170 tests passed (143 unit + 27 integration)
+
+### Review
+- **Agent:** review-phase-12 (sub-agent, id: a10f4c8)
+- **Issues Found:** 0
+- **Verdict:** APPROVED
+
+### Commit
+- **Message:** `cm: Phase 12 - Configuration File Support`
+- **Hash:** 3fb7185

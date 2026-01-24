@@ -492,33 +492,33 @@ Enable users to install cm skills (/cm, /feat, /fix) into any project.
 
 ## Phase 12: Configuration File Support
 
-- [ ] **12.1** Define configuration file format
-  - [ ] Choose format (TOML recommended for Rust projects)
-  - [ ] Define schema for all ManagerConfig fields
-  - [ ] Support: model, timeout, max_cycles, log_path, working_dir
+- [x] **12.1** Define configuration file format
+  - [x] Choose format (TOML recommended for Rust projects)
+  - [x] Define schema for all ManagerConfig fields
+  - [x] Support: model, timeout, max_cycles, log_path, working_dir
 
-- [ ] **12.2** Implement config file loading
-  - [ ] Add `toml` dependency to Cargo.toml
-  - [ ] Create src/config/mod.rs
-  - [ ] ConfigFile struct with serde derive
-  - [ ] load_config(path) -> Result<ConfigFile>
-  - [ ] Merge with CLI args (CLI takes precedence)
+- [x] **12.2** Implement config file loading
+  - [x] Add `toml` dependency to Cargo.toml
+  - [x] Create src/config/mod.rs
+  - [x] ConfigFile struct with serde derive
+  - [x] load_config(path) -> Result<ConfigFile>
+  - [x] Merge with CLI args (CLI takes precedence)
 
-- [ ] **12.3** Wire --config flag in CLI
-  - [ ] Load config file if --config provided
-  - [ ] Apply config values to ManagerConfig
-  - [ ] Support default path: .cm/config.toml
+- [x] **12.3** Wire --config flag in CLI
+  - [x] Load config file if --config provided
+  - [x] Apply config values to ManagerConfig
+  - [x] Support default path: .cm/config.toml
 
-- [ ] **12.4** Create CONFIG.md documentation
-  - [ ] Document all configuration options
-  - [ ] Provide example config.toml
-  - [ ] Document precedence: CLI > config file > defaults
+- [x] **12.4** Create CONFIG.md documentation
+  - [x] Document all configuration options
+  - [x] Provide example config.toml
+  - [x] Document precedence: CLI > config file > defaults
 
-- [ ] **12.5** Verify configuration support
-  - [ ] `cargo build` passes
-  - [ ] `cargo clippy` passes
-  - [ ] Add unit tests for config loading
-  - [ ] Manual test with config file
+- [x] **12.5** Verify configuration support
+  - [x] `cargo build` passes
+  - [x] `cargo clippy` passes
+  - [x] Add unit tests for config loading
+  - [x] Manual test with config file
 
 ---
 

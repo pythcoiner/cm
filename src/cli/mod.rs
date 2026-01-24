@@ -7,11 +7,13 @@
 mod init;
 
 use std::path::PathBuf;
+use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use log::{debug, info, warn};
 use thiserror::Error;
 
+use crate::config::{ConfigError, ConfigFile};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager};
 use crate::state::{load_state, save_state, StateError, TaskStatus, TasksState};
 
@@ -40,6 +42,10 @@ pub enum CliError {
     /// An I/O error occurred.
     #[error("io error: {0}")]
     IoError(#[from] std::io::Error),
+
+    /// An error occurred while loading configuration.
+    #[error("config error: {0}")]
+    ConfigError(#[from] ConfigError),
 
     /// Validation failed.
     #[error("validation failed: {0}")]
@@ -92,6 +98,26 @@ pub struct Cli {
     /// Path to tasks.json state file.
     #[arg(long, value_name = "FILE", default_value = ".cm/tasks.json")]
     pub state: PathBuf,
+
+    /// Claude model to use.
+    #[arg(long, value_name = "MODEL")]
+    pub model: Option<String>,
+
+    /// Agent timeout in seconds.
+    #[arg(long, value_name = "SECONDS")]
+    pub timeout: Option<u64>,
+
+    /// Maximum cycles per task before deferring.
+    #[arg(long, value_name = "N")]
+    pub max_cycles: Option<u32>,
+
+    /// Path to LOG.md file.
+    #[arg(long, value_name = "FILE")]
+    pub log_path: Option<PathBuf>,
+
+    /// Working directory for build verification.
+    #[arg(long, value_name = "DIR")]
+    pub working_dir: Option<PathBuf>,
 }
 
 /// Run the CLI application.
@@ -152,15 +178,109 @@ pub fn run() -> Result<(), CliError> {
     result
 }
 
+/// Build a ManagerConfig by merging config file and CLI arguments.
+///
+/// Precedence (highest to lowest):
+/// 1. CLI arguments
+/// 2. Config file values
+/// 3. Default values
+///
+/// # Arguments
+///
+/// * `cli` - Parsed CLI arguments
+///
+/// # Errors
+///
+/// Returns an error if the config file exists but cannot be read or parsed.
+fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
+    // 1. Load config file (explicit path or default)
+    let config_file = if let Some(ref path) = cli.config {
+        debug!("Loading config from explicit path: {:?}", path);
+        Some(ConfigFile::load(path)?)
+    } else {
+        debug!("Trying to load default config from .cm/config.toml");
+        ConfigFile::load_default()?
+    };
+
+    if let Some(ref cf) = config_file {
+        debug!("Config file loaded: {:?}", cf);
+    } else {
+        debug!("No config file found, using defaults");
+    }
+
+    // 2. Start with defaults from ManagerConfig
+    let mut config = ManagerConfig::new(cli.state.clone());
+
+    // 3. Apply config file values (if present)
+    if let Some(cf) = config_file {
+        if let Some(model) = cf.model {
+            config = config.model(model);
+        }
+        if let Some(timeout_secs) = cf.timeout_secs {
+            config = config.timeout(Duration::from_secs(timeout_secs));
+        }
+        if let Some(max_cycles) = cf.max_cycles {
+            config = config.max_cycles(max_cycles);
+        }
+        if let Some(log_path) = cf.log_path {
+            config = config.log_path(log_path);
+        }
+        if let Some(working_dir) = cf.working_dir {
+            config = config.working_dir(working_dir);
+        }
+    }
+
+    // 4. Apply CLI overrides (highest precedence)
+    if let Some(ref model) = cli.model {
+        config = config.model(model.clone());
+    }
+    if let Some(timeout_secs) = cli.timeout {
+        config = config.timeout(Duration::from_secs(timeout_secs));
+    }
+    if let Some(max_cycles) = cli.max_cycles {
+        config = config.max_cycles(max_cycles);
+    }
+    if let Some(ref log_path) = cli.log_path {
+        config = config.log_path(log_path.clone());
+    }
+    if let Some(ref working_dir) = cli.working_dir {
+        config = config.working_dir(working_dir.clone());
+    }
+
+    // 5. Apply defaults for paths that weren't set
+    // If log_path wasn't explicitly set, derive from state path
+    if cli.log_path.is_none() {
+        let default_log = cli
+            .state
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .join("LOG.md");
+        // Only set if config file didn't specify it
+        if config.log_path == ManagerConfig::new(cli.state.clone()).log_path {
+            config = config.log_path(default_log);
+        }
+    }
+
+    // If working_dir wasn't explicitly set, use current directory
+    if cli.working_dir.is_none() {
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        // Only set if config file didn't specify it
+        if config.working_dir == ManagerConfig::new(cli.state.clone()).working_dir {
+            config = config.working_dir(cwd);
+        }
+    }
+
+    debug!("Final ManagerConfig: {:?}", config);
+    Ok(config)
+}
+
 /// Execute the default run mode.
 ///
 /// Runs all tasks until completion or error.
 fn execute_run(cli: &Cli) -> Result<(), CliError> {
     info!("Run mode: executing all tasks from {:?}", cli.state);
 
-    let config = ManagerConfig::new(cli.state.clone())
-        .log_path(cli.state.parent().unwrap_or(std::path::Path::new(".")).join("LOG.md"))
-        .working_dir(std::env::current_dir()?);
+    let config = build_manager_config(cli)?;
 
     let mut manager = Manager::new(config)?;
     manager.run()?;
@@ -209,14 +329,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             save_state(&state, &cli.state)?;
 
             // Now run with the cleaned state
-            let config = ManagerConfig::new(cli.state.clone())
-                .log_path(
-                    cli.state
-                        .parent()
-                        .unwrap_or(std::path::Path::new("."))
-                        .join("LOG.md"),
-                )
-                .working_dir(std::env::current_dir()?);
+            let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config)?;
             manager.run()?;
@@ -233,14 +346,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             save_state(&restored_state, &cli.state)?;
 
             // Now run with the restored state
-            let config = ManagerConfig::new(cli.state.clone())
-                .log_path(
-                    cli.state
-                        .parent()
-                        .unwrap_or(std::path::Path::new("."))
-                        .join("LOG.md"),
-                )
-                .working_dir(std::env::current_dir()?);
+            let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config)?;
             manager.run()?;
@@ -264,14 +370,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
             save_state(&state, &cli.state)?;
 
             // Now run with the remaining tasks
-            let config = ManagerConfig::new(cli.state.clone())
-                .log_path(
-                    cli.state
-                        .parent()
-                        .unwrap_or(std::path::Path::new("."))
-                        .join("LOG.md"),
-                )
-                .working_dir(std::env::current_dir()?);
+            let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config)?;
             manager.run()?;
@@ -287,14 +386,7 @@ fn execute_continue(cli: &Cli) -> Result<(), CliError> {
 fn execute_step(cli: &Cli) -> Result<(), CliError> {
     info!("Step mode: executing one task from {:?}", cli.state);
 
-    let config = ManagerConfig::new(cli.state.clone())
-        .log_path(
-            cli.state
-                .parent()
-                .unwrap_or(std::path::Path::new("."))
-                .join("LOG.md"),
-        )
-        .working_dir(std::env::current_dir()?);
+    let config = build_manager_config(cli)?;
 
     let mut manager = Manager::new(config)?;
     manager.step()?;
@@ -742,5 +834,96 @@ mod tests {
 
         let err = CliError::ValidationFailed("test error".to_string());
         assert!(err.to_string().contains("validation failed"));
+    }
+
+    #[test]
+    fn test_cli_parse_model() {
+        let cli = Cli::parse_from(["cm", "--model", "claude-opus-4-5-20251101"]);
+        assert_eq!(cli.model, Some("claude-opus-4-5-20251101".to_string()));
+    }
+
+    #[test]
+    fn test_cli_parse_timeout() {
+        let cli = Cli::parse_from(["cm", "--timeout", "600"]);
+        assert_eq!(cli.timeout, Some(600));
+    }
+
+    #[test]
+    fn test_cli_parse_max_cycles() {
+        let cli = Cli::parse_from(["cm", "--max-cycles", "10"]);
+        assert_eq!(cli.max_cycles, Some(10));
+    }
+
+    #[test]
+    fn test_cli_parse_log_path() {
+        let cli = Cli::parse_from(["cm", "--log-path", "/tmp/LOG.md"]);
+        assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
+    }
+
+    #[test]
+    fn test_cli_parse_working_dir() {
+        let cli = Cli::parse_from(["cm", "--working-dir", "/home/user/project"]);
+        assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
+    }
+
+    #[test]
+    fn test_cli_parse_all_options() {
+        let cli = Cli::parse_from([
+            "cm",
+            "--config", "/path/to/config.toml",
+            "--state", "/path/to/tasks.json",
+            "--model", "claude-opus-4-5-20251101",
+            "--timeout", "600",
+            "--max-cycles", "10",
+            "--log-path", "/tmp/LOG.md",
+            "--working-dir", "/home/user/project",
+            "--verbose",
+        ]);
+
+        assert_eq!(cli.config, Some(PathBuf::from("/path/to/config.toml")));
+        assert_eq!(cli.state, PathBuf::from("/path/to/tasks.json"));
+        assert_eq!(cli.model, Some("claude-opus-4-5-20251101".to_string()));
+        assert_eq!(cli.timeout, Some(600));
+        assert_eq!(cli.max_cycles, Some(10));
+        assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
+        assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
+        assert!(cli.verbose);
+    }
+
+    #[test]
+    fn test_build_manager_config_defaults() {
+        let cli = Cli::parse_from(["cm", "--state", "/tmp/tasks.json"]);
+        let config = build_manager_config(&cli).unwrap();
+
+        assert_eq!(config.state_path, PathBuf::from("/tmp/tasks.json"));
+        assert_eq!(config.model, "claude-sonnet-4-5-20250929");
+        assert_eq!(config.timeout, Duration::from_secs(300));
+        assert_eq!(config.max_cycles, 5);
+    }
+
+    #[test]
+    fn test_build_manager_config_cli_overrides() {
+        let cli = Cli::parse_from([
+            "cm",
+            "--state", "/tmp/tasks.json",
+            "--model", "claude-opus-4-5-20251101",
+            "--timeout", "600",
+            "--max-cycles", "10",
+            "--log-path", "/custom/LOG.md",
+            "--working-dir", "/custom/dir",
+        ]);
+        let config = build_manager_config(&cli).unwrap();
+
+        assert_eq!(config.model, "claude-opus-4-5-20251101");
+        assert_eq!(config.timeout, Duration::from_secs(600));
+        assert_eq!(config.max_cycles, 10);
+        assert_eq!(config.log_path, PathBuf::from("/custom/LOG.md"));
+        assert_eq!(config.working_dir, PathBuf::from("/custom/dir"));
+    }
+
+    #[test]
+    fn test_cli_config_error_display() {
+        let err = CliError::ConfigError(ConfigError::NotFound(PathBuf::from("/nonexistent")));
+        assert!(err.to_string().contains("config error"));
     }
 }
