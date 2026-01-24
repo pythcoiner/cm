@@ -346,23 +346,23 @@ This is the detailed checklist of all implementation tasks. Check items off as t
 
 ## Phase 9: Integration Testing
 
-- [ ] **9.1** Create tests/integration.rs
-  - [ ] Test setup helpers
+- [x] **9.1** Create tests/integration.rs
+  - [x] Test setup helpers
 
-- [ ] **9.2** Test basic flow
-  - [ ] Create minimal tasks.json
-  - [ ] Run cm with mock agent
-  - [ ] Verify state updates
+- [x] **9.2** Test basic flow
+  - [x] Create minimal tasks.json
+  - [x] Run cm with mock agent
+  - [x] Verify state updates
 
-- [ ] **9.3** Test recovery
-  - [ ] Simulate crash during execution
-  - [ ] Run cm continue
-  - [ ] Verify resumed correctly
+- [x] **9.3** Test recovery
+  - [x] Simulate crash during execution
+  - [x] Run cm continue
+  - [x] Verify resumed correctly
 
-- [ ] **9.4** Test deferred tasks
-  - [ ] Create task that fails 5 times
-  - [ ] Verify marked as deferred
-  - [ ] Verify next task runs
+- [x] **9.4** Test deferred tasks
+  - [x] Create task that fails 5 times
+  - [x] Verify marked as deferred
+  - [x] Verify next task runs
 
 ---
 
