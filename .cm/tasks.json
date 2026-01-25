@@ -2000,6 +2000,279 @@
           "roadmap_item_id": "25.3"
         }
       ]
+    },
+    {
+      "id": "phase-26",
+      "name": "Skills to Commands Migration",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-26.task-1",
+          "name": "Remove YAML front matter and update skill->command text in assets",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "assets/cm.md",
+              "assets/feat.md",
+              "assets/fix.md",
+              "assets/end.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Update all four asset markdown files to remove YAML front matter and replace self-referential 'skill' with 'command'.\n\nFor each file (assets/cm.md, assets/feat.md, assets/fix.md, assets/end.md):\n\n1. Remove the YAML front matter block (the `---` delimited block at the top of the file, including both `---` lines and all content between them, plus the blank line after the closing `---`).\n\n2. Replace self-referential uses of 'skill' with 'command' in the body text. Specifically:\n   - 'This skill' -> 'This command'\n   - 'this skill' -> 'this command'\n   - 'Before using this skill' -> 'Before using this command'\n   - 'The `/end` skill' -> 'The `/end` command'\n\n   Do NOT change:\n   - References to file paths like '.claude/skills/' (those will change in a later task)\n   - Historical phase names or roadmap references\n   - Template examples that show skill structure\n\n3. Ensure `cargo build` passes (the asset files are embedded via include_str! so compilation verifies they exist).\n\nNote: assets/feat.md has a description that wraps to a second line in the YAML front matter, so the front matter block is 6 lines instead of 5.",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "60a9ef7b-b4c6-43b6-b3cf-94ee1f76d5fb",
+              "started_at": "2026-01-25T03:14:17.394131318Z",
+              "completed_at": "2026-01-25T03:15:16.313570759Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Remove YAML front matter and update skill->command text in assets\n\n### Instructions\n\nUpdate all four asset markdown files to remove YAML front matter and replace self-referential 'skill' with 'command'.\n\nFor each file (assets/cm.md, assets/feat.md, assets/fix.md, assets/end.md):\n\n1. Remove the YAML front matter block (the `---` delimited block at the top of the file, including both `---` lines and all content between them, plus the blank line after the closing `---`).\n\n2. Replace self-referential uses of 'skill' with 'command' in the body text. Specifically:\n   - 'This skill' -> 'This command'\n   - 'this skill' -> 'this command'\n   - 'Before using this skill' -> 'Before using this command'\n   - 'The `/end` skill' -> 'The `/end` command'\n\n   Do NOT change:\n   - References to file paths like '.claude/skills/' (those will change in a later task)\n   - Historical phase names or roadmap references\n   - Template examples that show skill structure\n\n3. Ensure `cargo build` passes (the asset files are embedded via include_str! so compilation verifies they exist).\n\nNote: assets/feat.md has a description that wraps to a second line in the YAML front matter, so the front matter block is 6 lines instead of 5.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- assets/cm.md\n- assets/feat.md\n- assets/fix.md\n- assets/end.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [
+                  "assets/cm.md",
+                  "assets/feat.md",
+                  "assets/fix.md",
+                  "assets/end.md"
+                ],
+                "commands_run": [],
+                "message": "Removed YAML front matter and replaced self-referential 'skill' with 'command' in all four asset markdown files"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.1"
+        },
+        {
+          "id": "phase-26.task-2",
+          "name": "Rename src/skill.rs to src/command.rs with updated constants",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/skill.rs",
+              "src/lib.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Rename the skill module to command module:\n\n1. Delete `src/skill.rs`\n\n2. Create `src/command.rs` with content:\n```rust\n//! Embedded command files for cm init.\n\npub const CM_COMMAND: &str = include_str!(\"../assets/cm.md\");\npub const FEAT_COMMAND: &str = include_str!(\"../assets/feat.md\");\npub const FIX_COMMAND: &str = include_str!(\"../assets/fix.md\");\npub const END_COMMAND: &str = include_str!(\"../assets/end.md\");\n```\n\n3. Update `src/lib.rs` line 36-37:\n   - Change `/// Embedded skill files for cm init command.` to `/// Embedded command files for cm init.`\n   - Change `pub mod skill;` to `pub mod command;`\n\n4. Ensure `cargo build` passes.",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "88c7839e-fa71-46dd-bb99-f75090119d2d",
+              "started_at": "2026-01-25T03:15:16.322073991Z",
+              "completed_at": "2026-01-25T03:16:14.526565813Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Rename src/skill.rs to src/command.rs with updated constants\n\n### Instructions\n\nRename the skill module to command module:\n\n1. Delete `src/skill.rs`\n\n2. Create `src/command.rs` with content:\n```rust\n//! Embedded command files for cm init.\n\npub const CM_COMMAND: &str = include_str!(\"../assets/cm.md\");\npub const FEAT_COMMAND: &str = include_str!(\"../assets/feat.md\");\npub const FIX_COMMAND: &str = include_str!(\"../assets/fix.md\");\npub const END_COMMAND: &str = include_str!(\"../assets/end.md\");\n```\n\n3. Update `src/lib.rs` line 36-37:\n   - Change `/// Embedded skill files for cm init command.` to `/// Embedded command files for cm init.`\n   - Change `pub mod skill;` to `pub mod command;`\n\n4. Ensure `cargo build` passes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/skill.rs\n- src/lib.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [
+                  "src/command.rs"
+                ],
+                "files_modified": [
+                  "src/lib.rs",
+                  "src/cli/init.rs"
+                ],
+                "commands_run": [],
+                "message": "Renamed skill module to command module with updated constants and verified successful build"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.2"
+        },
+        {
+          "id": "phase-26.task-3",
+          "name": "Update src/cli/mod.rs help text",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/cli/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Update the Command enum doc comments in src/cli/mod.rs:\n\n1. Change line 27 from:\n   `/// Initialize .claude/skills directory with cm, feat, and fix skills`\n   to:\n   `/// Initialize .claude/commands directory with cm, feat, fix, and end commands`\n\n2. Change line 29 from:\n   `/// Overwrite existing skill files`\n   to:\n   `/// Overwrite existing command files`\n\n3. Ensure `cargo build` passes.",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "7827b15e-a699-4000-a67c-2e374df135a0",
+              "started_at": "2026-01-25T03:16:14.531517708Z",
+              "completed_at": "2026-01-25T03:16:39.995383721Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Update src/cli/mod.rs help text\n\n### Instructions\n\nUpdate the Command enum doc comments in src/cli/mod.rs:\n\n1. Change line 27 from:\n   `/// Initialize .claude/skills directory with cm, feat, and fix skills`\n   to:\n   `/// Initialize .claude/commands directory with cm, feat, fix, and end commands`\n\n2. Change line 29 from:\n   `/// Overwrite existing skill files`\n   to:\n   `/// Overwrite existing command files`\n\n3. Ensure `cargo build` passes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [
+                  "src/cli/mod.rs"
+                ],
+                "commands_run": [],
+                "message": "Updated Command enum doc comments in src/cli/mod.rs to reference 'commands' instead of 'skills' and added 'end' command to the list"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.3"
+        },
+        {
+          "id": "phase-26.task-4",
+          "name": "Rewrite src/cli/init.rs for commands",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/cli/init.rs",
+              "src/command.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Rewrite src/cli/init.rs to install commands instead of skills:\n\n1. Update module doc comment: 'Creates `.claude/commands/` directory and writes command files.'\n\n2. Change import from `crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL}` to `crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND}`\n\n3. Rename `SkillFile` struct to `CommandFile` with fields:\n   - `name: &'static str` (was `dir_name`) - the filename without .md extension\n   - `content: &'static str` - the file content\n\n4. Rename `SKILLS` to `COMMANDS`, update entries to use `CommandFile` and `*_COMMAND` constants\n\n5. Rewrite `execute_init_in_dir()` to:\n   - Create `.claude/commands/` directory (not `.claude/skills/`)\n   - Write files as `.claude/commands/{name}.md` (flat files, no subdirectories)\n   - Skip/overwrite logic same as before, just with new paths\n   - Call `cleanup_legacy_skills(base_dir)` after writing\n   - Print 'Commands initialized successfully!' and list available commands\n\n6. Add `cleanup_legacy_skills(base_dir: &Path)` function that:\n   - Checks if `.claude/skills/` exists\n   - Removes known legacy files: `{cm,feat,fix,end}/SKILL.md`\n   - Removes empty subdirectories with `fs::remove_dir()` (NOT remove_dir_all)\n   - Attempts to remove `.claude/skills/` if empty\n   - Prints migration message if any files were removed\n\n7. Rewrite all tests to use new paths (`.claude/commands/{name}.md` instead of `.claude/skills/{name}/SKILL.md`). Add a test for legacy cleanup.\n\n8. Ensure `cargo build`, `cargo clippy`, and `cargo test` all pass.",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "de0fd4e5-5656-4064-9deb-0687a6ddda7d",
+              "started_at": "2026-01-25T03:16:40.003750317Z",
+              "completed_at": "2026-01-25T03:17:55.856271504Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Rewrite src/cli/init.rs for commands\n\n### Instructions\n\nRewrite src/cli/init.rs to install commands instead of skills:\n\n1. Update module doc comment: 'Creates `.claude/commands/` directory and writes command files.'\n\n2. Change import from `crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL}` to `crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND}`\n\n3. Rename `SkillFile` struct to `CommandFile` with fields:\n   - `name: &'static str` (was `dir_name`) - the filename without .md extension\n   - `content: &'static str` - the file content\n\n4. Rename `SKILLS` to `COMMANDS`, update entries to use `CommandFile` and `*_COMMAND` constants\n\n5. Rewrite `execute_init_in_dir()` to:\n   - Create `.claude/commands/` directory (not `.claude/skills/`)\n   - Write files as `.claude/commands/{name}.md` (flat files, no subdirectories)\n   - Skip/overwrite logic same as before, just with new paths\n   - Call `cleanup_legacy_skills(base_dir)` after writing\n   - Print 'Commands initialized successfully!' and list available commands\n\n6. Add `cleanup_legacy_skills(base_dir: &Path)` function that:\n   - Checks if `.claude/skills/` exists\n   - Removes known legacy files: `{cm,feat,fix,end}/SKILL.md`\n   - Removes empty subdirectories with `fs::remove_dir()` (NOT remove_dir_all)\n   - Attempts to remove `.claude/skills/` if empty\n   - Prints migration message if any files were removed\n\n7. Rewrite all tests to use new paths (`.claude/commands/{name}.md` instead of `.claude/skills/{name}/SKILL.md`). Add a test for legacy cleanup.\n\n8. Ensure `cargo build`, `cargo clippy`, and `cargo test` all pass.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/init.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [
+                  "src/cli/init.rs"
+                ],
+                "commands_run": [],
+                "message": "Rewrote src/cli/init.rs to install commands in .claude/commands/ instead of skills in .claude/skills/, with automatic legacy cleanup and comprehensive tests"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.4"
+        },
+        {
+          "id": "phase-26.task-5",
+          "name": "Update README.md",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-4"
+          ],
+          "context": {
+            "files_to_read": [
+              "README.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Update README.md to reflect the skills-to-commands change:\n\n1. Line 44: 'Install skills into your project' -> 'Install commands into your project'\n\n2. Line 47: Update code block comment from `.claude/skills/{cm,feat,fix}/SKILL.md` to `.claude/commands/{cm,feat,fix,end}.md`\n\n3. Line 50: 'Use the /cm skill in Claude Code' -> 'Use the /cm command in Claude Code'\n\n4. Lines 92-101: Rename section '## Skills' to '## Commands'. Change 'installs three Claude Code skills' to 'installs four Claude Code commands'. Update table header from 'Skill' to 'Command'. Add `/end` row to the table.\n\n5. Lines 129-136: Update the directory tree to show:\n```\n\u251c\u2500\u2500 .claude/\n\u2502   \u2514\u2500\u2500 commands/\n\u2502       \u251c\u2500\u2500 cm.md\n\u2502       \u251c\u2500\u2500 feat.md\n\u2502       \u251c\u2500\u2500 fix.md\n\u2502       \u2514\u2500\u2500 end.md\n```\n\n6. No build verification needed for README changes.",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "e99f5fa4-d286-4b0e-9c75-bfae6a84dc9f",
+              "started_at": "2026-01-25T03:17:55.869520736Z",
+              "completed_at": "2026-01-25T03:18:22.334643372Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Update README.md\n\n### Instructions\n\nUpdate README.md to reflect the skills-to-commands change:\n\n1. Line 44: 'Install skills into your project' -> 'Install commands into your project'\n\n2. Line 47: Update code block comment from `.claude/skills/{cm,feat,fix}/SKILL.md` to `.claude/commands/{cm,feat,fix,end}.md`\n\n3. Line 50: 'Use the /cm skill in Claude Code' -> 'Use the /cm command in Claude Code'\n\n4. Lines 92-101: Rename section '## Skills' to '## Commands'. Change 'installs three Claude Code skills' to 'installs four Claude Code commands'. Update table header from 'Skill' to 'Command'. Add `/end` row to the table.\n\n5. Lines 129-136: Update the directory tree to show:\n```\n\u251c\u2500\u2500 .claude/\n\u2502   \u2514\u2500\u2500 commands/\n\u2502       \u251c\u2500\u2500 cm.md\n\u2502       \u251c\u2500\u2500 feat.md\n\u2502       \u251c\u2500\u2500 fix.md\n\u2502       \u2514\u2500\u2500 end.md\n```\n\n6. No build verification needed for README changes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- README.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [
+                  "README.md"
+                ],
+                "commands_run": [],
+                "message": "Updated README.md to reflect skills-to-commands change: renamed 'skills' to 'commands' throughout, updated directory structure, and added /end command to the documentation"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.5"
+        },
+        {
+          "id": "phase-26.task-6",
+          "name": "Delete legacy .claude/skills/ directory",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-4"
+          ],
+          "context": {
+            "files_to_read": [],
+            "prior_review_issues": []
+          },
+          "instructions": "Remove the legacy .claude/skills/ directory from this repository:\n\n1. Delete .claude/skills/ and all its contents (cm/SKILL.md, feat/SKILL.md, fix/SKILL.md, end/SKILL.md)\n2. Run `cm init` to create the new .claude/commands/ directory with all four command files\n3. Verify .claude/commands/cm.md, .claude/commands/feat.md, .claude/commands/fix.md, .claude/commands/end.md all exist",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "645c5a1b-91ce-4b33-bc85-2c3e1970dae6",
+              "started_at": "2026-01-25T03:18:22.354579352Z",
+              "completed_at": "2026-01-25T03:19:03.448912887Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Delete legacy .claude/skills/ directory\n\n### Instructions\n\nRemove the legacy .claude/skills/ directory from this repository:\n\n1. Delete .claude/skills/ and all its contents (cm/SKILL.md, feat/SKILL.md, fix/SKILL.md, end/SKILL.md)\n2. Run `cm init` to create the new .claude/commands/ directory with all four command files\n3. Verify .claude/commands/cm.md, .claude/commands/feat.md, .claude/commands/fix.md, .claude/commands/end.md all exist\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [
+                  ".claude/commands/cm.md",
+                  ".claude/commands/feat.md",
+                  ".claude/commands/fix.md",
+                  ".claude/commands/end.md"
+                ],
+                "files_modified": [],
+                "commands_run": [],
+                "message": "Deleted legacy .claude/skills/ directory and created new .claude/commands/ directory with all four command files"
+              }
+            }
+          ],
+          "roadmap_item_id": "26.6"
+        },
+        {
+          "id": "phase-26.task-7",
+          "name": "Build and verify commands migration",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-26.task-3",
+            "phase-26.task-4",
+            "phase-26.task-5",
+            "phase-26.task-6"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/command.rs",
+              "src/cli/init.rs",
+              "src/lib.rs",
+              "README.md"
+            ],
+            "prior_review_issues": []
+          },
+          "instructions": "Final verification of the skills-to-commands migration:\n\n1. Run `cargo build` - must pass\n2. Run `cargo clippy` - must pass with no warnings\n3. Run `cargo test` - all tests must pass\n4. Verify src/skill.rs no longer exists\n5. Verify src/command.rs exists with CM_COMMAND, FEAT_COMMAND, FIX_COMMAND, END_COMMAND constants\n6. Verify src/lib.rs declares `pub mod command` (not `pub mod skill`)\n7. Verify src/cli/init.rs installs to `.claude/commands/{name}.md`\n8. Verify .claude/commands/ directory exists with all 4 command files\n9. Verify .claude/skills/ directory does not exist\n10. Verify README.md references commands (not skills)",
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "ff646d1d-a508-4da2-bb71-485fe848b8bc",
+              "started_at": "2026-01-25T03:19:03.458997936Z",
+              "completed_at": "2026-01-25T03:21:11.498565864Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Build and verify commands migration\n\n### Instructions\n\nFinal verification of the skills-to-commands migration:\n\n1. Run `cargo build` - must pass\n2. Run `cargo clippy` - must pass with no warnings\n3. Run `cargo test` - all tests must pass\n4. Verify src/skill.rs no longer exists\n5. Verify src/command.rs exists with CM_COMMAND, FEAT_COMMAND, FIX_COMMAND, END_COMMAND constants\n6. Verify src/lib.rs declares `pub mod command` (not `pub mod skill`)\n7. Verify src/cli/init.rs installs to `.claude/commands/{name}.md`\n8. Verify .claude/commands/ directory exists with all 4 command files\n9. Verify .claude/skills/ directory does not exist\n10. Verify README.md references commands (not skills)\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/command.rs\n- src/cli/init.rs\n- src/lib.rs\n- README.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [],
+                "commands_run": [],
+                "message": "Successfully verified skills-to-commands migration. All builds, tests, and file structure checks passed."
+              }
+            }
+          ],
+          "roadmap_item_id": "26.7"
+        }
+      ]
     }
   ],
   "agent_history": [
@@ -2407,6 +2680,62 @@
       "agent_type": "implem",
       "started_at": "2026-01-25T01:57:04.489403057Z",
       "completed_at": "2026-01-25T01:57:20.616014040Z",
+      "exit_status": 0
+    },
+    {
+      "id": "60a9ef7b-b4c6-43b6-b3cf-94ee1f76d5fb",
+      "task_id": "phase-26.task-1",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:14:17.394131318Z",
+      "completed_at": "2026-01-25T03:15:16.298774204Z",
+      "exit_status": 0
+    },
+    {
+      "id": "88c7839e-fa71-46dd-bb99-f75090119d2d",
+      "task_id": "phase-26.task-2",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:15:16.322073991Z",
+      "completed_at": "2026-01-25T03:16:14.520281678Z",
+      "exit_status": 0
+    },
+    {
+      "id": "7827b15e-a699-4000-a67c-2e374df135a0",
+      "task_id": "phase-26.task-3",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:16:14.531517708Z",
+      "completed_at": "2026-01-25T03:16:39.975139775Z",
+      "exit_status": 0
+    },
+    {
+      "id": "de0fd4e5-5656-4064-9deb-0687a6ddda7d",
+      "task_id": "phase-26.task-4",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:16:40.003750317Z",
+      "completed_at": "2026-01-25T03:17:55.833492130Z",
+      "exit_status": 0
+    },
+    {
+      "id": "e99f5fa4-d286-4b0e-9c75-bfae6a84dc9f",
+      "task_id": "phase-26.task-5",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:17:55.869520736Z",
+      "completed_at": "2026-01-25T03:18:22.314387003Z",
+      "exit_status": 0
+    },
+    {
+      "id": "645c5a1b-91ce-4b33-bc85-2c3e1970dae6",
+      "task_id": "phase-26.task-6",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:18:22.354579352Z",
+      "completed_at": "2026-01-25T03:19:03.426466295Z",
+      "exit_status": 0
+    },
+    {
+      "id": "ff646d1d-a508-4da2-bb71-485fe848b8bc",
+      "task_id": "phase-26.task-7",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T03:19:03.458997936Z",
+      "completed_at": "2026-01-25T03:21:11.479019562Z",
       "exit_status": 0
     }
   ],
@@ -3966,6 +4295,164 @@
       "data": {
         "type": "error",
         "message": "Task phase-25.task-1 failed: max cycles exceeded for task: phase-25.task-1"
+      }
+    },
+    {
+      "id": "f67e5e53-50a1-4188-b510-113e6650c682",
+      "timestamp": "2026-01-25T03:14:17.394130626Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Remove YAML front matter and update skill->command text in assets\n\n### Instructions\n\nUpdate all four asset markdown files to remove YAML front matter and replace self-referential 'skill' with 'command'.\n\nFor each file (assets/cm.md, assets/feat.md, assets/fix.md, assets/end.md):\n\n1. Remove the YAML front matter block (the `---` delimited block at the top of the file, including both `---` lines and all content between them, plus the blank line after the closing `---`).\n\n2. Replace self-referential uses of 'skill' with 'command' in the body text. Specifically:\n   - 'This skill' -> 'This command'\n   - 'this skill' -> 'this command'\n   - 'Before using this skill' -> 'Before using this command'\n   - 'The `/end` skill' -> 'The `/end` command'\n\n   Do NOT change:\n   - References to file paths like '.claude/skills/' (those will change in a later task)\n   - Historical phase names or roadmap references\n   - Template examples that show skill structure\n\n3. Ensure `cargo build` passes (the asset files are embedded via include_str! so compilation verifies they exist).\n\nNote: assets/feat.md has a description that wraps to a second line in the YAML front matter, so the front matter block is 6 lines instead of 5.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- assets/cm.md\n- assets/feat.md\n- assets/fix.md\n- assets/end.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "8c319808-cfa3-4172-b913-05ccfaca7054",
+      "timestamp": "2026-01-25T03:15:16.313664844Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "3755324c-652d-497d-9852-9b5e383d2311",
+      "timestamp": "2026-01-25T03:15:16.322072538Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Rename src/skill.rs to src/command.rs with updated constants\n\n### Instructions\n\nRename the skill module to command module:\n\n1. Delete `src/skill.rs`\n\n2. Create `src/command.rs` with content:\n```rust\n//! Embedded command files for cm init.\n\npub const CM_COMMAND: &str = include_str!(\"../assets/cm.md\");\npub const FEAT_COMMAND: &str = include_str!(\"../assets/feat.md\");\npub const FIX_COMMAND: &str = include_str!(\"../assets/fix.md\");\npub const END_COMMAND: &str = include_str!(\"../assets/end.md\");\n```\n\n3. Update `src/lib.rs` line 36-37:\n   - Change `/// Embedded skill files for cm init command.` to `/// Embedded command files for cm init.`\n   - Change `pub mod skill;` to `pub mod command;`\n\n4. Ensure `cargo build` passes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/skill.rs\n- src/lib.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "8a87d7bb-0266-4cb6-8c2b-b53a3a77c510",
+      "timestamp": "2026-01-25T03:16:14.526662915Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "3b2d7ed7-9471-406f-84b8-e714478ead2f",
+      "timestamp": "2026-01-25T03:16:14.531517217Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-3",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Update src/cli/mod.rs help text\n\n### Instructions\n\nUpdate the Command enum doc comments in src/cli/mod.rs:\n\n1. Change line 27 from:\n   `/// Initialize .claude/skills directory with cm, feat, and fix skills`\n   to:\n   `/// Initialize .claude/commands directory with cm, feat, fix, and end commands`\n\n2. Change line 29 from:\n   `/// Overwrite existing skill files`\n   to:\n   `/// Overwrite existing command files`\n\n3. Ensure `cargo build` passes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "c7b1a6c2-f9ef-44b2-954d-123121bd4cb3",
+      "timestamp": "2026-01-25T03:16:39.995491322Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-3",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "bb06e324-1485-4eb9-b0c4-d4460cbe4934",
+      "timestamp": "2026-01-25T03:16:40.003749817Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Rewrite src/cli/init.rs for commands\n\n### Instructions\n\nRewrite src/cli/init.rs to install commands instead of skills:\n\n1. Update module doc comment: 'Creates `.claude/commands/` directory and writes command files.'\n\n2. Change import from `crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL}` to `crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND}`\n\n3. Rename `SkillFile` struct to `CommandFile` with fields:\n   - `name: &'static str` (was `dir_name`) - the filename without .md extension\n   - `content: &'static str` - the file content\n\n4. Rename `SKILLS` to `COMMANDS`, update entries to use `CommandFile` and `*_COMMAND` constants\n\n5. Rewrite `execute_init_in_dir()` to:\n   - Create `.claude/commands/` directory (not `.claude/skills/`)\n   - Write files as `.claude/commands/{name}.md` (flat files, no subdirectories)\n   - Skip/overwrite logic same as before, just with new paths\n   - Call `cleanup_legacy_skills(base_dir)` after writing\n   - Print 'Commands initialized successfully!' and list available commands\n\n6. Add `cleanup_legacy_skills(base_dir: &Path)` function that:\n   - Checks if `.claude/skills/` exists\n   - Removes known legacy files: `{cm,feat,fix,end}/SKILL.md`\n   - Removes empty subdirectories with `fs::remove_dir()` (NOT remove_dir_all)\n   - Attempts to remove `.claude/skills/` if empty\n   - Prints migration message if any files were removed\n\n7. Rewrite all tests to use new paths (`.claude/commands/{name}.md` instead of `.claude/skills/{name}/SKILL.md`). Add a test for legacy cleanup.\n\n8. Ensure `cargo build`, `cargo clippy`, and `cargo test` all pass.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/init.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"su\n\n... [truncated, 319 more bytes]"
+      }
+    },
+    {
+      "id": "ee939390-ff3e-4ad1-893e-b239288a832a",
+      "timestamp": "2026-01-25T03:17:55.856384776Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-4",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "5ecf5122-8b49-4aea-a680-06ac0decfa0e",
+      "timestamp": "2026-01-25T03:17:55.869520245Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-5",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Update README.md\n\n### Instructions\n\nUpdate README.md to reflect the skills-to-commands change:\n\n1. Line 44: 'Install skills into your project' -> 'Install commands into your project'\n\n2. Line 47: Update code block comment from `.claude/skills/{cm,feat,fix}/SKILL.md` to `.claude/commands/{cm,feat,fix,end}.md`\n\n3. Line 50: 'Use the /cm skill in Claude Code' -> 'Use the /cm command in Claude Code'\n\n4. Lines 92-101: Rename section '## Skills' to '## Commands'. Change 'installs three Claude Code skills' to 'installs four Claude Code commands'. Update table header from 'Skill' to 'Command'. Add `/end` row to the table.\n\n5. Lines 129-136: Update the directory tree to show:\n```\n\u251c\u2500\u2500 .claude/\n\u2502   \u2514\u2500\u2500 commands/\n\u2502       \u251c\u2500\u2500 cm.md\n\u2502       \u251c\u2500\u2500 feat.md\n\u2502       \u251c\u2500\u2500 fix.md\n\u2502       \u2514\u2500\u2500 end.md\n```\n\n6. No build verification needed for README changes.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- README.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "9eb87a5a-7720-4924-8227-17ccc6f808cc",
+      "timestamp": "2026-01-25T03:18:22.334954593Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-5",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "82cd5063-1f25-4e6b-ac09-45b8abc4e1db",
+      "timestamp": "2026-01-25T03:18:22.354570485Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-6",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Delete legacy .claude/skills/ directory\n\n### Instructions\n\nRemove the legacy .claude/skills/ directory from this repository:\n\n1. Delete .claude/skills/ and all its contents (cm/SKILL.md, feat/SKILL.md, fix/SKILL.md, end/SKILL.md)\n2. Run `cm init` to create the new .claude/commands/ directory with all four command files\n3. Verify .claude/commands/cm.md, .claude/commands/feat.md, .claude/commands/fix.md, .claude/commands/end.md all exist\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "0473750c-6069-4fc2-a062-9a2cef70e33d",
+      "timestamp": "2026-01-25T03:19:03.449017573Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-6",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "08d0dca1-1e71-4c1c-8dc5-11dddb21f4d6",
+      "timestamp": "2026-01-25T03:19:03.458995020Z",
+      "action": "agent_spawn",
+      "task_id": "phase-26.task-7",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Build and verify commands migration\n\n### Instructions\n\nFinal verification of the skills-to-commands migration:\n\n1. Run `cargo build` - must pass\n2. Run `cargo clippy` - must pass with no warnings\n3. Run `cargo test` - all tests must pass\n4. Verify src/skill.rs no longer exists\n5. Verify src/command.rs exists with CM_COMMAND, FEAT_COMMAND, FIX_COMMAND, END_COMMAND constants\n6. Verify src/lib.rs declares `pub mod command` (not `pub mod skill`)\n7. Verify src/cli/init.rs installs to `.claude/commands/{name}.md`\n8. Verify .claude/commands/ directory exists with all 4 command files\n9. Verify .claude/skills/ directory does not exist\n10. Verify README.md references commands (not skills)\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/command.rs\n- src/cli/init.rs\n- src/lib.rs\n- README.md\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "986597b8-419c-4afd-a5fb-1beaaa8e82be",
+      "timestamp": "2026-01-25T03:21:11.498667504Z",
+      "action": "task_complete",
+      "task_id": "phase-26.task-7",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "147ce356-3ed6-4134-a21b-45771aa217df",
+      "timestamp": "2026-01-25T03:21:14.357285157Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
       }
     }
   ]

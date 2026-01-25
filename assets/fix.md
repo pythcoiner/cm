@@ -1,12 +1,6 @@
----
-name: fix
-description: Interactive wizard for adding bug fix tasks to an existing cm project (project)
-user-invocable: true
----
-
 # Bug Fix Wizard
 
-This skill guides users through adding a bug fix task to an existing cm (Claude Code Manager) project. The wizard collects bug details through a conversational flow and then updates the project artifacts (tasks.json, optionally ROADMAP.md).
+This command guides users through adding a bug fix task to an existing cm (Claude Code Manager) project. The wizard collects bug details through a conversational flow and then updates the project artifacts (tasks.json, optionally ROADMAP.md).
 
 ## Prerequisites
 
@@ -19,11 +13,11 @@ If prerequisites are not met, inform the user and suggest running `/cm` first.
 
 ## CRITICAL: Scope Limitations
 
-This skill ONLY updates planning files:
+This command ONLY updates planning files:
 - `.cm/tasks.json` - Add fix task definition
 - `.cm/ROADMAP.md` - Optionally add checkbox entry
 
-This skill does NOT:
+This command does NOT:
 - Implement any code fixes
 - Run `cm run` or execute tasks
 - Make changes outside `.cm/` directory

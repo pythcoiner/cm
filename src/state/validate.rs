@@ -468,6 +468,38 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
                     });
                 }
             }
+
+            // Check for completed items with uncompleted sub_items
+            let is_completed = item
+                .get("completed")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            if is_completed {
+                if let Some(Value::Array(sub_items)) = item.get("sub_items") {
+                    let uncompleted_count = sub_items
+                        .iter()
+                        .filter(|s| {
+                            !s.get("completed")
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(false)
+                        })
+                        .count();
+                    if uncompleted_count > 0 {
+                        let item_id = item
+                            .get("id")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown");
+                        result.add_warning(SanityError::OrphanedReference {
+                            file: file_name.clone(),
+                            id: item_id.to_string(),
+                            message: format!(
+                                "item marked completed but has {} uncompleted sub_item(s)",
+                                uncompleted_count
+                            ),
+                        });
+                    }
+                }
+            }
         }
     }
 
@@ -571,8 +603,13 @@ pub fn validate_cross_references(tasks_path: &Path, roadmap_path: &Path) -> Vali
         for phase in phases {
             if let Some(Value::Array(items)) = phase.get("items") {
                 for item in items {
+                    let item_id = item.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
+                    let is_completed = item
+                        .get("completed")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+
                     if let Some(Value::Array(linked_ids)) = item.get("linked_task_ids") {
-                        let item_id = item.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
                         for linked_id in linked_ids {
                             if let Some(linked_task_id) = linked_id.as_str() {
                                 if !task_ids.contains(linked_task_id) {
@@ -585,6 +622,22 @@ pub fn validate_cross_references(tasks_path: &Path, roadmap_path: &Path) -> Vali
                                 }
                             }
                         }
+
+                        // Uncompleted item with empty linked_task_ids
+                        if !is_completed && linked_ids.is_empty() {
+                            result.add_warning(SanityError::OrphanedReference {
+                                file: roadmap_file.clone(),
+                                id: item_id.to_string(),
+                                message: "uncompleted roadmap item has empty linked_task_ids — no task will drive completion".to_string(),
+                            });
+                        }
+                    } else if !is_completed {
+                        // Uncompleted item with no linked_task_ids field at all
+                        result.add_warning(SanityError::OrphanedReference {
+                            file: roadmap_file.clone(),
+                            id: item_id.to_string(),
+                            message: "uncompleted roadmap item has no linked_task_ids — no task will drive completion".to_string(),
+                        });
                     }
                 }
             }
@@ -1369,5 +1422,172 @@ mod tests {
                 if field == "agent_history" && message == "must be an array")
         });
         assert!(has_type_error, "Expected 'must be an array' error, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_uncompleted_roadmap_item_no_linked_tasks() {
+        let dir = TempDir::new().unwrap();
+        let tasks_path = dir.path().join("tasks.json");
+        let roadmap_path = dir.path().join("roadmap.json");
+
+        fs::write(&tasks_path, r#"{
+            "version": "1.0.0",
+            "project": { "name": "Test", "description": "Test" },
+            "phases": [{
+                "id": "phase-1",
+                "name": "Phase",
+                "status": "completed",
+                "tasks": [{
+                    "id": "task-1",
+                    "name": "Task",
+                    "type": "implement",
+                    "status": "completed",
+                    "context": {},
+                    "instructions": "Do it"
+                }]
+            }]
+        }"#).unwrap();
+
+        // Roadmap with uncompleted item that has no linked_task_ids
+        fs::write(&roadmap_path, r#"{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [
+                    {
+                        "id": "item-1",
+                        "name": "Completed item",
+                        "completed": true,
+                        "linked_task_ids": ["task-1"]
+                    },
+                    {
+                        "id": "item-2",
+                        "name": "Unlinked uncompleted item",
+                        "completed": false
+                    }
+                ]
+            }]
+        }"#).unwrap();
+
+        let result = validate_cross_references(&tasks_path, &roadmap_path);
+
+        // Should produce a warning for the unlinked item
+        assert!(result.is_valid(), "Should not produce errors, got: {:?}", result.errors);
+        assert!(!result.warnings.is_empty(), "Expected warning for unlinked roadmap item");
+        let has_orphan_warning = result.warnings.iter().any(|w| {
+            matches!(w, SanityError::OrphanedReference { id, message, .. }
+                if id == "item-2" && message.contains("no linked_task_ids"))
+        });
+        assert!(has_orphan_warning, "Expected orphaned reference warning for item-2, got: {:?}", result.warnings);
+    }
+
+    #[test]
+    fn test_uncompleted_roadmap_item_empty_linked_tasks() {
+        let dir = TempDir::new().unwrap();
+        let tasks_path = dir.path().join("tasks.json");
+        let roadmap_path = dir.path().join("roadmap.json");
+
+        fs::write(&tasks_path, r#"{
+            "version": "1.0.0",
+            "project": { "name": "Test", "description": "Test" },
+            "phases": [{ "id": "phase-1", "name": "Phase", "status": "pending", "tasks": [] }]
+        }"#).unwrap();
+
+        // Roadmap with uncompleted item that has empty linked_task_ids
+        fs::write(&roadmap_path, r#"{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{
+                    "id": "item-1",
+                    "name": "Unlinked item",
+                    "completed": false,
+                    "linked_task_ids": []
+                }]
+            }]
+        }"#).unwrap();
+
+        let result = validate_cross_references(&tasks_path, &roadmap_path);
+
+        assert!(result.is_valid());
+        assert!(!result.warnings.is_empty(), "Expected warning for empty linked_task_ids");
+        let has_orphan_warning = result.warnings.iter().any(|w| {
+            matches!(w, SanityError::OrphanedReference { id, message, .. }
+                if id == "item-1" && message.contains("empty linked_task_ids"))
+        });
+        assert!(has_orphan_warning, "Expected orphaned reference warning for item-1, got: {:?}", result.warnings);
+    }
+
+    #[test]
+    fn test_completed_item_with_uncompleted_sub_items() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Parent item",
+                    "completed": true,
+                    "sub_items": [
+                        {{ "name": "Done sub", "completed": true }},
+                        {{ "name": "Not done sub", "completed": false }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_roadmap_json(file.path());
+
+        assert!(result.is_valid(), "Should not produce errors, got: {:?}", result.errors);
+        assert!(!result.warnings.is_empty(), "Expected warning for completed item with uncompleted sub_items");
+        let has_warning = result.warnings.iter().any(|w| {
+            matches!(w, SanityError::OrphanedReference { id, message, .. }
+                if id == "item-1" && message.contains("1 uncompleted sub_item"))
+        });
+        assert!(has_warning, "Expected orphaned reference warning for item-1, got: {:?}", result.warnings);
+    }
+
+    #[test]
+    fn test_completed_roadmap_item_no_linked_tasks_ok() {
+        let dir = TempDir::new().unwrap();
+        let tasks_path = dir.path().join("tasks.json");
+        let roadmap_path = dir.path().join("roadmap.json");
+
+        fs::write(&tasks_path, r#"{
+            "version": "1.0.0",
+            "project": { "name": "Test", "description": "Test" },
+            "phases": [{ "id": "phase-1", "name": "Phase", "status": "completed", "tasks": [] }]
+        }"#).unwrap();
+
+        // Completed item with no linked tasks — should NOT warn
+        fs::write(&roadmap_path, r#"{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{
+                    "id": "item-1",
+                    "name": "Already done",
+                    "completed": true
+                }]
+            }]
+        }"#).unwrap();
+
+        let result = validate_cross_references(&tasks_path, &roadmap_path);
+
+        assert!(result.is_valid());
+        assert!(result.warnings.is_empty(), "Completed items should not warn, got: {:?}", result.warnings);
     }
 }

@@ -1,16 +1,10 @@
----
-name: end
-description: Finalize a /feat or /fix session by saving changes to planning files
-user-invocable: true
----
-
 # End Session Wizard
 
-This skill finalizes a `/feat` or `/fix` conversational session by saving all gathered information to the planning files without starting implementation. Use this when you've discussed a feature or fix with the user and want to save it to the project plan for later execution.
+This command finalizes a `/feat` or `/fix` conversational session by saving all gathered information to the planning files without starting implementation. Use this when you've discussed a feature or fix with the user and want to save it to the project plan for later execution.
 
 ## Prerequisites
 
-Before using this skill, ensure:
+Before using this command, ensure:
 - You are completing a `/feat` or `/fix` session
 - A `.cm/` directory exists with valid project files
 - The user has confirmed all details about the feature/fix
@@ -20,27 +14,27 @@ If prerequisites are not met, inform the user.
 
 ## CRITICAL: Scope Limitations
 
-This skill ONLY updates planning files:
+This command ONLY updates planning files:
 - `.cm/tasks.json` - Add new task definitions
 - `.cm/roadmap.json` - Add new roadmap items
 - `.cm/PLAN.md` - Add feature documentation (for `/feat` sessions)
 
-This skill does NOT:
+This command does NOT:
 - Implement any code
 - Run `cm run` or execute tasks
 - Make changes outside `.cm/` directory
 
-After this skill completes, the user must manually run `cm run` when ready to implement.
+After this command completes, the user must manually run `cm run` when ready to implement.
 
 ## Important: Session Context
 
-This skill assumes you have already:
+This command assumes you have already:
 - Gathered all feature/fix requirements from the user
 - Confirmed task breakdown and approach
 - Received user approval for the plan
 - Identified phase placement for new tasks
 
-DO NOT use this skill to start a new planning session. Use `/feat` or `/fix` for that.
+DO NOT use this command to start a new planning session. Use `/feat` or `/fix` for that.
 
 ---
 
@@ -242,9 +236,11 @@ If the command fails, investigate the error and fix any JSON formatting issues.
 
 ---
 
-## Step 6: Validate Changes
+## Step 6: Validate Changes (MANDATORY GATE)
 
-After updating all files, run validation to ensure consistency:
+After updating all files, you MUST run validation and fix ALL issues before proceeding.
+
+### 6.1 Run sanity check
 
 ```bash
 cm --sanity-check
@@ -256,24 +252,33 @@ This checks:
 - All dependencies reference existing tasks
 - All `roadmap_item_id` references point to valid items
 - All `linked_task_ids` in roadmap point to valid tasks
+- Every uncompleted roadmap item has `linked_task_ids` pointing to tasks
 - Required fields are present
 
-Check the output:
-- If validation **passes**: Proceed to Step 7
-- If validation **fails**:
-  1. Review the error messages carefully
-  2. Fix the issues in the JSON files (tasks.json or roadmap.json)
-  3. Re-run `cm --sanity-check`
-  4. Repeat until all errors are resolved
+### 6.2 If sanity check fails: FIX and RE-RUN
 
-**Common issues:**
+You MUST loop until the sanity check passes:
+
+1. Read the error/warning output carefully
+2. Fix the issues in the JSON files (tasks.json and/or roadmap.json)
+3. Re-run `cm --sanity-check`
+4. **Repeat from step 1 until ALL errors are resolved**
+
+**Common issues and fixes:**
 - **Duplicate task IDs**: Change one of the conflicting IDs
 - **Invalid cross-references**: Ensure `roadmap_item_id` points to an existing roadmap item ID
 - **Missing required fields**: Add the missing fields to task definitions
 - **Invalid dependencies**: Check that `depends_on` references existing task IDs
 - **Circular dependencies**: Remove dependency loops
+- **Uncompleted roadmap item with no linked tasks**: Add `linked_task_ids` to the roadmap item pointing to the task(s) you created, OR add a new task in tasks.json and link it
 
-**DO NOT proceed until validation passes.**
+### 6.3 Also check warnings
+
+Warnings (e.g., orphaned roadmap items) indicate roadmap items that no task will ever complete. For each warning:
+- If the roadmap item should be completed by a task you just added, add its task ID to `linked_task_ids`
+- If the roadmap item needs a NEW task, go back to Step 2 and add one
+
+**DO NOT proceed to Step 7 until `cm --sanity-check` reports zero errors AND zero warnings.**
 
 ---
 
@@ -531,7 +536,7 @@ The fix has been saved to your planning files and is ready for implementation wh
 
 ## Summary
 
-The `/end` skill bridges the gap between planning and execution by:
+The `/end` command bridges the gap between planning and execution by:
 1. Capturing all details from /feat or /fix sessions
 2. Updating planning files (tasks.json, roadmap.json, PLAN.md)
 3. Ensuring consistency with validation

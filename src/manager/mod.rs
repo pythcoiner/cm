@@ -1228,9 +1228,16 @@ impl Manager {
                 if item.id == item_id {
                     item.completed = true;
                     info!("Roadmap item '{}' marked completed (task {})", item.name, task_id);
+                    // Cascade: mark all sub-items as completed too
+                    for sub_item in &mut item.sub_items {
+                        if !sub_item.completed {
+                            sub_item.completed = true;
+                            info!("Roadmap sub-item '{}' marked completed (cascaded from item {})", sub_item.name, item_id);
+                        }
+                    }
                     return;
                 }
-                // Also check sub-items
+                // Also check sub-items by name (for direct sub-item targeting)
                 for sub_item in &mut item.sub_items {
                     if sub_item.name == item_id {
                         sub_item.completed = true;

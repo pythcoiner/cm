@@ -1,6 +1,6 @@
 //! Init subcommand implementation.
 //!
-//! Creates `.claude/skills/` directory and writes skill files (cm.md, feat.md, fix.md).
+//! Creates `.claude/commands/` directory and writes command files.
 
 use std::fs;
 use std::path::Path;
@@ -8,39 +8,39 @@ use std::path::Path;
 use log::info;
 
 use super::CliError;
-use crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL};
+use crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND};
 
-/// Skill file definition.
-struct SkillFile {
-    /// Directory name under .claude/skills/ (e.g., "cm" for .claude/skills/cm/)
-    dir_name: &'static str,
-    /// Content of the SKILL.md file
+/// Command file definition.
+struct CommandFile {
+    /// Filename without .md extension (e.g., "cm" for .claude/commands/cm.md)
+    name: &'static str,
+    /// Content of the command file
     content: &'static str,
 }
 
-/// All skill files to write.
-const SKILLS: &[SkillFile] = &[
-    SkillFile {
-        dir_name: "cm",
-        content: CM_SKILL,
+/// All command files to write.
+const COMMANDS: &[CommandFile] = &[
+    CommandFile {
+        name: "cm",
+        content: CM_COMMAND,
     },
-    SkillFile {
-        dir_name: "feat",
-        content: FEAT_SKILL,
+    CommandFile {
+        name: "feat",
+        content: FEAT_COMMAND,
     },
-    SkillFile {
-        dir_name: "fix",
-        content: FIX_SKILL,
+    CommandFile {
+        name: "fix",
+        content: FIX_COMMAND,
     },
-    SkillFile {
-        dir_name: "end",
-        content: END_SKILL,
+    CommandFile {
+        name: "end",
+        content: END_COMMAND,
     },
 ];
 
 /// Execute the init subcommand.
 ///
-/// Creates `.claude/skills/` directory and writes all skill files.
+/// Creates `.claude/commands/` directory and writes all command files.
 /// If `force` is false, existing files will not be overwritten.
 ///
 /// # Errors
@@ -58,46 +58,88 @@ pub fn execute_init(force: bool) -> Result<(), CliError> {
 /// This is the internal implementation that allows specifying the base directory,
 /// used for testing.
 fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
-    let skills_dir = base_dir.join(".claude/skills");
+    let commands_dir = base_dir.join(".claude/commands");
 
     // Create the directory if it doesn't exist
-    if !skills_dir.exists() {
-        info!("Creating directory: {:?}", skills_dir);
-        fs::create_dir_all(&skills_dir)?;
+    if !commands_dir.exists() {
+        info!("Creating directory: {:?}", commands_dir);
+        fs::create_dir_all(&commands_dir)?;
     }
 
-    // Write each skill file
-    for skill in SKILLS {
-        let skill_dir = skills_dir.join(skill.dir_name);
-        let file_path = skill_dir.join("SKILL.md");
+    // Write each command file
+    for command in COMMANDS {
+        let file_path = commands_dir.join(format!("{}.md", command.name));
 
         if file_path.exists() && !force {
             println!(
-                "Skipping {}/SKILL.md (already exists, use --force to overwrite)",
-                skill.dir_name
+                "Skipping {}.md (already exists, use --force to overwrite)",
+                command.name
             );
             continue;
         }
 
-        // Create the skill directory if it doesn't exist
-        if !skill_dir.exists() {
-            info!("Creating directory: {:?}", skill_dir);
-            fs::create_dir_all(&skill_dir)?;
-        }
-
-        info!("Writing skill file: {:?}", file_path);
-        fs::write(&file_path, skill.content)?;
+        info!("Writing command file: {:?}", file_path);
+        fs::write(&file_path, command.content)?;
         println!("Created {}", file_path.display());
     }
 
+    // Clean up legacy skills directory if it exists
+    cleanup_legacy_skills(base_dir)?;
+
     println!();
-    println!("Skills initialized successfully!");
+    println!("Commands initialized successfully!");
     println!();
-    println!("Available skills:");
+    println!("Available commands:");
     println!("  /cm   - Project setup wizard");
     println!("  /feat - Feature addition wizard");
     println!("  /fix  - Bug fix wizard");
     println!("  /end  - Finalize feat/fix session");
+
+    Ok(())
+}
+
+/// Clean up legacy `.claude/skills/` directory structure.
+///
+/// Removes known legacy skill files and empty directories from the old
+/// `.claude/skills/{name}/SKILL.md` structure.
+fn cleanup_legacy_skills(base_dir: &Path) -> Result<(), CliError> {
+    let skills_dir = base_dir.join(".claude/skills");
+
+    if !skills_dir.exists() {
+        return Ok(());
+    }
+
+    let legacy_skills = ["cm", "feat", "fix", "end"];
+    let mut removed_any = false;
+
+    for skill_name in &legacy_skills {
+        let skill_dir = skills_dir.join(skill_name);
+        let skill_file = skill_dir.join("SKILL.md");
+
+        // Remove legacy SKILL.md file if it exists
+        if skill_file.exists() {
+            info!("Removing legacy file: {:?}", skill_file);
+            fs::remove_file(&skill_file)?;
+            removed_any = true;
+        }
+
+        // Try to remove the skill subdirectory if it's empty
+        if skill_dir.exists() {
+            if let Ok(()) = fs::remove_dir(&skill_dir) {
+                info!("Removed empty directory: {:?}", skill_dir);
+            }
+        }
+    }
+
+    // Try to remove the .claude/skills directory if it's empty
+    if let Ok(()) = fs::remove_dir(&skills_dir) {
+        info!("Removed empty directory: {:?}", skills_dir);
+    }
+
+    if removed_any {
+        println!();
+        println!("Migrated from legacy .claude/skills/ to .claude/commands/");
+    }
 
     Ok(())
 }
@@ -112,33 +154,27 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         execute_init_in_dir(tmp.path(), false).unwrap();
 
-        let skills_dir = tmp.path().join(".claude/skills");
-        assert!(skills_dir.exists());
-        assert!(skills_dir.is_dir());
+        let commands_dir = tmp.path().join(".claude/commands");
+        assert!(commands_dir.exists());
+        assert!(commands_dir.is_dir());
     }
 
     #[test]
-    fn test_execute_init_creates_all_skill_files() {
+    fn test_execute_init_creates_all_command_files() {
         let tmp = TempDir::new().unwrap();
         execute_init_in_dir(tmp.path(), false).unwrap();
 
-        let skills_dir = tmp.path().join(".claude/skills");
+        let commands_dir = tmp.path().join(".claude/commands");
 
-        for skill in SKILLS {
-            let skill_dir = skills_dir.join(skill.dir_name);
-            let file_path = skill_dir.join("SKILL.md");
-            assert!(
-                skill_dir.exists(),
-                "Expected {}/SKILL.md directory to exist",
-                skill.dir_name
-            );
+        for command in COMMANDS {
+            let file_path = commands_dir.join(format!("{}.md", command.name));
             assert!(
                 file_path.exists(),
-                "Expected {}/SKILL.md to exist",
-                skill.dir_name
+                "Expected {}.md to exist",
+                command.name
             );
             let content = fs::read_to_string(&file_path).unwrap();
-            assert_eq!(content, skill.content);
+            assert_eq!(content, command.content);
         }
     }
 
@@ -147,17 +183,16 @@ mod tests {
         let tmp = TempDir::new().unwrap();
 
         // Create directory and a file with different content
-        let skills_dir = tmp.path().join(".claude/skills");
-        let cm_dir = skills_dir.join("cm");
-        fs::create_dir_all(&cm_dir).unwrap();
-        let cm_path = cm_dir.join("SKILL.md");
+        let commands_dir = tmp.path().join(".claude/commands");
+        fs::create_dir_all(&commands_dir).unwrap();
+        let cm_path = commands_dir.join("cm.md");
         let original_content = "original content";
         fs::write(&cm_path, original_content).unwrap();
 
         // Run init without force
         execute_init_in_dir(tmp.path(), false).unwrap();
 
-        // Check that cm/SKILL.md was not overwritten
+        // Check that cm.md was not overwritten
         let content = fs::read_to_string(&cm_path).unwrap();
         assert_eq!(content, original_content);
     }
@@ -167,18 +202,17 @@ mod tests {
         let tmp = TempDir::new().unwrap();
 
         // Create directory and a file with different content
-        let skills_dir = tmp.path().join(".claude/skills");
-        let cm_dir = skills_dir.join("cm");
-        fs::create_dir_all(&cm_dir).unwrap();
-        let cm_path = cm_dir.join("SKILL.md");
+        let commands_dir = tmp.path().join(".claude/commands");
+        fs::create_dir_all(&commands_dir).unwrap();
+        let cm_path = commands_dir.join("cm.md");
         fs::write(&cm_path, "original content").unwrap();
 
         // Run init with force
         execute_init_in_dir(tmp.path(), true).unwrap();
 
-        // Check that cm/SKILL.md was overwritten
+        // Check that cm.md was overwritten
         let content = fs::read_to_string(&cm_path).unwrap();
-        assert_eq!(content, CM_SKILL);
+        assert_eq!(content, CM_COMMAND);
     }
 
     #[test]
@@ -190,11 +224,69 @@ mod tests {
         execute_init_in_dir(tmp.path(), true).unwrap();
 
         // Check files still exist and have correct content
-        let skills_dir = tmp.path().join(".claude/skills");
-        for skill in SKILLS {
-            let file_path = skills_dir.join(skill.dir_name).join("SKILL.md");
+        let commands_dir = tmp.path().join(".claude/commands");
+        for command in COMMANDS {
+            let file_path = commands_dir.join(format!("{}.md", command.name));
             let content = fs::read_to_string(&file_path).unwrap();
-            assert_eq!(content, skill.content);
+            assert_eq!(content, command.content);
         }
+    }
+
+    #[test]
+    fn test_cleanup_legacy_skills() {
+        let tmp = TempDir::new().unwrap();
+
+        // Create legacy skills structure
+        let skills_dir = tmp.path().join(".claude/skills");
+        let cm_dir = skills_dir.join("cm");
+        let feat_dir = skills_dir.join("feat");
+        fs::create_dir_all(&cm_dir).unwrap();
+        fs::create_dir_all(&feat_dir).unwrap();
+        fs::write(cm_dir.join("SKILL.md"), "legacy cm").unwrap();
+        fs::write(feat_dir.join("SKILL.md"), "legacy feat").unwrap();
+
+        // Run init
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        // Check that legacy files are removed
+        assert!(!cm_dir.join("SKILL.md").exists());
+        assert!(!feat_dir.join("SKILL.md").exists());
+
+        // Check that legacy directories are removed if empty
+        // (They might still exist if there are other files)
+
+        // Check that new commands exist
+        let commands_dir = tmp.path().join(".claude/commands");
+        assert!(commands_dir.join("cm.md").exists());
+        assert!(commands_dir.join("feat.md").exists());
+    }
+
+    #[test]
+    fn test_cleanup_legacy_skills_removes_empty_dirs() {
+        let tmp = TempDir::new().unwrap();
+
+        // Create legacy skills structure with only SKILL.md files
+        let skills_dir = tmp.path().join(".claude/skills");
+        let cm_dir = skills_dir.join("cm");
+        fs::create_dir_all(&cm_dir).unwrap();
+        fs::write(cm_dir.join("SKILL.md"), "legacy cm").unwrap();
+
+        // Run cleanup
+        cleanup_legacy_skills(tmp.path()).unwrap();
+
+        // Check that the directory structure is removed
+        assert!(!cm_dir.join("SKILL.md").exists());
+        assert!(!cm_dir.exists());
+    }
+
+    #[test]
+    fn test_cleanup_legacy_skills_no_op_when_not_exists() {
+        let tmp = TempDir::new().unwrap();
+
+        // Run cleanup when .claude/skills doesn't exist
+        let result = cleanup_legacy_skills(tmp.path());
+
+        // Should succeed without error
+        assert!(result.is_ok());
     }
 }

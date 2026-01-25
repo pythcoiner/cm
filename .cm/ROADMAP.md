@@ -479,6 +479,40 @@ Status: **Complete** (3/3)
 
 ---
 
+## Phase 26: Skills to Commands Migration
+
+Status: **Not Started** (0/7)
+
+- [ ] Remove YAML front matter and update skill->command text in assets
+  - [ ] Strip YAML front matter from assets/cm.md
+  - [ ] Strip YAML front matter from assets/feat.md
+  - [ ] Strip YAML front matter from assets/fix.md
+  - [ ] Strip YAML front matter from assets/end.md
+  - [ ] Replace 'This skill' with 'This command' in all assets
+- [ ] Rename src/skill.rs to src/command.rs
+  - [ ] Delete src/skill.rs
+  - [ ] Create src/command.rs with *_COMMAND constants
+  - [ ] Update src/lib.rs module declaration
+- [ ] Update CLI help text
+- [ ] Rewrite src/cli/init.rs for commands
+  - [ ] Rename SkillFile to CommandFile, SKILLS to COMMANDS
+  - [ ] Install to .claude/commands/{name}.md (flat files)
+  - [ ] Add cleanup_legacy_skills() function
+  - [ ] Rewrite all tests for new path structure
+- [ ] Update README.md
+  - [ ] Rename Skills section to Commands
+  - [ ] Update directory tree
+  - [ ] Add /end to commands table
+- [ ] Delete legacy .claude/skills/ directory
+  - [ ] Remove .claude/skills/ tree
+  - [ ] Run cm init to create .claude/commands/
+- [ ] Build and verify commands migration
+  - [ ] cargo build + clippy + test pass
+  - [ ] Verify src/skill.rs deleted, src/command.rs exists
+  - [ ] Verify .claude/commands/ exists, .claude/skills/ gone
+
+---
+
 ## Summary
 
 | Phase | Status | Progress |
@@ -511,4 +545,5 @@ Status: **Complete** (3/3)
 | Phase 23: Detailed File Logging | Complete | 35/35 |
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
-| **Total** | | **281/281** |
+| Phase 26: Skills to Commands Migration | Not Started | 0/27 |
+| **Total** | | **281/308** |

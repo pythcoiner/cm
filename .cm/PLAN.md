@@ -273,6 +273,23 @@ After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --r
 - WARN: Build failures, task deferrals, shutdown signals
 - ERROR: Fatal errors
 
+### Phase 26: Skills to Commands Migration
+
+**Goal:** Convert `/cm`, `/feat`, `/fix`, `/end` from Claude Code skills to commands
+
+**Deliverables:**
+- Asset files without YAML front matter, "skill" → "command" in text
+- `src/command.rs` replacing `src/skill.rs` with renamed constants
+- `src/cli/init.rs` installing to `.claude/commands/{name}.md` (flat files)
+- Legacy `.claude/skills/` cleanup function
+- Updated README.md with commands terminology
+
+**Key changes:**
+- Install path: `.claude/skills/{name}/SKILL.md` → `.claude/commands/{name}.md`
+- Module: `crate::skill` → `crate::command`
+- Constants: `*_SKILL` → `*_COMMAND`
+- Struct: `SkillFile` → `CommandFile`
+
 ## Technical Decisions
 
 ### Error Handling

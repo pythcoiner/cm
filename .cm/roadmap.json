@@ -2005,6 +2005,162 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-26",
+      "number": "26",
+      "name": "Skills to Commands Migration",
+      "items": [
+        {
+          "id": "26.1",
+          "name": "Remove YAML front matter and update skill->command text in assets",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Strip YAML front matter from assets/cm.md",
+              "completed": false
+            },
+            {
+              "name": "Strip YAML front matter from assets/feat.md",
+              "completed": false
+            },
+            {
+              "name": "Strip YAML front matter from assets/fix.md",
+              "completed": false
+            },
+            {
+              "name": "Strip YAML front matter from assets/end.md",
+              "completed": false
+            },
+            {
+              "name": "Replace 'This skill' with 'This command' in all assets",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-1"
+          ]
+        },
+        {
+          "id": "26.2",
+          "name": "Rename src/skill.rs to src/command.rs",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Delete src/skill.rs",
+              "completed": false
+            },
+            {
+              "name": "Create src/command.rs with *_COMMAND constants",
+              "completed": false
+            },
+            {
+              "name": "Update src/lib.rs module declaration",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-2"
+          ]
+        },
+        {
+          "id": "26.3",
+          "name": "Update CLI help text",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-26.task-3"
+          ]
+        },
+        {
+          "id": "26.4",
+          "name": "Rewrite src/cli/init.rs for commands",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Rename SkillFile to CommandFile, SKILLS to COMMANDS",
+              "completed": false
+            },
+            {
+              "name": "Install to .claude/commands/{name}.md (flat files)",
+              "completed": false
+            },
+            {
+              "name": "Add cleanup_legacy_skills() function",
+              "completed": false
+            },
+            {
+              "name": "Rewrite all tests for new path structure",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-4"
+          ]
+        },
+        {
+          "id": "26.5",
+          "name": "Update README.md",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Rename Skills section to Commands",
+              "completed": false
+            },
+            {
+              "name": "Update directory tree",
+              "completed": false
+            },
+            {
+              "name": "Add /end to commands table",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-5"
+          ]
+        },
+        {
+          "id": "26.6",
+          "name": "Delete legacy .claude/skills/ directory",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Remove .claude/skills/ tree",
+              "completed": false
+            },
+            {
+              "name": "Run cm init to create .claude/commands/",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-6"
+          ]
+        },
+        {
+          "id": "26.7",
+          "name": "Build and verify commands migration",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "cargo build + clippy + test pass",
+              "completed": false
+            },
+            {
+              "name": "Verify src/skill.rs deleted, src/command.rs exists",
+              "completed": false
+            },
+            {
+              "name": "Verify .claude/commands/ exists, .claude/skills/ gone",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-26.task-7"
+          ]
+        }
+      ]
     }
   ]
 }

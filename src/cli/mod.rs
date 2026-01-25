@@ -24,9 +24,9 @@ use crate::tui::{self, ManagerEvent, TuiCommand};
 /// Subcommands for the cm CLI.
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Initialize .claude/skills directory with cm, feat, and fix skills
+    /// Initialize .claude/commands directory with cm, feat, fix, and end commands
     Init {
-        /// Overwrite existing skill files
+        /// Overwrite existing command files
         #[arg(long)]
         force: bool,
     },

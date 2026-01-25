@@ -2299,3 +2299,256 @@ Task deferred.
 **Error:** Task phase-25.task-1 failed: max cycles exceeded for task: phase-25.task-1
 
 
+[2026-01-25 03:14:17 UTC] **AGENT_SPAWN** | Task: phase-26.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Remove YAML front matter and update skill->command text in assets
+
+### Instructions
+
+Update all four asset markdown files to remove YAML front matter and replace self-referential 'skill' with 'command'.
+
+For each file (assets/cm.md, assets/feat.md, assets/fix.md, assets/end.md):
+
+1. Remove the YAML front matter block (the `---` delimited block at the top of the file, including both `---` lines and all content bet
+
+... [truncated, 1454 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:15:16 UTC] **TASK_COMPLETE** | Task: phase-26.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:15:16 UTC] **AGENT_SPAWN** | Task: phase-26.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Rename src/skill.rs to src/command.rs with updated constants
+
+### Instructions
+
+Rename the skill module to command module:
+
+1. Delete `src/skill.rs`
+
+2. Create `src/command.rs` with content:
+```rust
+//! Embedded command files for cm init.
+
+pub const CM_COMMAND: &str = include_str!("../assets/cm.md");
+pub const FEAT_COMMAND: &str = include_str!("../assets/feat.md");
+pub const FIX_COMMAND: &str = include_str!("../a
+
+... [truncated, 928 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:16:14 UTC] **TASK_COMPLETE** | Task: phase-26.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:16:14 UTC] **AGENT_SPAWN** | Task: phase-26.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update src/cli/mod.rs help text
+
+### Instructions
+
+Update the Command enum doc comments in src/cli/mod.rs:
+
+1. Change line 27 from:
+   `/// Initialize .claude/skills directory with cm, feat, and fix skills`
+   to:
+   `/// Initialize .claude/commands directory with cm, feat, fix, and end commands`
+
+2. Change line 29 from:
+   `/// Overwrite existing skill files`
+   to:
+   `/// Overwrite existing command files`
+
+3. 
+
+... [truncated, 637 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:16:39 UTC] **TASK_COMPLETE** | Task: phase-26.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:16:40 UTC] **AGENT_SPAWN** | Task: phase-26.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Rewrite src/cli/init.rs for commands
+
+### Instructions
+
+Rewrite src/cli/init.rs to install commands instead of skills:
+
+1. Update module doc comment: 'Creates `.claude/commands/` directory and writes command files.'
+
+2. Change import from `crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL}` to `crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND}`
+
+3. Rename `SkillFile` struct to `CommandF
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:17:55 UTC] **TASK_COMPLETE** | Task: phase-26.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:17:55 UTC] **AGENT_SPAWN** | Task: phase-26.task-5
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update README.md
+
+### Instructions
+
+Update README.md to reflect the skills-to-commands change:
+
+1. Line 44: 'Install skills into your project' -> 'Install commands into your project'
+
+2. Line 47: Update code block comment from `.claude/skills/{cm,feat,fix}/SKILL.md` to `.claude/commands/{cm,feat,fix,end}.md`
+
+3. Line 50: 'Use the /cm skill in Claude Code' -> 'Use the /cm command in Claude Code'
+
+4. Lines 92-101: 
+
+... [truncated, 1076 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:18:22 UTC] **TASK_COMPLETE** | Task: phase-26.task-5
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:18:22 UTC] **AGENT_SPAWN** | Task: phase-26.task-6
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Delete legacy .claude/skills/ directory
+
+### Instructions
+
+Remove the legacy .claude/skills/ directory from this repository:
+
+1. Delete .claude/skills/ and all its contents (cm/SKILL.md, feat/SKILL.md, fix/SKILL.md, end/SKILL.md)
+2. Run `cm init` to create the new .claude/commands/ directory with all four command files
+3. Verify .claude/commands/cm.md, .claude/commands/feat.md, .claude/commands/fix.md, .claude/co
+
+... [truncated, 520 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:19:03 UTC] **TASK_COMPLETE** | Task: phase-26.task-6
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:19:03 UTC] **AGENT_SPAWN** | Task: phase-26.task-7
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Build and verify commands migration
+
+### Instructions
+
+Final verification of the skills-to-commands migration:
+
+1. Run `cargo build` - must pass
+2. Run `cargo clippy` - must pass with no warnings
+3. Run `cargo test` - all tests must pass
+4. Verify src/skill.rs no longer exists
+5. Verify src/command.rs exists with CM_COMMAND, FEAT_COMMAND, FIX_COMMAND, END_COMMAND constants
+6. Verify src/lib.rs declares `pub mod c
+
+... [truncated, 923 more bytes]
+```
+
+</details>
+
+[2026-01-25 03:21:11 UTC] **TASK_COMPLETE** | Task: phase-26.task-7
+
+Task completed with status: **completed**
+
+
+[2026-01-25 03:21:14 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+

@@ -23,7 +23,8 @@ You are the MAIN AGENT. You MUST:
 1. Only COORDINATE and manage work
 2. NEVER write implementation code directly
 3. NEVER perform reviews directly
-4. Update ROADMAP.md (check items) and LOG.md (detailed logs) AFTER each phase
+4. Update ROADMAP.json (check items) and tasks.json (detailed logs) AFTER each phase
+   and run `cm --regenerate`
 5. Create a NEW sub-agent for EVERY task (never reuse agent IDs)
 
 ## Phase Workflow
@@ -36,8 +37,9 @@ For each phase:
 4. SPAWN review sub-agent to review (FRESH context!)
 5. IF review finds issues: SPAWN fix sub-agent, then re-review
 6. REPEAT until review APPROVED (max 5 cycles, then DEFER)
-7. UPDATE ROADMAP.md - check off completed items
-8. UPDATE LOG.md - add detailed log entry
+7. UPDATE ROADMAP.json - check off completed items
+8. UPDATE LOG.json - add detailed log entry
+9. RUN `cm --regenerate`
 9. GIT COMMIT - commit all changes with message "cm: Phase N - [description]"
 
 ## What is the current state?

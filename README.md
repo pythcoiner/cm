@@ -41,13 +41,13 @@ cargo install --path .
 
 ## Quick Start
 
-### Install skills into your project
+### Install commands into your project
 
 ```bash
-cm init              # Creates .claude/skills/{cm,feat,fix}/SKILL.md
+cm init              # Creates .claude/commands/{cm,feat,fix,end}.md
 ```
 
-### Use the /cm skill in Claude Code
+### Use the /cm command in Claude Code
 
 ```bash
 claude
@@ -89,15 +89,16 @@ cm --model MODEL    # Override model
 cm --timeout SECS   # Override agent timeout
 ```
 
-## Skills
+## Commands
 
-`cm init` installs three Claude Code skills:
+`cm init` installs four Claude Code commands:
 
-| Skill | Usage | Description |
-|-------|-------|-------------|
+| Command | Usage | Description |
+|---------|-------|-------------|
 | `/cm` | `/cm` | Interactive wizard to set up a new cm project |
 | `/feat` | `/feat` | Add a new feature to an existing cm project |
 | `/fix` | `/fix` | Add a bug fix task to an existing cm project |
+| `/end` | `/end` | Finalize a /feat or /fix session by saving changes to planning files |
 
 ## Configuration
 
@@ -127,13 +128,11 @@ your-project/
 │   ├── LOG.md          # Audit trail (generated)
 │   └── checkpoints/    # Recovery snapshots (auto-generated)
 ├── .claude/
-│   └── skills/
-│       ├── cm/
-│       │   └── SKILL.md
-│       ├── feat/
-│       │   └── SKILL.md
-│       └── fix/
-│           └── SKILL.md
+│   └── commands/
+│       ├── cm.md
+│       ├── feat.md
+│       ├── fix.md
+│       └── end.md
 ├── src/
 └── Cargo.toml
 ```

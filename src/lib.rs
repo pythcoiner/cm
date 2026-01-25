@@ -33,5 +33,5 @@ pub mod cli;
 /// Configuration file support.
 pub mod config;
 
-/// Embedded skill files for cm init command.
-pub mod skill;
+/// Embedded command files for cm init.
+pub mod command;

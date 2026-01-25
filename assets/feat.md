@@ -1,13 +1,6 @@
----
-name: feat
-description: Interactive wizard for adding new features to an existing cm project
-(project)
-user-invocable: true
----
-
 # Feature Wizard
 
-This skill guides users through adding a new feature to an existing cm (Claude Code
+This command guides users through adding a new feature to an existing cm (Claude Code
 Manager) project. The wizard collects feature requirements through a conversational
 flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
 
@@ -22,12 +15,12 @@ If prerequisites are not met, inform the user and suggest running `/cm` first.
 
 ## CRITICAL: Scope Limitations
 
-This skill ONLY updates planning files:
+This command ONLY updates planning files:
 - `.cm/PLAN.md` - Add feature documentation
 - `.cm/roadmap.json` - Add roadmap items
 - `.cm/tasks.json` - Add task definitions
 
-This skill does NOT:
+This command does NOT:
 - Implement any code
 - Run `cm run` or execute tasks
 - Make changes outside `.cm/` directory

@@ -1,12 +1,6 @@
----
-name: cm
-description: Interactive wizard for setting up cm (Claude Code Manager) projects (project)
-user-invocable: true
----
-
 # CM Project Wizard
 
-This skill guides users through creating a complete cm (Claude Code Manager) project setup. The wizard collects information through a conversational flow and then generates all necessary artifacts in the `.cm/` directory.
+This command guides users through creating a complete cm (Claude Code Manager) project setup. The wizard collects information through a conversational flow and then generates all necessary artifacts in the `.cm/` directory.
 
 ## Important: Interactive Flow
 
