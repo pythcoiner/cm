@@ -2258,15 +2258,15 @@
         {
           "id": "27.4",
           "name": "Update --prune for per-phase logs",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "Add prune_all() function",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Update execute_prune() in CLI",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
@@ -2276,23 +2276,23 @@
         {
           "id": "27.5",
           "name": "Add unit tests for PhaseLogger",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "Test extract_phase_id",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Test directory creation",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Test log file creation and format",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Test multiple phases create separate files",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
@@ -2302,19 +2302,19 @@
         {
           "id": "27.6",
           "name": "Build and verify per-phase logging",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Verify PhaseLogger integration",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Verify TRACE level added",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
