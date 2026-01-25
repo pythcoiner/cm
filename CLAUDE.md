@@ -35,14 +35,13 @@ The manager selects the next runnable task, spawns an IMPLEM agent with isolated
 - **`src/build/`** - Build verification (`mod.rs`), cargo runner (`cargo.rs`), and git operations (`git.rs`)
 - **`src/log/`** - Per-phase detailed logging (`mod.rs`) and persistent `cm.log` with rotation (`file_logger.rs`)
 - **`src/generate/`** - Deterministic markdown generation from JSON: `roadmap_md.rs` (ROADMAP.md) and `tasks_md.rs` (TASKS.md)
-- **`src/tui/`** - Terminal UI with ratatui/crossterm: split layout (`layout.rs`), widgets (`widgets.rs`), and stream management (`mod.rs`)
 - **`src/config/`** - TOML configuration loading from `.cm/config.toml`
 
 ### Key Design Decisions
 
 - **JSON is source of truth** - `tasks.json` and `roadmap.json` are definitive; markdown files (ROADMAP.md, TASKS.md) are always regenerated from JSON, never edited directly
 - **Agent context isolation** - Each agent receives only its task description, relevant files, code style excerpt, and prior review issues (if applicable). No global context or cross-task information
-- **Threading model** - Uses `std::thread` (not async). Main thread runs TUI, background thread runs Manager. Communication via `std::sync::mpsc` channels and `Arc<AtomicBool>` for shutdown signaling
+- **Threading model** - Single-threaded execution with interactive stdin/stdout prompts. Uses `Arc<AtomicBool>` for graceful shutdown signaling
 - **Error handling** - All error types use `thiserror` derive macro with typed enums. Never use `anyhow` or string errors
 - **Config precedence** - CLI args > `.cm/config.toml` > defaults
 
@@ -65,7 +64,7 @@ Project state lives in `.cm/`:
 ## CLI Modes
 
 ```
-cm                  # Run all tasks with TUI
+cm                  # Run with interactive prompts
 cm --step           # Run one task only
 cm --continue       # Resume from crash
 cm --status         # Show progress

@@ -6,16 +6,13 @@
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
-use std::time::Duration;
 
 use chrono::Utc;
 use log::{debug, error, info, warn};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::tui::{ManagerEvent, TuiCommand};
 
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
@@ -180,10 +177,6 @@ pub struct Manager {
     manager_state: ManagerState,
     /// Shutdown flag for graceful termination.
     shutdown_flag: Arc<AtomicBool>,
-    /// Optional event sender for TUI communication.
-    event_tx: Option<Sender<ManagerEvent>>,
-    /// Optional command receiver for TUI communication.
-    cmd_rx: Option<Receiver<TuiCommand>>,
 }
 
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
@@ -242,8 +235,6 @@ impl Manager {
             phase_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
-            event_tx: None,
-            cmd_rx: None,
         })
     }
 
@@ -339,148 +330,6 @@ impl Manager {
         Ok(())
     }
 
-    /// Run the main orchestration loop with TUI channel communication.
-    ///
-    /// This variant of `run()` sends events to the TUI and checks for commands.
-    /// Uses phase-based execution where all tasks in a phase are handled by one agent.
-    ///
-    /// # Arguments
-    ///
-    /// * `event_tx` - Sender for manager events to the TUI
-    /// * `cmd_rx` - Receiver for commands from the TUI
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - Phase execution fails
-    /// - State cannot be saved
-    /// - Shutdown was requested
-    pub fn run_with_channels(
-        &mut self,
-        event_tx: Sender<ManagerEvent>,
-        cmd_rx: Receiver<TuiCommand>,
-    ) -> Result<(), ManagerError> {
-        info!("Starting manager run loop with TUI channels (phase-based)");
-        emit_cm("Starting run loop (TUI, phase-based)");
-
-        // Store channels for use in nested methods (like prompt_retry_cycles)
-        self.event_tx = Some(event_tx.clone());
-        self.cmd_rx = Some(cmd_rx);
-
-        // Ensure clean working tree for commit-per-agent audit trail
-        self.preflight_git_check()?;
-
-        self.manager_state = ManagerState::Executing;
-
-        // Send initial state to TUI
-        let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
-
-        let mut paused = false;
-
-        loop {
-            // Check for shutdown signal
-            if self.shutdown_flag.load(Ordering::SeqCst) {
-                info!("Shutdown signal received, saving state and exiting gracefully");
-                self.update_state()?;
-                self.manager_state = ManagerState::Idle;
-                return Err(ManagerError::ShutdownRequested);
-            }
-
-            // Check for TUI commands (non-blocking)
-            if let Some(ref rx) = self.cmd_rx {
-                while let Ok(cmd) = rx.try_recv() {
-                    match cmd {
-                        TuiCommand::Pause => {
-                            paused = !paused;
-                            info!("Manager paused: {}", paused);
-                        }
-                        TuiCommand::Interrupt => {
-                            info!("Interrupt received, stopping manager");
-                            self.manager_state = ManagerState::Idle;
-                            return Ok(());
-                        }
-                        TuiCommand::Quit => {
-                            info!("Quit received, stopping manager");
-                            self.manager_state = ManagerState::Idle;
-                            return Ok(());
-                        }
-                        TuiCommand::RetryResponse { .. } => {
-                            // Ignore - only expected during prompt_retry_cycles
-                        }
-                    }
-                }
-            }
-
-            // If paused, wait a bit and check again
-            if paused {
-                std::thread::sleep(std::time::Duration::from_millis(100));
-                continue;
-            }
-
-            // Select next runnable phase
-            let phase_id = match self.state.next_runnable_phase() {
-                Some(phase) => phase.id.clone(),
-                None => {
-                    info!("No more runnable phases, exiting loop");
-                    emit_cm("No more runnable phases");
-                    break;
-                }
-            };
-
-            // Count pending tasks in phase for TUI event
-            let task_count = self.state.pending_tasks_in_phase(&phase_id).len();
-
-            info!("Selected phase for execution: {} ({} tasks)", phase_id, task_count);
-            emit_cm(&format!("Selected phase: {} ({} tasks)", phase_id, task_count));
-
-            // Send PhaseStarted event
-            let _ = event_tx.send(ManagerEvent::PhaseStarted {
-                phase_id: phase_id.clone(),
-                task_count,
-            });
-
-            // Execute the phase (all pending tasks in one agent call)
-            match self.execute_phase(&phase_id) {
-                Ok(()) => {
-                    info!("Phase {} completed successfully", phase_id);
-                    emit_cm(&format!("Phase {} completed", phase_id));
-                    let _ = event_tx.send(ManagerEvent::PhaseCompleted {
-                        phase_id: phase_id.clone(),
-                    });
-                }
-                Err(e) => {
-                    let error_msg = format!("Phase {} failed: {}", phase_id, e);
-                    error!("{}", error_msg);
-                    emit_cm(&format!("Phase {} failed: {}", phase_id, e));
-                    let _ = event_tx.send(ManagerEvent::Error(error_msg.clone()));
-                    self.log_manager.log_error(&error_msg)?;
-                    self.state
-                        .log_records
-                        .push(LogManager::create_error_record(&error_msg));
-
-                    // Don't propagate the error; continue with next phase
-                }
-            }
-
-            // Save state after each phase
-            self.update_state()?;
-
-            // Send updated state to TUI
-            let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
-
-            // Check for shutdown signal after phase completion
-            if self.shutdown_flag.load(Ordering::SeqCst) {
-                info!("Shutdown signal received after phase completion, exiting gracefully");
-                self.manager_state = ManagerState::Idle;
-                return Err(ManagerError::ShutdownRequested);
-            }
-        }
-
-        self.manager_state = ManagerState::Idle;
-        info!("Manager run loop completed");
-        emit_cm("Run loop completed");
-        Ok(())
-    }
 
     /// Execute a single step (one phase) and return.
     ///
@@ -694,53 +543,16 @@ impl Manager {
 
     /// Prompt user whether to retry after max review cycles exhausted.
     ///
-    /// In TUI mode, sends a RetryPrompt event and waits for RetryResponse.
-    /// In daemon mode (no TUI channels), prompts via stdin/stdout.
+    /// Prompts via stdin/stdout.
     ///
     /// Returns Some(additional_cycles) if user wants to retry, None if they decline.
     fn prompt_retry_cycles(&self, task_id: &str, cycles_completed: u32) -> Option<u32> {
+        use std::io::{self, BufRead, Write};
+
         let message = format!(
             "Task {} exhausted {} review cycles. Retry more cycles?",
             task_id, cycles_completed
         );
-
-        // TUI mode: send event and wait for response
-        if let (Some(ref tx), Some(ref rx)) = (&self.event_tx, &self.cmd_rx) {
-            let _ = tx.send(ManagerEvent::RetryPrompt {
-                task_id: task_id.to_string(),
-                cycles_completed,
-                message: message.clone(),
-            });
-
-            // Wait for response with 5 minute timeout
-            let timeout = Duration::from_secs(300);
-            loop {
-                match rx.recv_timeout(timeout) {
-                    Ok(TuiCommand::RetryResponse { retry, additional_cycles }) => {
-                        if retry && additional_cycles > 0 {
-                            return Some(additional_cycles);
-                        } else {
-                            return None;
-                        }
-                    }
-                    Ok(TuiCommand::Quit) | Ok(TuiCommand::Interrupt) => {
-                        return None;
-                    }
-                    Ok(_) => {
-                        // Ignore other commands while waiting
-                        continue;
-                    }
-                    Err(_) => {
-                        // Timeout - treat as decline
-                        warn!("Retry prompt timed out for task {}", task_id);
-                        return None;
-                    }
-                }
-            }
-        }
-
-        // Daemon mode: use stdin/stdout
-        use std::io::{self, BufRead, Write};
 
         println!();
         println!("{}", message);
@@ -755,7 +567,7 @@ impl Manager {
 
         let input = line.trim().to_lowercase();
         if input == "y" || input == "yes" {
-            Some(5) // Default to 5 more cycles
+            Some(5)
         } else if let Ok(n) = input.parse::<u32>() {
             if n > 0 { Some(n) } else { None }
         } else {

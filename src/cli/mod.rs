@@ -19,7 +19,6 @@ use crate::config::{ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
-use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
 #[derive(Debug, Subcommand)]
@@ -63,9 +62,6 @@ pub enum CliError {
     #[error("background thread panicked")]
     ThreadError,
 
-    /// TUI error.
-    #[error("tui error: {0}")]
-    TuiError(String),
 
     /// Markdown generation error.
     #[error("generate error: {0}")]
@@ -139,9 +135,6 @@ pub struct Cli {
     #[arg(long, value_name = "DIR")]
     pub working_dir: Option<PathBuf>,
 
-    /// Run in daemon mode (no TUI, stdin prompts).
-    #[arg(long)]
-    pub daemon: bool,
 
     /// Perform comprehensive sanity check on JSON files.
     #[arg(long)]
@@ -322,53 +315,12 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
 /// Runs all tasks until completion or error.
 fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     info!("Run mode: executing all tasks from {:?}", cli.state);
-
     let config = build_manager_config(cli)?;
-
-    if cli.daemon {
-        // run without TUI (daemon mode with interactive prompts)
-        let mut manager = Manager::new(config, shutdown_flag)?;
-        manager.run_interactive()?;
-        Ok(())
-    } else {
-        execute_run_with_tui(config, shutdown_flag)
-    }
-}
-
-/// Execute run mode with the terminal UI.
-///
-/// Spawns the manager in a background thread and runs the TUI on the main thread.
-fn execute_run_with_tui(config: ManagerConfig, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
-    use std::sync::mpsc;
-    use std::thread;
-
-    info!("Starting TUI mode");
-
-    // Load state for initial TUI display
-    let initial_state = load_state(&config.state_path)?;
-
-    // Create channels for bidirectional communication
-    let (event_tx, event_rx) = mpsc::channel::<ManagerEvent>();
-    let (cmd_tx, cmd_rx) = mpsc::channel::<TuiCommand>();
-
-    // Spawn manager in background thread
-    let manager_handle = thread::spawn(move || -> Result<(), ManagerError> {
-        let mut manager = Manager::new(config, shutdown_flag)?;
-        manager.run_with_channels(event_tx, cmd_rx)
-    });
-
-    // Run TUI on main thread (it owns the terminal)
-    tui::run_tui_with_channels(initial_state, event_rx, cmd_tx)
-        .map_err(|e| CliError::TuiError(e.to_string()))?;
-
-    // Wait for manager thread
-    match manager_handle.join() {
-        Ok(result) => result?,
-        Err(_) => return Err(CliError::ThreadError),
-    }
-
+    let mut manager = Manager::new(config, shutdown_flag)?;
+    manager.run_interactive()?;
     Ok(())
 }
+
 
 /// Execute the continue mode.
 ///
@@ -1112,16 +1064,10 @@ mod tests {
         assert!(!cli.status);
         assert!(!cli.validate);
         assert!(!cli.verbose);
-        assert!(!cli.daemon);
         assert!(cli.config.is_none());
         assert_eq!(cli.state, PathBuf::from(".cm/tasks.json"));
     }
 
-    #[test]
-    fn test_cli_parse_daemon() {
-        let cli = Cli::parse_from(["cm", "--daemon"]);
-        assert!(cli.daemon);
-    }
 
     #[test]
     fn test_cli_parse_continue() {
