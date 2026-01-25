@@ -202,7 +202,7 @@ Wait for the user's response before proceeding.
 > - `.cm/PLAN.md` - High-level project plan
 > - `.cm/ROADMAP.md` - Detailed checklist with checkboxes
 > - `.cm/tasks.json` - Machine-readable task definitions
-> - `.cm/LOG.md` - Execution log (empty template)
+> - `.cm/TASKS.md` - Task status overview (generated from tasks.json)
 >
 > **Project Structure:**
 > - Directories: [list]
@@ -229,7 +229,7 @@ Once confirmed, generate all files in the `.cm/` directory:
 3. Generate `roadmap.json` using the roadmap.json Schema below
 4. Generate `ROADMAP.md` from roadmap.json (or use template for initial creation)
 5. Generate `tasks.json` using the tasks.json Schema below
-6. Generate `LOG.md` as empty template (will be regenerated from tasks.json log_records)
+6. Generate `TASKS.md` from tasks.json
 7. Generate `.cm/agents/MANAGER.md` using the Manager Agent Template below
 8. Generate `.cm/agents/IMPLEMENTER.md` using the Implementer Agent Template below
 9. Generate `.cm/agents/REVIEWER.md` using the Reviewer Agent Template below
@@ -242,7 +242,7 @@ Once confirmed, generate all files in the `.cm/` directory:
     - If user skipped Step 6: use default ACTIONS.md template with placeholder text like `[build command]`
     - If file doesn't exist, create it from template
 
-**Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (LOG.md, ROADMAP.md) can be regenerated from JSON at any time using `cm --regenerate`.
+**Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (ROADMAP.md, TASKS.md) can be regenerated from JSON at any time using `cm --regenerate`.
 
 After generation, inform the user:
 
@@ -253,7 +253,7 @@ After generation, inform the user:
 > - `.cm/roadmap.json` - Source of truth for roadmap progress
 > - `.cm/ROADMAP.md` - Human-readable roadmap (generated from roadmap.json)
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
-> - `.cm/LOG.md` - Execution logs (generated from tasks.json log_records)
+> - `.cm/TASKS.md` - Task status overview (generated from tasks.json)
 > - `.cm/agents/MANAGER.md` - Manager agent instructions
 > - `.cm/agents/IMPLEMENTER.md` - Implementer agent instructions
 > - `.cm/agents/REVIEWER.md` - Reviewer agent instructions
@@ -549,7 +549,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 | current_phase | string | No | ID of active phase |
 | current_task | string | No | ID of active task |
 | agent_history | AgentInvocation[] | No | History of agent runs |
-| log_records | LogRecord[] | No | Structured log records for LOG.md generation |
+| log_records | LogRecord[] | No | Structured log records for audit trail |
 
 **Project**
 | Field | Type | Required | Description |
@@ -666,44 +666,6 @@ The `roadmap.json` file is the source of truth for ROADMAP.md:
 |-------|------|----------|-------------|
 | name | string | Yes | Sub-item name |
 | completed | boolean | Yes | Whether sub-item is completed |
-
-### LOG.md Template
-
-```markdown
-# [Project Name] - Execution Log
-
-This file is automatically updated by cm during task execution.
-
-## Log Format
-
-Each entry follows this format:
-
-```
-## [YYYY-MM-DD HH:MM:SS] Task: task-id
-
-**Status:** [started|completed|failed|deferred]
-**Agent:** [agent-type]
-**Duration:** [X minutes]
-
-### Summary
-[Brief summary of what was done]
-
-### Files Changed
-- `path/to/file.rs` - [created|modified|deleted]
-
-### Commands Run
-- `command 1`
-- `command 2`
-
-### Notes
-[Any additional notes or issues encountered]
-
----
-```
-
-## Execution Log
-
-[Entries will be appended below during execution]
 
 ---
 ```

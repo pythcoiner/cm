@@ -13,7 +13,7 @@ I want to continue working on the cm (Claude Code Manager) crate. Please read:
 
 1. .cm/PLAN.md - Overall implementation plan and workflow rules
 2. .cm/ROADMAP.md - Detailed checklist with all phases
-3. .cm/LOG.md - Implementation log with history
+3. .cm/TASKS.md - Task status overview
 4. .cm/CODE_STYLE.md - Code style requirements
 
 ## Critical Workflow Rules
@@ -31,7 +31,7 @@ You are the MAIN AGENT. You MUST:
 
 For each phase:
 
-1. READ current state from ROADMAP.md and LOG.md
+1. READ current state from ROADMAP.md and TASKS.md
 2. SPAWN implementation sub-agent with detailed prompt
 3. WAIT for implementation to complete
 4. SPAWN review sub-agent to review (FRESH context!)
@@ -165,7 +165,7 @@ REVIEW agent checks requirements
 
 MAIN AGENT:
 1. Updates ROADMAP.md: [x] 0.1 Create Cargo.toml
-2. Updates LOG.md with detailed entry
+2. Updates tasks.json with task completion
 3. Commits: git commit -m "cm: Phase 0.1 - Create Cargo.toml"
 
 MAIN AGENT continues to Phase 0.2...
@@ -192,5 +192,5 @@ MAIN AGENT continues to Phase 0.2...
 
 4. **Documentation is State**
    - ROADMAP.md checkboxes = progress tracker
-   - LOG.md = audit trail
+   - tasks.json = source of truth
    - Git commits = immutable history

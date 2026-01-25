@@ -30,11 +30,11 @@ cm/
 │   │   ├── state.rs     # ManagerState enum
 │   │   └── recovery.rs  # Crash recovery, checkpointing
 │   ├── log/
-│   │   ├── mod.rs       # Append-only LOG.md writing
+│   │   ├── mod.rs       # Per-phase detailed logging
 │   │   └── file_logger.rs # Persistent cm.log with rotation
 │   ├── generate/
 │   │   ├── mod.rs       # Regenerate functions
-│   │   ├── log_md.rs    # Generate LOG.md from JSON
+│   │   ├── tasks_md.rs  # Generate TASKS.md from JSON
 │   │   └── roadmap_md.rs # Generate ROADMAP.md from JSON
 │   ├── tui/
 │   │   ├── mod.rs       # App, terminal setup
@@ -49,9 +49,10 @@ cm/
 │   ├── roadmap.json     # Source of truth for roadmap
 │   ├── PLAN.md          # Project plan
 │   ├── ROADMAP.md       # Generated from roadmap.json
-│   ├── LOG.md           # Generated from tasks.json log_records
+│   ├── TASKS.md         # Generated from tasks.json
 │   ├── config.toml      # Optional configuration
 │   ├── cm.log           # Persistent operational log
+│   ├── logs/            # Per-phase detailed logs
 │   └── agents/          # Agent instruction files
 ├── Cargo.toml           # Rust dependencies
 └── CLAUDE.md            # Claude Code instructions

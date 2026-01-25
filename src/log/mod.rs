@@ -1,8 +1,8 @@
-//! LOG.md management for audit trail.
+//! Per-phase detailed logging.
 //!
-//! This module provides functionality for the manager (cm) to append entries to LOG.md.
-//! LOG.md is an append-only audit trail that records all agent activities, build results,
-//! and review verdicts. Only the manager writes to LOG.md - agents never touch it directly.
+//! This module provides functionality for the manager (cm) to log detailed information
+//! about task execution on a per-phase basis. Logs include agent prompts, responses,
+//! build results, and review verdicts. Only the manager writes logs - agents never touch them directly.
 
 use std::fs::OpenOptions;
 use std::io::Write;

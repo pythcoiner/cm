@@ -1,14 +1,12 @@
 //! Deterministic markdown generation from JSON state.
 //!
-//! This module provides functions to generate markdown files (LOG.md, ROADMAP.md)
+//! This module provides functions to generate markdown files (ROADMAP.md, TASKS.md)
 //! from their JSON source of truth files. The generation is deterministic:
 //! the same input always produces the same output.
 
-mod log_md;
 mod roadmap_md;
 mod tasks_md;
 
-pub use log_md::generate_log_md;
 pub use roadmap_md::generate_roadmap_md;
 pub use tasks_md::generate_tasks_md;
 

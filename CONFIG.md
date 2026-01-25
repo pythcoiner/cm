@@ -18,7 +18,7 @@ This document describes the configuration options for `cm` (Claude Code Manager)
 | `model` | String | `"claude-sonnet-4-5-20250929"` | Claude model to use for agent spawning |
 | `timeout_secs` | Integer | `300` | Agent execution timeout in seconds |
 | `max_cycles` | Integer | `5` | Maximum attempts per task before deferring |
-| `log_path` | String | `".cm/LOG.md"` | Path to the execution log file |
+| `log_path` | String | `".cm/LOG.md"` | (Deprecated - no longer used) |
 | `working_dir` | String | Current directory | Working directory for build verification |
 
 ## Example Configuration
@@ -35,8 +35,8 @@ timeout_secs = 300
 # Maximum attempts before deferring a task
 max_cycles = 5
 
-# Path to execution log
-log_path = ".cm/LOG.md"
+# Path to execution log (deprecated - no longer used)
+# log_path = ".cm/LOG.md"
 
 # Working directory for builds (optional, defaults to current dir)
 # working_dir = "/home/user/project"
@@ -83,7 +83,7 @@ Options:
     --model <MODEL>       Claude model to use
     --timeout <SECONDS>   Agent timeout in seconds
     --max-cycles <N>      Maximum cycles per task
-    --log-path <FILE>     Path to LOG.md file
+    --log-path <FILE>     (Deprecated - no longer used)
     --working-dir <DIR>   Working directory for builds
     -v, --verbose         Enable verbose output
 ```
@@ -97,7 +97,7 @@ When no config file is present and no CLI arguments are provided:
 | Model | `claude-sonnet-4-5-20250929` |
 | Timeout | 300 seconds (5 minutes) |
 | Max Cycles | 5 |
-| Log Path | `.cm/LOG.md` |
+| Log Path | `.cm/LOG.md` (deprecated) |
 | Working Dir | Current directory |
 | State Path | `.cm/tasks.json` |
 
@@ -114,7 +114,6 @@ When no config file is present and no CLI arguments are provided:
    model = "claude-sonnet-4-5-20250929"
    timeout_secs = 300
    max_cycles = 5
-   log_path = ".cm/LOG.md"
    EOF
    ```
 

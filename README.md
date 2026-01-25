@@ -15,7 +15,7 @@ ensuring independent verification and preventing context pollution.
 - **Real-time TUI** - Terminal UI for monitoring with `--tui`
 - **Config file support** - TOML configuration via `.cm/config.toml`
 - **Signal handling** - Graceful Ctrl+C shutdown with state preservation
-- **Audit log** - Append-only LOG.md tracks all actions
+- **Phase logging** - Detailed per-phase logs in `.cm/logs/`
 - **Deterministic generation** - JSON is source of truth, MD files regenerated
 
 ## Installation
@@ -58,7 +58,7 @@ This creates:
 - `.cm/tasks.json` - Task definitions & state
 - `.cm/PLAN.md` - High-level project plan
 - `.cm/ROADMAP.md` - Detailed checklist
-- `.cm/LOG.md` - Execution log
+- `.cm/TASKS.md` - Task status overview
 
 ### Run cm
 
@@ -125,7 +125,7 @@ your-project/
 │   ├── config.toml     # Configuration (optional)
 │   ├── PLAN.md         # High-level plan
 │   ├── ROADMAP.md      # Detailed checklist (generated)
-│   ├── LOG.md          # Audit trail (generated)
+│   ├── TASKS.md        # Task status (generated)
 │   └── checkpoints/    # Recovery snapshots (auto-generated)
 ├── .claude/
 │   └── commands/
@@ -166,7 +166,7 @@ Tasks are retried up to 5 times before being deferred. All actions are logged.
 - `tasks.json` - Task state and log records
 - `roadmap.json` - Roadmap structure
 
-Markdown files (LOG.md, ROADMAP.md) are **generated** from JSON:
+Markdown files (ROADMAP.md, TASKS.md) are **generated** from JSON:
 ```bash
 cm --regenerate     # Regenerate all MD files from JSON
 ```

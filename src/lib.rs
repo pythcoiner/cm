@@ -18,7 +18,7 @@ pub mod agent;
 /// Build verification: cargo build/clippy/test and git operations.
 pub mod build;
 
-/// LOG.md management for audit trail.
+/// Per-phase detailed logging.
 pub mod log;
 
 /// Deterministic markdown generation from JSON state.

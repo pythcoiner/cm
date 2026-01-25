@@ -222,13 +222,13 @@ cm --regenerate
 
 This command:
 - Regenerates `ROADMAP.md` from `roadmap.json`
-- Regenerates `LOG.md` from `tasks.json` log records
+- Regenerates `TASKS.md` from `tasks.json`
 - Updates summary tables and progress counts
 
 **Expected output:**
 ```
 Regenerating ROADMAP.md from roadmap.json...
-Regenerating LOG.md from tasks.json...
+Regenerating TASKS.md from tasks.json...
 ✓ Files regenerated successfully
 ```
 

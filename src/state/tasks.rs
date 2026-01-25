@@ -29,7 +29,7 @@ pub struct TasksState {
     /// History of all agent invocations.
     #[serde(default)]
     pub agent_history: Vec<AgentInvocation>,
-    /// Structured log records for deterministic LOG.md generation.
+    /// Structured log records for audit trail.
     #[serde(default)]
     pub log_records: Vec<LogRecord>,
     /// Timestamp when the state was interrupted by a shutdown signal.

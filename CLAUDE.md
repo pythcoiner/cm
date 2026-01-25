@@ -33,14 +33,14 @@ The manager selects the next runnable task, spawns an IMPLEM agent with isolated
 - **`src/manager/`** - Main orchestration loop (`mod.rs`), manager state machine (`state.rs`), and crash recovery with checkpointing (`recovery.rs`)
 - **`src/agent/`** - Agent spawning (`mod.rs`), prompt building with context isolation (`prompt.rs`), and JSON response parsing (`response.rs`)
 - **`src/build/`** - Build verification (`mod.rs`), cargo runner (`cargo.rs`), and git operations (`git.rs`)
-- **`src/log/`** - Append-only LOG.md writing (`mod.rs`) and persistent `cm.log` with rotation (`file_logger.rs`)
-- **`src/generate/`** - Deterministic markdown generation from JSON: `log_md.rs` (LOG.md) and `roadmap_md.rs` (ROADMAP.md)
+- **`src/log/`** - Per-phase detailed logging (`mod.rs`) and persistent `cm.log` with rotation (`file_logger.rs`)
+- **`src/generate/`** - Deterministic markdown generation from JSON: `roadmap_md.rs` (ROADMAP.md) and `tasks_md.rs` (TASKS.md)
 - **`src/tui/`** - Terminal UI with ratatui/crossterm: split layout (`layout.rs`), widgets (`widgets.rs`), and stream management (`mod.rs`)
 - **`src/config/`** - TOML configuration loading from `.cm/config.toml`
 
 ### Key Design Decisions
 
-- **JSON is source of truth** - `tasks.json` and `roadmap.json` are definitive; markdown files (ROADMAP.md, LOG.md) are always regenerated from JSON, never edited directly
+- **JSON is source of truth** - `tasks.json` and `roadmap.json` are definitive; markdown files (ROADMAP.md, TASKS.md) are always regenerated from JSON, never edited directly
 - **Agent context isolation** - Each agent receives only its task description, relevant files, code style excerpt, and prior review issues (if applicable). No global context or cross-task information
 - **Threading model** - Uses `std::thread` (not async). Main thread runs TUI, background thread runs Manager. Communication via `std::sync::mpsc` channels and `Arc<AtomicBool>` for shutdown signaling
 - **Error handling** - All error types use `thiserror` derive macro with typed enums. Never use `anyhow` or string errors
@@ -52,7 +52,7 @@ Project state lives in `.cm/`:
 - `tasks.json` - Phases, tasks, attempts, log records (source of truth)
 - `roadmap.json` - Roadmap structure for `/cm` skill
 - `config.toml` - Optional configuration
-- `PLAN.md`, `ROADMAP.md`, `LOG.md` - Human-readable files (markdown generated from JSON)
+- `PLAN.md`, `ROADMAP.md`, `TASKS.md` - Human-readable files (markdown generated from JSON)
 - `cm.log` - Persistent operational debug log
 
 ## Code Conventions

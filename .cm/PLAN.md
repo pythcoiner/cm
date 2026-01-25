@@ -137,7 +137,7 @@ cm supports crash recovery through checkpointing, real-time monitoring via a ter
 
 **Key files:**
 - `mod.rs` - GenerateError, regenerate functions
-- `log_md.rs` - Generate LOG.md from LogRecords
+- `tasks_md.rs` - Generate TASKS.md from TasksState
 - `roadmap_md.rs` - Generate ROADMAP.md from RoadmapState
 
 **Dependencies:** state module
@@ -241,7 +241,7 @@ cm supports crash recovery through checkpointing, real-time monitoring via a ter
 - Updated fix.md with `cm --regenerate` step after file modifications
 
 **Workflow:**
-After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --regenerate` to update the markdown documentation (ROADMAP.md, LOG.md) before proceeding to completion.
+After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --regenerate` to update the markdown documentation (ROADMAP.md, TASKS.md) before proceeding to completion.
 
 ### Phase 23: Detailed File Logging
 

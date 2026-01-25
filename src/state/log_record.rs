@@ -1,7 +1,7 @@
 //! LogRecord types for structured log storage.
 //!
 //! This module provides types for storing log entries as structured data
-//! in tasks.json. These records are the source of truth for LOG.md generation.
+//! in tasks.json. These records provide an audit trail of all task execution.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 /// A single structured log record.
 ///
-/// LogRecords are stored in TasksState and used to deterministically
-/// generate LOG.md content.
+/// LogRecords are stored in TasksState and provide an audit trail
+/// of task execution history.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogRecord {
     /// Unique identifier for this record.
