@@ -2592,7 +2592,7 @@
     {
       "id": "phase-27",
       "name": "Per-Phase TRACE Logging",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-27.task-1",
@@ -2705,7 +2705,7 @@
           "id": "phase-27.task-4",
           "name": "Update --prune for per-phase logs",
           "type": "implement",
-          "status": "deferred",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-2"
           ],
@@ -2744,7 +2744,7 @@
           "id": "phase-27.task-5",
           "name": "Add unit tests for PhaseLogger",
           "type": "implement",
-          "status": "in_progress",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-3"
           ],
@@ -2763,7 +2763,7 @@
           "id": "phase-27.task-6",
           "name": "Build and verify per-phase logging",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-3",
             "phase-27.task-4",
@@ -2790,13 +2790,13 @@
     {
       "id": "phase-28",
       "name": "FIX Cycle Retry & Resume",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-28.fix-retry-prompt",
           "name": "Fix: Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [],
           "context": {
             "files_to_read": [
