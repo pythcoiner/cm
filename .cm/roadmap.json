@@ -2258,15 +2258,15 @@
         {
           "id": "27.4",
           "name": "Update --prune for per-phase logs",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add prune_all() function",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update execute_prune() in CLI",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

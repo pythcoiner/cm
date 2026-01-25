@@ -304,6 +304,7 @@ mod tests {
         {
             let mut file = OpenOptions::new()
                 .create(true)
+                .truncate(true)
                 .write(true)
                 .open(&path)
                 .unwrap();

@@ -515,7 +515,7 @@ Status: **Complete** (7/7)
 
 ## Phase 27: Per-Phase TRACE Logging
 
-Status: **In Progress** (3/6)
+Status: **In Progress** (4/6)
 
 - [x] Add TRACE level to LogLevel enum
   - [x] Add Trace variant before Debug
@@ -533,9 +533,9 @@ Status: **In Progress** (3/6)
   - [x] Log prompts in execute_implem/review/fix
   - [x] Log responses in execute_implem/review/fix
   - [x] Log in run_review_cycle
-- [ ] Update --prune for per-phase logs
-  - [ ] Add prune_all() function
-  - [ ] Update execute_prune() in CLI
+- [x] Update --prune for per-phase logs
+  - [x] Add prune_all() function
+  - [x] Update execute_prune() in CLI
 - [ ] Add unit tests for PhaseLogger
   - [ ] Test extract_phase_id
   - [ ] Test directory creation
@@ -595,6 +595,6 @@ Status: **Not Started** (0/1)
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| Phase 27: Per-Phase TRACE Logging | In Progress | 16/28 |
+| Phase 27: Per-Phase TRACE Logging | In Progress | 19/28 |
 | Phase 28: FIX Cycle Retry & Resume | Not Started | 0/7 |
-| **Total** | | **324/343** |
+| **Total** | | **327/343** |
