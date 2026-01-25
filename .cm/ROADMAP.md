@@ -266,14 +266,14 @@ Status: **Complete** (1/1)
 
 ## Phase 36: Remove Unused MANAGER.md
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Remove unused MANAGER.md template and related code
-  - [ ] Delete assets/templates/MANAGER.md
-  - [ ] Remove MANAGER_TEMPLATE from src/command.rs
-  - [ ] Remove agents/MANAGER.md from TEMPLATES array in src/cli/init.rs
-  - [ ] Remove build_manager_prompt() from src/agent/prompt.rs
-  - [ ] Update assets/cm.md documentation
+- [x] Remove unused MANAGER.md template and related code
+  - [x] Delete assets/templates/MANAGER.md
+  - [x] Remove MANAGER_TEMPLATE from src/command.rs
+  - [x] Remove agents/MANAGER.md from TEMPLATES array in src/cli/init.rs
+  - [x] Remove build_manager_prompt() from src/agent/prompt.rs
+  - [x] Update assets/cm.md documentation
 
 ---
 
@@ -334,7 +334,7 @@ Status: **Not Started** (0/1)
 | Phase 33: Add PLAN Agent Before IMPLEM | Complete | 7/7 |
 | Phase 34: Add /split Command + Extend /end | Complete | 8/8 |
 | Phase 35: Remove TUI Module | Complete | 7/7 |
-| Phase 36: Remove Unused MANAGER.md | Not Started | 0/6 |
+| Phase 36: Remove Unused MANAGER.md | Complete | 6/6 |
 | Phase 37: Add Phase Range Selection | Not Started | 0/4 |
 | Phase 38: Add Model Selection Flag | Not Started | 0/5 |
-| **Total** | | **52/67** |
+| **Total** | | **58/67** |

@@ -509,32 +509,32 @@
         {
           "id": "phase-36-item-1",
           "name": "Remove unused MANAGER.md template and related code",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-36-item-1.sub-0",
               "name": "Delete assets/templates/MANAGER.md",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-36-item-1.sub-1",
               "name": "Remove MANAGER_TEMPLATE from src/command.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-36-item-1.sub-2",
               "name": "Remove agents/MANAGER.md from TEMPLATES array in src/cli/init.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-36-item-1.sub-3",
               "name": "Remove build_manager_prompt() from src/agent/prompt.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-36-item-1.sub-4",
               "name": "Update assets/cm.md documentation",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

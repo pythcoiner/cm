@@ -428,7 +428,7 @@ impl Manager {
         }
 
         // Prompt
-        print!("\n[s]ingle / [a]ll / [p]hase <#...> / [q]uit: ");
+        print!("\n[s]ingle / [a]ll / [p]hase <# or #-#> / [q]uit: ");
         io::stdout()
             .flush()
             .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
@@ -449,7 +449,17 @@ impl Manager {
                 let nums_part = input.strip_prefix("p ").or_else(|| input.strip_prefix("phase ")).unwrap();
                 let phase_ids: Vec<String> = nums_part
                     .split_whitespace()
-                    .map(|n| format!("phase-{}", n))
+                    .flat_map(|token| {
+                        if let Some((start, end)) = token.split_once('-') {
+                            // Range: "3-6" -> ["phase-3", "phase-4", "phase-5", "phase-6"]
+                            let start: u32 = start.parse().unwrap_or(0);
+                            let end: u32 = end.parse().unwrap_or(0);
+                            (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
+                        } else {
+                            // Single: "3" -> ["phase-3"]
+                            vec![format!("phase-{}", token)]
+                        }
+                    })
                     .collect();
                 if phase_ids.is_empty() {
                     println!("No phase numbers provided.");
