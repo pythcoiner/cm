@@ -48,6 +48,48 @@ pub struct TaskCompletionInfo {
     pub summary: String,
 }
 
+/// Response from a review agent.
+///
+/// This is the structured response expected from review prompts.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewAgentResponse {
+    /// Status reported by the agent (success/failed).
+    #[serde(default = "default_agent_status")]
+    pub status: AgentStatus,
+    /// Review verdict: "approved" or "needs_fixes".
+    #[serde(default)]
+    pub verdict: Option<String>,
+    /// Summary of the review.
+    #[serde(default)]
+    pub summary: String,
+    /// List of issues found during review.
+    #[serde(default)]
+    pub issues: Vec<ReviewIssueResponse>,
+    /// Error message if status is failed.
+    #[serde(default)]
+    pub error: Option<String>,
+}
+
+/// A single issue found during code review.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewIssueResponse {
+    /// Unique identifier for this issue.
+    #[serde(default)]
+    pub id: String,
+    /// Severity level: "critical", "high", "medium", or "low".
+    #[serde(default)]
+    pub severity: String,
+    /// File and line location (e.g., "src/main.rs:42").
+    #[serde(default)]
+    pub location: String,
+    /// Description of the problem.
+    #[serde(default)]
+    pub problem: String,
+    /// Suggested fix for the issue.
+    #[serde(default)]
+    pub suggested_fix: String,
+}
+
 /// Parses raw JSON output from Claude agents.
 ///
 /// The parser handles both well-formed JSON and gracefully handles
@@ -322,6 +364,63 @@ impl ResponseParser {
         None
     }
 
+    /// Parse raw JSON output from claude CLI into a ReviewAgentResponse.
+    ///
+    /// Similar to `parse()` but returns a `ReviewAgentResponse` which includes
+    /// verdict and issues information for review agents.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgentError::ParseError` if the JSON cannot be parsed at all.
+    pub fn parse_review_response(raw_json: &str) -> Result<ReviewAgentResponse, AgentError> {
+        let trimmed = raw_json.trim();
+
+        // Get the result text from the raw JSON
+        let result_text = if trimmed.starts_with('[') {
+            Self::extract_result_from_streaming(trimmed)?
+        } else {
+            let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
+                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+            })?;
+            output.result
+        };
+
+        // Try to extract embedded JSON from the result text
+        let parsed = Self::extract_review_response_json(&result_text);
+
+        Ok(parsed.unwrap_or_else(|| ReviewAgentResponse {
+            status: AgentStatus::Success,
+            verdict: None,
+            summary: result_text,
+            issues: vec![],
+            error: None,
+        }))
+    }
+
+    /// Attempt to extract a ReviewAgentResponse from embedded JSON in the text.
+    fn extract_review_response_json(text: &str) -> Option<ReviewAgentResponse> {
+        // Try to find JSON in code blocks first
+        if let Some(json_str) = Self::extract_json_from_code_block(text) {
+            if let Ok(parsed) = serde_json::from_str::<ReviewAgentResponse>(&json_str) {
+                return Some(parsed);
+            }
+        }
+
+        // Try to find raw JSON object in the text
+        if let Some(start) = text.find('{') {
+            if let Some(end) = text.rfind('}') {
+                if end > start {
+                    let potential_json = &text[start..=end];
+                    if let Ok(parsed) = serde_json::from_str::<ReviewAgentResponse>(potential_json) {
+                        return Some(parsed);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     /// Extract JSON from markdown code blocks.
     ///
     /// Looks for ```json or ``` code blocks and extracts the content.
@@ -568,5 +667,62 @@ mod tests {
 
         assert_eq!(response.status, AgentStatus::Success);
         assert_eq!(response.files_created, vec!["test.rs"]);
+    }
+
+    #[test]
+    fn test_parse_review_response_approved() {
+        let raw = r#"{
+            "result": "Review complete.\n\n```json\n{\"status\": \"success\", \"verdict\": \"approved\", \"summary\": \"Code looks good\", \"issues\": []}\n```"
+        }"#;
+
+        let response = ResponseParser::parse_review_response(raw).unwrap();
+
+        assert_eq!(response.status, AgentStatus::Success);
+        assert_eq!(response.verdict, Some("approved".to_string()));
+        assert_eq!(response.summary, "Code looks good");
+        assert!(response.issues.is_empty());
+    }
+
+    #[test]
+    fn test_parse_review_response_needs_fixes_with_issues() {
+        let raw = r#"{
+            "result": "Found issues.\n\n```json\n{\"status\": \"success\", \"verdict\": \"needs_fixes\", \"summary\": \"Found 2 issues\", \"issues\": [{\"id\": \"issue-1\", \"severity\": \"high\", \"location\": \"src/main.rs:42\", \"problem\": \"Missing error handling\", \"suggested_fix\": \"Add ? operator\"}]}\n```"
+        }"#;
+
+        let response = ResponseParser::parse_review_response(raw).unwrap();
+
+        assert_eq!(response.status, AgentStatus::Success);
+        assert_eq!(response.verdict, Some("needs_fixes".to_string()));
+        assert_eq!(response.issues.len(), 1);
+        assert_eq!(response.issues[0].id, "issue-1");
+        assert_eq!(response.issues[0].severity, "high");
+        assert_eq!(response.issues[0].location, "src/main.rs:42");
+        assert_eq!(response.issues[0].problem, "Missing error handling");
+    }
+
+    #[test]
+    fn test_parse_review_response_needs_fixes_empty_issues() {
+        // This is the bug case - needs_fixes with 0 issues
+        let raw = r#"{
+            "result": "Review.\n\n```json\n{\"status\": \"success\", \"verdict\": \"needs_fixes\", \"summary\": \"Some feedback\", \"issues\": []}\n```"
+        }"#;
+
+        let response = ResponseParser::parse_review_response(raw).unwrap();
+
+        assert_eq!(response.verdict, Some("needs_fixes".to_string()));
+        assert!(response.issues.is_empty());
+        // The manager should treat this as approved since there are no issues
+    }
+
+    #[test]
+    fn test_parse_review_response_no_verdict() {
+        let raw = r#"{
+            "result": "Some review text without proper JSON"
+        }"#;
+
+        let response = ResponseParser::parse_review_response(raw).unwrap();
+
+        assert_eq!(response.verdict, None);
+        assert!(response.issues.is_empty());
     }
 }

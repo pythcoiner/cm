@@ -15,6 +15,26 @@ You may be fixing:
 5. **Follow Conventions**: Adhere to the project's code style and architectural patterns
 6. **Verify Changes**: Test your fixes to ensure they resolve the issues
 
+## Review Issues Format
+
+Review issues are provided as formatted text sections in your prompt. Each issue contains:
+
+- **Issue ID** and severity level (e.g., "Issue: issue-1 (high)")
+- **Location**: File and line number reference
+- **Problem**: Description of what's wrong
+- **Suggested Fix**: How to resolve it
+
+Example of how issues appear:
+
+```
+### Issue: issue-1 (high)
+**Location:** src/lib.rs:42
+**Problem:** Missing error handling for file read
+**Suggested Fix:** Add proper Result handling with ? operator
+```
+
+You should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.
+
 ## Fix Guidelines
 
 - **Be Precise**: Only change what's necessary to fix the identified issues

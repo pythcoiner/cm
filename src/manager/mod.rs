@@ -1032,8 +1032,8 @@ impl Manager {
             let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")?;
             let review_output = review_handle.wait()?;
 
-            // Parse review response
-            let review_response = match ResponseParser::parse(&review_output.stdout) {
+            // Parse review response with proper JSON extraction
+            let review_response = match ResponseParser::parse_review_response(&review_output.stdout) {
                 Ok(resp) => resp,
                 Err(AgentError::ParseError(_)) => {
                     if let Some(session_id) = &review_output.session_id {
@@ -1044,7 +1044,7 @@ impl Manager {
                             "PHASE_REVIEW",
                         )?;
                         let retry_output = retry_handle.wait()?;
-                        match ResponseParser::parse(&retry_output.stdout) {
+                        match ResponseParser::parse_review_response(&retry_output.stdout) {
                             Ok(resp) => resp,
                             Err(_) => {
                                 warn!("Phase review parse failed twice, treating as approved");
@@ -1059,8 +1059,16 @@ impl Manager {
                 Err(e) => return Err(e.into()),
             };
 
-            // Log full response to phase logger (with parsed result)
-            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code, Some(&review_response));
+            // Log full response to phase logger
+            // Note: We need to convert to AgentResponse for logging compatibility
+            let agent_response_for_log = crate::state::AgentResponse {
+                status: review_response.status.clone(),
+                files_created: vec![],
+                files_modified: vec![],
+                commands_run: vec![],
+                message: review_response.summary.clone(),
+            };
+            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code, Some(&agent_response_for_log));
 
             // Update invocation
             if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == review_agent_id) {
@@ -1068,16 +1076,26 @@ impl Manager {
                 inv.exit_status = review_output.exit_code;
             }
 
-            self.log_manager.log_agent_response(&review_response)?;
+            self.log_manager.log_agent_response(&agent_response_for_log)?;
 
             if review_response.status == AgentStatus::Failed {
                 warn!("Phase review agent failed for {}", phase_id);
                 return Ok(Verdict::Approved);
             }
 
-            // Extract verdict
-            let verdict = self.extract_review_verdict(&review_response.message);
+            // Extract verdict from parsed JSON response
+            // CRITICAL FIX: If verdict is "needs_fixes" but there are no issues,
+            // treat it as "approved" since there's nothing to fix
+            let verdict = match review_response.verdict.as_deref() {
+                Some("needs_fixes") if !review_response.issues.is_empty() => Verdict::NeedsFixes,
+                Some("needs_fixes") => {
+                    warn!("Review returned needs_fixes with 0 issues, treating as approved");
+                    Verdict::Approved
+                }
+                _ => Verdict::Approved,
+            };
 
+            // Log with actual issue count
             self.log_manager.log_review_result(&verdict, &[])?;
             self.state
                 .log_records
@@ -1108,8 +1126,9 @@ impl Manager {
                         .cloned()
                         .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
 
-                    // Spawn FIX agent
-                    let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &review_response.message);
+                    // Spawn FIX agent with formatted review feedback
+                    let review_feedback = format_review_feedback(&review_response);
+                    let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &review_feedback);
 
                     let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
 
@@ -1543,48 +1562,34 @@ impl Manager {
         Ok(diff)
     }
 
-    /// Extract review verdict from the response text.
-    fn extract_review_verdict(&self, response: &str) -> Verdict {
-        let response_lower = response.to_lowercase();
+}
 
-        // Look for explicit verdict indicators
-        if response_lower.contains("\"verdict\"")
-            || response_lower.contains("verdict:")
-            || response_lower.contains("**verdict**")
-        {
-            if response_lower.contains("approved") && !response_lower.contains("not approved") {
-                return Verdict::Approved;
-            }
-            if response_lower.contains("needs_fixes")
-                || response_lower.contains("needs fixes")
-                || response_lower.contains("needsfixes")
-            {
-                return Verdict::NeedsFixes;
-            }
-        }
+/// Format review feedback from a parsed ReviewAgentResponse into a string for the fix agent.
+///
+/// This creates a structured text representation of the review issues that
+/// the fix agent can understand and act upon.
+fn format_review_feedback(response: &crate::agent::ReviewAgentResponse) -> String {
+    let mut feedback = String::new();
 
-        // Default heuristics
-        if response_lower.contains("lgtm")
-            || response_lower.contains("looks good")
-            || response_lower.contains("no issues")
-            || response_lower.contains("code is correct")
-        {
-            return Verdict::Approved;
-        }
-
-        // If we find issue indicators, assume needs fixes
-        if response_lower.contains("issue")
-            || response_lower.contains("problem")
-            || response_lower.contains("fix")
-            || response_lower.contains("error")
-            || response_lower.contains("bug")
-        {
-            return Verdict::NeedsFixes;
-        }
-
-        // Default to approved if unclear
-        Verdict::Approved
+    // Add summary
+    if !response.summary.is_empty() {
+        feedback.push_str("## Review Summary\n\n");
+        feedback.push_str(&response.summary);
+        feedback.push_str("\n\n");
     }
+
+    // Add issues
+    if !response.issues.is_empty() {
+        feedback.push_str("## Issues to Fix\n\n");
+        for issue in &response.issues {
+            feedback.push_str(&format!("### Issue: {} ({})\n", issue.id, issue.severity));
+            feedback.push_str(&format!("**Location:** {}\n", issue.location));
+            feedback.push_str(&format!("**Problem:** {}\n", issue.problem));
+            feedback.push_str(&format!("**Suggested Fix:** {}\n\n", issue.suggested_fix));
+        }
+    }
+
+    feedback
 }
 
 #[cfg(test)]
@@ -1628,21 +1633,48 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_review_verdict_approved() {
-        // We can't create a Manager without a valid state file, so test the logic directly
+    fn test_format_review_feedback_with_issues() {
+        use crate::agent::{ReviewAgentResponse, ReviewIssueResponse};
+        use crate::state::AgentStatus;
 
-        // Test approved patterns
-        let response1 = "The code looks good to me. LGTM!";
-        assert!(response1.to_lowercase().contains("lgtm"));
+        let response = ReviewAgentResponse {
+            status: AgentStatus::Success,
+            verdict: Some("needs_fixes".to_string()),
+            summary: "Found 1 issue".to_string(),
+            issues: vec![ReviewIssueResponse {
+                id: "issue-1".to_string(),
+                severity: "high".to_string(),
+                location: "src/main.rs:42".to_string(),
+                problem: "Missing error handling".to_string(),
+                suggested_fix: "Add ? operator".to_string(),
+            }],
+            error: None,
+        };
 
-        let response2 = r#"{"verdict": "approved", "issues": []}"#;
-        assert!(response2.to_lowercase().contains("approved"));
+        let feedback = format_review_feedback(&response);
+        assert!(feedback.contains("## Review Summary"));
+        assert!(feedback.contains("Found 1 issue"));
+        assert!(feedback.contains("### Issue: issue-1 (high)"));
+        assert!(feedback.contains("**Location:** src/main.rs:42"));
+        assert!(feedback.contains("**Problem:** Missing error handling"));
     }
 
     #[test]
-    fn test_extract_review_verdict_needs_fixes() {
-        let response = r#"{"verdict": "needs_fixes", "issues": [{"id": "1", "problem": "missing error handling"}]}"#;
-        assert!(response.to_lowercase().contains("needs_fixes"));
+    fn test_format_review_feedback_empty_issues() {
+        use crate::agent::ReviewAgentResponse;
+        use crate::state::AgentStatus;
+
+        let response = ReviewAgentResponse {
+            status: AgentStatus::Success,
+            verdict: Some("approved".to_string()),
+            summary: "Looks good".to_string(),
+            issues: vec![],
+            error: None,
+        };
+
+        let feedback = format_review_feedback(&response);
+        assert!(feedback.contains("Looks good"));
+        assert!(!feedback.contains("## Issues to Fix"));
     }
 
     #[test]

@@ -100,6 +100,20 @@ If you **cannot complete** the review:
 }
 ```
 
+## Issues Array Requirements
+
+When verdict is `"needs_fixes"`, you **MUST** provide at least one issue in the array.
+If you have no concrete issues to report, use verdict `"approved"` instead.
+
+Each issue **MUST** have ALL fields:
+- `id`: Unique identifier (e.g., "issue-1", "missing-error-handling")
+- `severity`: One of "critical", "high", "medium", "low"
+- `location`: File path with line number (e.g., "src/main.rs:42")
+- `problem`: Clear description of what's wrong
+- `suggested_fix`: Specific fix instruction
+
+**IMPORTANT**: Never return `"needs_fixes"` with an empty issues array. This causes the fix agent to have nothing to fix.
+
 ## Important Notes
 
 - Base your review on the diff and task requirements provided

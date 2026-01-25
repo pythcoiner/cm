@@ -3,3 +3,4 @@ target/
 .todo
 .cm/cm.log
 *.log
+.cm/logs/

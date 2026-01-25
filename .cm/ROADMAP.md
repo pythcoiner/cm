@@ -199,12 +199,12 @@ Status: **Complete** (1/1)
 
 ## Phase 31: Add .cm/logs/ to .gitignore
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add .cm/logs/ to root .gitignore during cm init
-  - [ ] Add ensure_gitignore_entry() function
-  - [ ] Call from execute_init_in_dir()
-  - [ ] Add tests for new and existing .gitignore
+- [x] Add .cm/logs/ to root .gitignore during cm init
+  - [x] Add ensure_gitignore_entry() function
+  - [x] Call from execute_init_in_dir()
+  - [x] Add tests for new and existing .gitignore
 
 ---
 
@@ -279,8 +279,8 @@ Status: **Not Started** (0/2)
 | Phase 28: Remove LOG.md Generation | Complete | 7/7 |
 | Phase 29: Add --reset Flag | Complete | 5/5 |
 | Phase 30: Add /cm Prerequisites Check | Complete | 4/4 |
-| Phase 31: Add .cm/logs/ to .gitignore | Not Started | 0/4 |
+| Phase 31: Add .cm/logs/ to .gitignore | Complete | 4/4 |
 | Phase 32: Add Phase Selection by Number | Not Started | 0/6 |
 | Phase 33: Add PLAN Agent Before IMPLEM | Not Started | 0/7 |
 | Phase 34: Add /split Command + Extend /end | Not Started | 0/8 |
-| **Total** | | **20/45** |
+| **Total** | | **24/45** |

@@ -284,22 +284,22 @@
         {
           "id": "phase-31-item-1",
           "name": "Add .cm/logs/ to root .gitignore during cm init",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-31-item-1.sub-0",
               "name": "Add ensure_gitignore_entry() function",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-31-item-1.sub-1",
               "name": "Call from execute_init_in_dir()",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-31-item-1.sub-2",
               "name": "Add tests for new and existing .gitignore",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
