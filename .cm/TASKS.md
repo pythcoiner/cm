@@ -169,6 +169,36 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ---
 
+## phase-29: Add --reset Flag
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-29.feat-reset-flag.impl-1**: Add --reset flag to reset a phase - Add a --reset <PHASE_ID> CLI flag that resets a phase to pending status:
+
+---
+
+## phase-30: Add /cm Prerequisites Check
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-30.feat-cm-prereq.impl-1**: Add Step 0 prerequisites check to /cm wizard - Add a Step 0 prerequisites check to the /cm wizard in `assets/cm.md`:
+
+---
+
+## phase-31: Add .cm/*.log to .gitignore
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-31.feat-gitignore.impl-1**: Add .cm/*.log to root .gitignore during cm init - Add `.cm/*.log` to root `.gitignore` during `cm init`:
+
+---
+
 ## Summary
 
 | Phase | Status | Tasks | Completed |
@@ -196,4 +226,7 @@ This document shows phase plans and task status. Generated from tasks.json.
 | phase-26: Skills to Commands Migration | Complete | 0 | 0 |
 | phase-27: Add /run Command | Pending | 1 | 0 |
 | phase-28: Remove LOG.md Generation | Pending | 1 | 0 |
-| **Total** | | **2** | **0** |
+| phase-29: Add --reset Flag | Pending | 1 | 0 |
+| phase-30: Add /cm Prerequisites Check | Pending | 1 | 0 |
+| phase-31: Add .cm/*.log to .gitignore | Pending | 1 | 0 |
+| **Total** | | **5** | **0** |

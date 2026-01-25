@@ -166,6 +166,61 @@
           "linked_task_ids": ["phase-28.feat-remove-log-md.impl-1"]
         }
       ]
+    },
+    {
+      "id": "phase-29",
+      "number": "29",
+      "name": "Add --reset Flag",
+      "items": [
+        {
+          "id": "phase-29-item-1",
+          "name": "Add --reset flag to reset a phase",
+          "completed": false,
+          "sub_items": [
+            { "name": "Add reset: Option<String> to Cli struct", "completed": false },
+            { "name": "Add dispatch in run() function", "completed": false },
+            { "name": "Implement execute_reset() function", "completed": false },
+            { "name": "Update CLAUDE.md documentation", "completed": false }
+          ],
+          "linked_task_ids": ["phase-29.feat-reset-flag.impl-1"]
+        }
+      ]
+    },
+    {
+      "id": "phase-30",
+      "number": "30",
+      "name": "Add /cm Prerequisites Check",
+      "items": [
+        {
+          "id": "phase-30-item-1",
+          "name": "Add Step 0 prerequisites check to /cm wizard",
+          "completed": false,
+          "sub_items": [
+            { "name": "Add Step 0 section to assets/cm.md", "completed": false },
+            { "name": "Check for .cm/agents/ directory", "completed": false },
+            { "name": "Provide guidance to run cm init", "completed": false }
+          ],
+          "linked_task_ids": ["phase-30.feat-cm-prereq.impl-1"]
+        }
+      ]
+    },
+    {
+      "id": "phase-31",
+      "number": "31",
+      "name": "Add .cm/*.log to .gitignore",
+      "items": [
+        {
+          "id": "phase-31-item-1",
+          "name": "Add .cm/*.log to root .gitignore during cm init",
+          "completed": false,
+          "sub_items": [
+            { "name": "Add ensure_gitignore_entry() function", "completed": false },
+            { "name": "Call from execute_init_in_dir()", "completed": false },
+            { "name": "Add tests for new and existing .gitignore", "completed": false }
+          ],
+          "linked_task_ids": ["phase-31.feat-gitignore.impl-1"]
+        }
+      ]
     }
   ]
 }

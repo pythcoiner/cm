@@ -174,6 +174,66 @@
           "roadmap_item_id": "phase-28-item-1"
         }
       ]
+    },
+    {
+      "id": "phase-29",
+      "name": "Add --reset Flag",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-29.feat-reset-flag.impl-1",
+          "name": "Add --reset flag to reset a phase",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-28.feat-remove-log-md.impl-1"],
+          "context": {
+            "files_to_read": ["src/cli/mod.rs", "src/state/tasks.rs", "src/state/mod.rs"],
+            "code_style_excerpt": null
+          },
+          "instructions": "Add a --reset <PHASE_ID> CLI flag that resets a phase to pending status:\n\n1. Add CLI argument to `Cli` struct in `src/cli/mod.rs` (with other flags):\n```rust\n/// Reset a phase to pending status and clear execution state.\n#[arg(long, value_name = \"PHASE_ID\")]\npub reset: Option<String>,\n```\n\n2. Add flag dispatch in `run()` function (around line 204-222):\n```rust\n} else if cli.reset.is_some() {\n    execute_reset(&cli)\n```\n\n3. Implement `execute_reset()` function:\n```rust\nfn execute_reset(cli: &Cli) -> Result<(), CliError> {\n    info!(\"Reset mode: resetting phase {:?}\", cli.reset);\n\n    let phase_id = cli.reset.as_ref().unwrap();\n    let mut state = load_state(&cli.state)?;\n\n    // Find and reset the phase\n    let phase = state.get_phase_mut(phase_id)?;\n\n    // Reset phase fields\n    phase.status = PhaseStatus::Pending;\n    phase.review_cycles_completed = 0;\n    phase.baseline_commit = None;\n    phase.implem_completed_at = None;\n\n    // Reset all tasks in the phase\n    for task in &mut phase.tasks {\n        task.status = TaskStatus::Pending;\n        task.attempts.clear();\n        task.implem_completed_at = None;\n        task.baseline_commit = None;\n        task.review_cycles_completed = 0;\n    }\n\n    // Save modified state\n    save_state(&state, &cli.state)?;\n\n    println!(\"Phase '{}' reset to pending state\", phase_id);\n    println!(\"  - Phase status: pending\");\n    println!(\"  - {} task(s) reset\", phase.tasks.len());\n\n    Ok(())\n}\n```\n\n4. Update `CLAUDE.md` CLI modes section to add:\n```\ncm --reset <ID>     # Reset phase to pending\n```\n\n5. Ensure `cargo build` and `cargo clippy` pass\n6. Ensure `cargo test` passes",
+          "roadmap_item_id": "phase-29-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-30",
+      "name": "Add /cm Prerequisites Check",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-30.feat-cm-prereq.impl-1",
+          "name": "Add Step 0 prerequisites check to /cm wizard",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-29.feat-reset-flag.impl-1"],
+          "context": {
+            "files_to_read": ["assets/cm.md"],
+            "code_style_excerpt": null
+          },
+          "instructions": "Add a Step 0 prerequisites check to the /cm wizard in `assets/cm.md`:\n\n1. Find the section after \"Important: Interactive Flow\" (around line 20)\n\n2. Insert new Step 0 before Step 1:\n\n```markdown\n---\n\n## Step 0: Prerequisites Check\n\nBefore starting the wizard, verify that `cm init` has been run:\n\n1. Check if `.claude/commands/cm.md` exists (you're reading this, so it does)\n2. Check if `.cm/agents/` directory exists with template files\n\nIf `.cm/agents/` is missing or incomplete, inform the user:\n\n> **Prerequisites not met.**\n>\n> Please run `cm init` in your terminal first to set up the required files:\n>\n> ```bash\n> cm init\n> ```\n>\n> This will create:\n> - `.claude/commands/` - Claude Code command files\n> - `.cm/agents/` - Agent template files\n>\n> After running `cm init`, return here and run `/cm` again.\n\nWait for user confirmation that they've run `cm init` before proceeding.\n\nIf prerequisites are met, proceed to Step 1.\n\n---\n```\n\n3. Run `cargo build` to re-embed the updated asset\n4. Run `cm init --force` to update installed command files\n5. Verify the change is correctly embedded",
+          "roadmap_item_id": "phase-30-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-31",
+      "name": "Add .cm/*.log to .gitignore",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-31.feat-gitignore.impl-1",
+          "name": "Add .cm/*.log to root .gitignore during cm init",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-30.feat-cm-prereq.impl-1"],
+          "context": {
+            "files_to_read": ["src/cli/init.rs"],
+            "code_style_excerpt": null
+          },
+          "instructions": "Add `.cm/*.log` to root `.gitignore` during `cm init`:\n\n1. Add function to `src/cli/init.rs`:\n```rust\n/// Ensure .cm/*.log is in the root .gitignore file.\nfn ensure_gitignore_entry(base_dir: &Path) -> Result<(), CliError> {\n    let gitignore_path = base_dir.join(\".gitignore\");\n    let entry = \".cm/*.log\";\n\n    if gitignore_path.exists() {\n        let content = fs::read_to_string(&gitignore_path)?;\n        if content.lines().any(|line| line.trim() == entry) {\n            return Ok(());\n        }\n        let mut file = fs::OpenOptions::new()\n            .append(true)\n            .open(&gitignore_path)?;\n        use std::io::Write;\n        writeln!(file, \"\\n# cm runtime logs\\n{}\", entry)?;\n    } else {\n        fs::write(&gitignore_path, format!(\"# cm runtime logs\\n{}\\n\", entry))?;\n    }\n\n    println!(\"Added {} to .gitignore\", entry);\n    Ok(())\n}\n```\n\n2. Call from `execute_init_in_dir()` after creating directories:\n```rust\nensure_gitignore_entry(base_dir)?;\n```\n\n3. Add tests:\n```rust\n#[test]\nfn test_execute_init_adds_gitignore_entry() {\n    let tmp = TempDir::new().unwrap();\n    execute_init_in_dir(tmp.path(), false).unwrap();\n    let content = fs::read_to_string(tmp.path().join(\".gitignore\")).unwrap();\n    assert!(content.contains(\".cm/*.log\"));\n}\n\n#[test]\nfn test_execute_init_appends_to_existing_gitignore() {\n    let tmp = TempDir::new().unwrap();\n    fs::write(tmp.path().join(\".gitignore\"), \"node_modules/\\n\").unwrap();\n    execute_init_in_dir(tmp.path(), false).unwrap();\n    let content = fs::read_to_string(tmp.path().join(\".gitignore\")).unwrap();\n    assert!(content.contains(\"node_modules/\"));\n    assert!(content.contains(\".cm/*.log\"));\n}\n```\n\n4. Ensure `cargo build` and `cargo clippy` pass\n5. Ensure `cargo test` passes",
+          "roadmap_item_id": "phase-31-item-1"
+        }
+      ]
     }
   ],
   "current_phase": null,
