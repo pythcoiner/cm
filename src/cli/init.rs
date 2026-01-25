@@ -10,7 +10,8 @@ use log::info;
 use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
-    IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, STRUCTURE_TEMPLATE,
+    IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
+    STRUCTURE_TEMPLATE,
 };
 
 /// Command file definition.
@@ -46,6 +47,10 @@ const COMMANDS: &[CommandFile] = &[
     CommandFile {
         name: "end",
         content: END_COMMAND,
+    },
+    CommandFile {
+        name: "run",
+        content: RUN_COMMAND,
     },
 ];
 
@@ -167,6 +172,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("  /feat - Feature addition wizard");
     println!("  /fix  - Bug fix wizard");
     println!("  /end  - Finalize feat/fix session");
+    println!("  /run  - Run cm orchestration");
 
     Ok(())
 }
@@ -182,7 +188,7 @@ fn cleanup_legacy_skills(base_dir: &Path) -> Result<(), CliError> {
         return Ok(());
     }
 
-    let legacy_skills = ["cm", "feat", "fix", "end"];
+    let legacy_skills = ["cm", "feat", "fix", "end", "run"];
     let mut removed_any = false;
 
     for skill_name in &legacy_skills {
