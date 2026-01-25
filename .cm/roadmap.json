@@ -913,6 +913,43 @@
       ]
     },
     {
+      "id": "phase-15.5",
+      "number": "15.5",
+      "name": "Phase-Level Build Verification",
+      "items": [
+        {
+          "id": "15.5.1",
+          "name": "Move build verification from per-task to per-phase execution",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add state helper methods (all_phase_tasks_completed, find_phase_for_task, mark_phase_status, add_task_to_phase)",
+              "completed": false
+            },
+            {
+              "name": "Update next_runnable_task for phase gating",
+              "completed": false
+            },
+            {
+              "name": "Remove per-task verify_all() from execute_implem and execute_fix",
+              "completed": false
+            },
+            {
+              "name": "Add check_phase_completion and inject_build_fix_task methods",
+              "completed": false
+            },
+            {
+              "name": "Integrate into run(), run_with_channels(), and step() loops",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-15.5.fix-phase-level-verification"
+          ]
+        }
+      ]
+    },
+    {
       "id": "phase-16",
       "number": "16",
       "name": "Sanity Check Workflow",

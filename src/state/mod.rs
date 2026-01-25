@@ -125,11 +125,20 @@ impl TasksState {
     /// A task is runnable if:
     /// - Its status is `Pending`
     /// - All tasks it depends on are `Completed`
+    /// - It belongs to the first non-completed phase (phase gating)
     pub fn next_runnable_task(&self) -> Option<&Task> {
-        self.phases
-            .iter()
-            .flat_map(|p| &p.tasks)
-            .find(|t| t.status == TaskStatus::Pending && !self.is_task_blocked(&t.id))
+        // Only return tasks from the first phase that isn't completed
+        for phase in &self.phases {
+            if phase.status == PhaseStatus::Completed {
+                continue;
+            }
+            // This phase isn't complete - look for runnable tasks here
+            return phase
+                .tasks
+                .iter()
+                .find(|t| t.status == TaskStatus::Pending && !self.is_task_blocked(&t.id));
+        }
+        None
     }
 
     /// Check if a task is blocked by uncompleted dependencies.
@@ -163,6 +172,60 @@ impl TasksState {
                 None => true, // Missing dependency counts as blocked
             }
         })
+    }
+
+    /// Check if all tasks in a phase are completed (or deferred).
+    pub fn all_phase_tasks_completed(&self, phase_id: &str) -> bool {
+        self.phases
+            .iter()
+            .find(|p| p.id == phase_id)
+            .map(|p| {
+                p.tasks
+                    .iter()
+                    .all(|t| t.status == TaskStatus::Completed || t.status == TaskStatus::Deferred)
+            })
+            .unwrap_or(false)
+    }
+
+    /// Find which phase a task belongs to.
+    pub fn find_phase_for_task(&self, task_id: &str) -> Option<&Phase> {
+        self.phases
+            .iter()
+            .find(|p| p.tasks.iter().any(|t| t.id == task_id))
+    }
+
+    /// Mark phase status.
+    ///
+    /// # Errors
+    ///
+    /// Returns `StateError::PhaseNotFound` if the phase does not exist.
+    pub fn mark_phase_status(
+        &mut self,
+        phase_id: &str,
+        status: PhaseStatus,
+    ) -> Result<(), StateError> {
+        for phase in &mut self.phases {
+            if phase.id == phase_id {
+                phase.status = status;
+                return Ok(());
+            }
+        }
+        Err(StateError::PhaseNotFound(phase_id.to_string()))
+    }
+
+    /// Add a new task to a phase dynamically (e.g., build-fix tasks).
+    ///
+    /// # Errors
+    ///
+    /// Returns `StateError::PhaseNotFound` if the phase does not exist.
+    pub fn add_task_to_phase(&mut self, phase_id: &str, task: Task) -> Result<(), StateError> {
+        for phase in &mut self.phases {
+            if phase.id == phase_id {
+                phase.tasks.push(task);
+                return Ok(());
+            }
+        }
+        Err(StateError::PhaseNotFound(phase_id.to_string()))
     }
 
     /// Update the status of a task.

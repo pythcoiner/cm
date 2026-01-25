@@ -212,6 +212,19 @@ Status: **Complete** (8/8)
 
 ---
 
+## Phase 15.5: Phase-Level Build Verification
+
+Status: **Complete** (1/1)
+
+- [x] Move build verification from per-task to per-phase execution
+  - [x] Add state helper methods (all_phase_tasks_completed, find_phase_for_task, mark_phase_status, add_task_to_phase)
+  - [x] Update next_runnable_task for phase gating
+  - [x] Remove per-task verify_all() from execute_implem and execute_fix
+  - [x] Add check_phase_completion and inject_build_fix_task methods
+  - [x] Integrate into run(), run_with_channels(), and step() loops
+
+---
+
 ## Phase 16: Sanity Check Workflow
 
 Status: **Not Started** (0/6)
@@ -487,6 +500,7 @@ Status: **Complete** (3/3)
 | Phase 13: Wire TUI into CLI | Complete | 3/3 |
 | Phase 14: Enable Signal Handling | Complete | 2/2 |
 | Phase 15: Deterministic Markdown Generation | Complete | 8/8 |
+| Phase 15.5: Phase-Level Build Verification | Complete | 6/6 |
 | Phase 16: Sanity Check Workflow | Not Started | 0/32 |
 | Phase 17: Concise One-at-a-Time Questions in Skills | Not Started | 0/21 |
 | Phase 18: Regenerate MD After Skills | Not Started | 0/6 |
@@ -497,4 +511,4 @@ Status: **Complete** (3/3)
 | Phase 23: Detailed File Logging | Not Started | 0/35 |
 | Phase 24: /end Skill | In Progress | 6/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
-| **Total** | | **108/275** |
+| **Total** | | **108/281** |

@@ -2299,3 +2299,17 @@ Task deferred.
 **Error:** Task phase-25.task-1 failed: max cycles exceeded for task: phase-25.task-1
 
 
+[2026-01-25 12:00:00 UTC] **PHASE_COMPLETE** | Phase: phase-15.5
+
+### Phase 15.5: Phase-Level Build Verification
+
+**Status:** Complete
+
+**Changes:**
+- `src/state/mod.rs`: Added 4 state helper methods (`all_phase_tasks_completed`, `find_phase_for_task`, `mark_phase_status`, `add_task_to_phase`), added `PhaseNotFound` variant to `StateError`, updated `next_runnable_task()` for phase gating
+- `src/manager/mod.rs`: Removed per-task `verify_all()` from `execute_implem` and `execute_fix`, added `check_phase_completion` and `inject_build_fix_task` methods, integrated phase completion checks into `run()`, `run_with_channels()`, and `step()`
+
+**Build:** cargo build PASS, cargo clippy PASS, cargo test PASS (217 unit + 27 integration)
+
+**Review:** APPROVED - no issues found
+

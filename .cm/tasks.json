@@ -408,6 +408,36 @@
       ]
     },
     {
+      "id": "phase-15.5",
+      "name": "Phase-Level Build Verification",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-15.5.fix-phase-level-verification",
+          "name": "Fix: Move build verification from per-task to per-phase execution",
+          "type": "fix",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs",
+              "src/state/mod.rs",
+              "src/state/tasks.rs",
+              "src/build/mod.rs"
+            ],
+            "prior_review_issues": [
+              "Bug: verify_all() runs after each Implement/Fix task completion",
+              "Observed: cargo build + cargo clippy executes after every individual task",
+              "Expected: verification should only run after all tasks in a phase are completed"
+            ]
+          },
+          "instructions": "Move build verification from per-task to per-phase execution:\n\n## Bug Details\n- Observed: verify_all() called in execute_implem() (line 835) and execute_fix() (line 1177) after every task\n- Expected: verify_all() only runs when all tasks in a phase are Completed/Deferred\n- Location: src/manager/mod.rs (execute_implem, execute_fix, run, run_with_channels, step)\n\n## Root Cause\nBuild verification is embedded in per-task execution methods instead of being a phase-level gate.\n\n## Fix Steps\n\n### 1. Add state helper methods (src/state/mod.rs)\n- Add `all_phase_tasks_completed(phase_id) -> bool` — returns true if every task in the phase is Completed or Deferred\n- Add `find_phase_for_task(task_id) -> Option<&Phase>` — finds which phase contains a task\n- Add `mark_phase_status(phase_id, status)` — updates a phase's status\n- Add `add_task_to_phase(phase_id, task)` — injects a new task into an existing phase\n\n### 2. Add PhaseNotFound variant to StateError (src/state/mod.rs)\n- Add `#[error(\"phase not found: {0}\")] PhaseNotFound(String)` to the StateError enum\n\n### 3. Update next_runnable_task for phase gating (src/state/mod.rs)\n- Iterate phases in order; skip phases with status Completed\n- For the first non-Completed phase, find the first Pending + unblocked task\n- If that phase has no runnable tasks (all done but phase not Completed), return None — this forces the run loop to detect the phase boundary and run verification before proceeding to the next phase\n\n### 4. Remove per-task verification from execute_implem (src/manager/mod.rs)\n- Remove the entire verify_all() block (lines ~833-898)\n- After git changes check passes, directly: record successful attempt, mark task Completed, sync roadmap, log completion\n- Remove the ManagerState::Verifying transition for this path\n\n### 5. Remove per-task verification from execute_fix (src/manager/mod.rs)\n- Remove the entire verify_all() block (lines ~1175-1231)\n- Same direct completion logic as execute_implem\n\n### 6. Add check_phase_completion method (src/manager/mod.rs)\n- New private method: `fn check_phase_completion(&mut self, task_id: &str) -> Result<(), ManagerError>`\n- Find the phase for the given task_id\n- If all tasks in that phase are Completed/Deferred: run verify_all()\n- If verify passes: mark phase as PhaseStatus::Completed\n- If verify fails: log the build error, call inject_build_fix_task()\n\n### 7. Add inject_build_fix_task method (src/manager/mod.rs)\n- New private method: `fn inject_build_fix_task(&mut self, phase_id: &str, error_text: &str) -> Result<(), ManagerError>`\n- Create a Fix-type Task with a unique ID (e.g. phase-X.build-fix-UUID)\n- Set prior_review_issues to the build error output\n- Set instructions to fix the build/clippy errors\n- Add the task to the phase via state.add_task_to_phase()\n\n### 8. Integrate into run() loop (src/manager/mod.rs)\n- After update_state() call (~line 363), call check_phase_completion(&task_id)\n- Call update_state() again after phase check (state may have changed)\n\n### 9. Integrate into run_with_channels() loop (src/manager/mod.rs)\n- Same integration after update_state() (~line 488)\n- Call update_state() again, then send StateUpdated event\n\n### 10. Integrate into step() method (src/manager/mod.rs)\n- Same integration after update_state() (~line 519)\n\n### 11. Import PhaseStatus in manager/mod.rs\n- Add PhaseStatus to the existing use crate::state imports\n\n## Testing\n1. Add unit tests for all new state methods:\n   - test_all_phase_tasks_completed (with Completed, Deferred, and mixed)\n   - test_find_phase_for_task (found and not found)\n   - test_mark_phase_status\n   - test_add_task_to_phase\n   - test_next_runnable_task_respects_phase_gate\n2. Run cargo build and cargo clippy\n3. Run cargo test\n\n## Verification\n- [ ] verify_all() no longer called in execute_implem()\n- [ ] verify_all() no longer called in execute_fix()\n- [ ] Phase completion triggers verify_all() in all run loops\n- [ ] Failed verification auto-injects fix task into the phase\n- [ ] Phase gating prevents cross-phase task execution\n- [ ] All existing tests pass",
+          "attempts": [],
+          "roadmap_item_id": "15.5.1"
+        }
+      ]
+    },
+    {
       "id": "phase-16",
       "name": "Sanity Check Workflow",
       "status": "pending",

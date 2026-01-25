@@ -23,8 +23,8 @@ use crate::generate::{generate_log_md, write_md_file, GenerateError};
 use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
-    AttemptStatus, RoadmapState, StateError, Task, TaskAttempt, TaskStatus, TaskType, TasksState,
-    Verdict,
+    AttemptStatus, PhaseStatus, RoadmapState, StateError, Task, TaskAttempt, TaskContext,
+    TaskStatus, TaskType, TasksState, Verdict,
 };
 use crate::generate::generate_roadmap_md;
 
@@ -362,6 +362,13 @@ impl Manager {
             // Save state after each task
             self.update_state()?;
 
+            // Check if the task's phase is now complete
+            if let Some(phase) = self.state.find_phase_for_task(&task_id) {
+                let phase_id = phase.id.clone();
+                self.check_phase_completion(&phase_id)?;
+                self.update_state()?;
+            }
+
             // Check for shutdown signal after task completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received after task completion, exiting gracefully");
@@ -487,6 +494,13 @@ impl Manager {
             // Save state after each task
             self.update_state()?;
 
+            // Check if the task's phase is now complete
+            if let Some(phase) = self.state.find_phase_for_task(&task_id) {
+                let phase_id = phase.id.clone();
+                self.check_phase_completion(&phase_id)?;
+                self.update_state()?;
+            }
+
             // Send updated state to TUI
             let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
 
@@ -517,6 +531,14 @@ impl Manager {
 
         self.execute_task(&task_id)?;
         self.update_state()?;
+
+        // Check if the task's phase is now complete
+        if let Some(phase) = self.state.find_phase_for_task(&task_id) {
+            let phase_id = phase.id.clone();
+            self.check_phase_completion(&phase_id)?;
+            self.update_state()?;
+        }
+
         Ok(())
     }
 
@@ -830,73 +852,17 @@ impl Manager {
             return Ok(());
         }
 
-        // Run build verification
-        self.manager_state = ManagerState::Verifying;
-        let build_result = self.build_verifier.verify_all();
+        // Record successful attempt (build verification deferred to phase completion)
+        self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
 
-        match build_result {
-            Ok(()) => {
-                info!("Build verification passed for task {}", task.id);
-                emit_cm(&format!("Build PASSED for {}", task.id));
-                self.flog(LogLevel::Info, "build", &format!("Build PASSED for task {}", task.id));
-                let build_output = crate::build::BuildOutput {
-                    success: true,
-                    errors: vec![],
-                    warnings: vec![],
-                    stdout: String::new(),
-                    stderr: String::new(),
-                };
-                self.log_manager.log_build_result(&build_output)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_build_result_record(&build_output));
-
-                // Record successful attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
-
-                // Mark task as completed
-                self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-                self.sync_roadmap_item(&task.id);
-                self.log_manager.log_task_complete(&task.id)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_task_complete_record(&task.id));
-                self.flog(LogLevel::Info, "task", &format!("Task {} marked completed", task.id));
-            }
-            Err(e) => {
-                warn!("Build verification failed for task {}: {}", task.id, e);
-                emit_cm(&format!("Build FAILED for {}", task.id));
-                self.flog(LogLevel::Warn, "build", &format!("Build FAILED for task {}: {}", task.id, e));
-
-                // Log the build failure
-                let build_output = match &e {
-                    BuildError::CommandFailed { stderr, .. } => crate::build::BuildOutput {
-                        success: false,
-                        errors: vec![],
-                        warnings: vec![],
-                        stdout: String::new(),
-                        stderr: stderr.clone(),
-                    },
-                    _ => crate::build::BuildOutput {
-                        success: false,
-                        errors: vec![],
-                        warnings: vec![],
-                        stdout: String::new(),
-                        stderr: e.to_string(),
-                    },
-                };
-                self.log_manager.log_build_result(&build_output)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_build_result_record(&build_output));
-
-                // Record failed attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
-
-                // Keep task in progress for retry
-                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
-            }
-        }
+        // Mark task as completed
+        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+        self.sync_roadmap_item(&task.id);
+        self.log_manager.log_task_complete(&task.id)?;
+        self.state
+            .log_records
+            .push(LogManager::create_task_complete_record(&task.id));
+        self.flog(LogLevel::Info, "task", &format!("Task {} marked completed", task.id));
 
         self.manager_state = ManagerState::Executing;
         Ok(())
@@ -1172,64 +1138,17 @@ impl Manager {
             return Ok(());
         }
 
-        // Run build verification
-        self.manager_state = ManagerState::Verifying;
-        let build_result = self.build_verifier.verify_all();
+        // Record successful attempt (build verification deferred to phase completion)
+        self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
 
-        match build_result {
-            Ok(()) => {
-                info!("Build verification passed for fix task {}", task.id);
-                emit_cm(&format!("Build PASSED for FIX {}", task.id));
-                self.flog(LogLevel::Info, "build", &format!("Build PASSED for FIX task {}", task.id));
-                let build_output = crate::build::BuildOutput {
-                    success: true,
-                    errors: vec![],
-                    warnings: vec![],
-                    stdout: String::new(),
-                    stderr: String::new(),
-                };
-                self.log_manager.log_build_result(&build_output)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_build_result_record(&build_output));
-
-                // Record successful attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
-
-                // Mark task as completed
-                self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-                self.sync_roadmap_item(&task.id);
-                self.log_manager.log_task_complete(&task.id)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_task_complete_record(&task.id));
-                self.flog(LogLevel::Info, "task", &format!("FIX task {} marked completed", task.id));
-            }
-            Err(e) => {
-                warn!("Build verification failed for fix task {}: {}", task.id, e);
-                emit_cm(&format!("Build FAILED for FIX {}", task.id));
-                self.flog(LogLevel::Warn, "build", &format!("Build FAILED for FIX task {}: {}", task.id, e));
-
-                // Log the build failure
-                let build_output = crate::build::BuildOutput {
-                    success: false,
-                    errors: vec![],
-                    warnings: vec![],
-                    stdout: String::new(),
-                    stderr: e.to_string(),
-                };
-                self.log_manager.log_build_result(&build_output)?;
-                self.state
-                    .log_records
-                    .push(LogManager::create_build_result_record(&build_output));
-
-                // Record failed attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
-
-                // Keep task pending for retry
-                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
-            }
-        }
+        // Mark task as completed
+        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+        self.sync_roadmap_item(&task.id);
+        self.log_manager.log_task_complete(&task.id)?;
+        self.state
+            .log_records
+            .push(LogManager::create_task_complete_record(&task.id));
+        self.flog(LogLevel::Info, "task", &format!("FIX task {} marked completed", task.id));
 
         self.manager_state = ManagerState::Executing;
         Ok(())
@@ -1323,6 +1242,139 @@ impl Manager {
         }
 
         debug!("Roadmap item {} not found for task {}", item_id, task_id);
+    }
+
+    /// Check if a phase just completed and run build verification.
+    ///
+    /// Returns `Ok(true)` if build passed (or no check needed),
+    /// `Ok(false)` if build failed and a fix task was injected.
+    fn check_phase_completion(&mut self, phase_id: &str) -> Result<bool, ManagerError> {
+        if !self.state.all_phase_tasks_completed(phase_id) {
+            return Ok(true); // Phase not complete yet, no check needed
+        }
+
+        // All tasks in phase completed - run build verification
+        emit_cm(&format!("Phase {} complete, verifying build...", phase_id));
+        self.flog(
+            LogLevel::Info,
+            "build",
+            &format!("Phase {} complete, running build verification", phase_id),
+        );
+        self.manager_state = ManagerState::Verifying;
+
+        let build_result = self.build_verifier.verify_all();
+
+        match build_result {
+            Ok(()) => {
+                emit_cm(&format!("Build PASSED for phase {}", phase_id));
+                self.flog(
+                    LogLevel::Info,
+                    "build",
+                    &format!("Build PASSED for phase {}", phase_id),
+                );
+                let build_output = crate::build::BuildOutput {
+                    success: true,
+                    errors: vec![],
+                    warnings: vec![],
+                    stdout: String::new(),
+                    stderr: String::new(),
+                };
+                self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
+
+                // Mark phase as completed
+                self.state
+                    .mark_phase_status(phase_id, PhaseStatus::Completed)?;
+                self.manager_state = ManagerState::Executing;
+                Ok(true)
+            }
+            Err(e) => {
+                let err_msg = match &e {
+                    BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                    _ => e.to_string(),
+                };
+                emit_cm(&format!(
+                    "Build FAILED for phase {}, injecting fix task",
+                    phase_id
+                ));
+                self.flog(
+                    LogLevel::Warn,
+                    "build",
+                    &format!("Build FAILED for phase {}: {}", phase_id, err_msg),
+                );
+
+                let build_output = crate::build::BuildOutput {
+                    success: false,
+                    errors: vec![],
+                    warnings: vec![],
+                    stdout: String::new(),
+                    stderr: err_msg.clone(),
+                };
+                self.log_manager.log_build_result(&build_output)?;
+                self.state
+                    .log_records
+                    .push(LogManager::create_build_result_record(&build_output));
+
+                // Inject a build-fix task
+                self.inject_build_fix_task(phase_id, &err_msg)?;
+                self.manager_state = ManagerState::Executing;
+                Ok(false)
+            }
+        }
+    }
+
+    /// Inject a build fix task into the specified phase.
+    fn inject_build_fix_task(
+        &mut self,
+        phase_id: &str,
+        build_errors: &str,
+    ) -> Result<(), ManagerError> {
+        // Count existing build-fix tasks to create a unique ID
+        let fix_count = self
+            .state
+            .phases
+            .iter()
+            .find(|p| p.id == phase_id)
+            .map(|p| {
+                p.tasks
+                    .iter()
+                    .filter(|t| t.id.contains("build-fix"))
+                    .count()
+            })
+            .unwrap_or(0);
+
+        let task_id = format!("{}.build-fix-{}", phase_id, fix_count + 1);
+        let instructions = format!(
+            "The build failed after all tasks in this phase completed. Fix the build errors.\n\nBuild errors:\n{}",
+            build_errors
+        );
+
+        let task = Task {
+            id: task_id.clone(),
+            name: format!("Fix build errors (attempt {})", fix_count + 1),
+            task_type: TaskType::Fix,
+            status: TaskStatus::Pending,
+            depends_on: vec![],
+            context: TaskContext {
+                files_to_read: vec![],
+                code_style_excerpt: None,
+                prior_review_issues: vec![],
+            },
+            instructions,
+            attempts: vec![],
+            roadmap_item_id: None,
+        };
+
+        self.state.add_task_to_phase(phase_id, task)?;
+        emit_cm(&format!("Injected build-fix task: {}", task_id));
+        self.flog(
+            LogLevel::Info,
+            "task",
+            &format!("Injected build-fix task: {}", task_id),
+        );
+        Ok(())
     }
 
     /// Check if git has any uncommitted changes in the working directory.
