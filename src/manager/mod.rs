@@ -20,7 +20,7 @@ use crate::tui::{ManagerEvent, TuiCommand};
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
 use crate::generate::{generate_log_md, write_md_file, GenerateError};
-use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager, PhaseLogger, PhaseLogError};
+use crate::log::{LogError, LogManager, PhaseLogger, PhaseLogError};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
     PhaseStatus, RoadmapState, StateError, Task, TaskContext, TaskStatus, TaskType, TasksState,
@@ -68,10 +68,6 @@ pub enum ManagerError {
     #[error("generate error: {0}")]
     GenerateError(#[from] GenerateError),
 
-    /// An error occurred while writing to the file log.
-    #[error("file log error: {0}")]
-    FileLogError(#[from] FileLogError),
-
     /// An error occurred while writing to the phase log.
     #[error("phase log error: {0}")]
     PhaseLogError(#[from] PhaseLogError),
@@ -112,10 +108,6 @@ pub struct ManagerConfig {
     pub timeout: Duration,
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: u32,
-    /// Path to the cm.log file for persistent operational logging.
-    pub file_log_path: PathBuf,
-    /// Whether verbose (DEBUG-level) file logging is enabled.
-    pub verbose: bool,
 }
 
 impl ManagerConfig {
@@ -137,8 +129,6 @@ impl ManagerConfig {
             model: "claude-sonnet-4-5-20250929".to_string(),
             timeout: Duration::from_secs(300),
             max_cycles: 5,
-            file_log_path: parent.join("cm.log"),
-            verbose: false,
         }
     }
 
@@ -172,17 +162,6 @@ impl ManagerConfig {
         self
     }
 
-    /// Set the file log path.
-    pub fn file_log_path(mut self, path: PathBuf) -> Self {
-        self.file_log_path = path;
-        self
-    }
-
-    /// Set verbose mode.
-    pub fn verbose(mut self, verbose: bool) -> Self {
-        self.verbose = verbose;
-        self
-    }
 }
 
 /// The main manager that orchestrates task execution.
@@ -202,8 +181,6 @@ pub struct Manager {
     build_verifier: BuildVerifier,
     /// Manager for LOG.md entries.
     log_manager: LogManager,
-    /// Persistent file logger for .cm/cm.log.
-    file_logger: FileLogger,
     /// Per-phase logger for full prompts and responses.
     phase_logger: PhaseLogger,
     /// Current execution state.
@@ -244,13 +221,6 @@ impl Manager {
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
         let log_manager = LogManager::new(config.log_path.clone());
 
-        let log_level = if config.verbose {
-            LogLevel::Debug
-        } else {
-            LogLevel::Info
-        };
-        let file_logger = FileLogger::new(config.file_log_path.clone())?.with_level(log_level);
-
         // Initialize phase logger
         let cm_dir = config.state_path.parent().unwrap_or(std::path::Path::new("."));
         let phase_logger = PhaseLogger::new(cm_dir)?;
@@ -269,12 +239,6 @@ impl Manager {
 
         info!("Manager initialized with state from {:?}", config.state_path);
 
-        // Log startup to file
-        let _ = file_logger.info(
-            "manager",
-            &format!("Manager starting with model: {}", config.model),
-        );
-
         Ok(Self {
             config,
             state,
@@ -282,7 +246,6 @@ impl Manager {
             agent_spawner,
             build_verifier,
             log_manager,
-            file_logger,
             phase_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
@@ -294,13 +257,6 @@ impl Manager {
     /// Get the current manager state.
     pub fn manager_state(&self) -> ManagerState {
         self.manager_state
-    }
-
-    /// Log to file logger, ignoring errors (file log failures should not halt execution).
-    fn flog(&self, level: LogLevel, component: &str, message: &str) {
-        if let Err(e) = self.file_logger.log(level, component, message) {
-            warn!("File log write failed: {}", e);
-        }
     }
 
     /// Get a reference to the tasks state.
@@ -326,7 +282,6 @@ impl Manager {
     pub fn run(&mut self) -> Result<(), ManagerError> {
         info!("Starting manager run loop (phase-based)");
         emit_cm("Starting run loop (phase-based)");
-        self.flog(LogLevel::Info, "manager", "Execution loop started (phase-based)");
 
         // Ensure clean working tree for commit-per-agent audit trail
         self.preflight_git_check()?;
@@ -337,7 +292,6 @@ impl Manager {
             // Check for shutdown signal before selecting next phase
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received, saving state and exiting gracefully");
-                self.flog(LogLevel::Warn, "manager", "Shutdown signal received, saving state");
                 self.update_state()?;
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
@@ -349,27 +303,23 @@ impl Manager {
                 None => {
                     info!("No more runnable phases, exiting loop");
                     emit_cm("No more runnable phases");
-                    self.flog(LogLevel::Info, "manager", "No more runnable phases");
                     break;
                 }
             };
 
             info!("Selected phase for execution: {}", phase_id);
             emit_cm(&format!("Selected phase: {}", phase_id));
-            self.flog(LogLevel::Info, "phase", &format!("Phase selected: {}", phase_id));
 
             // Execute the phase (all pending tasks in one agent call)
             match self.execute_phase(&phase_id) {
                 Ok(()) => {
                     info!("Phase {} completed successfully", phase_id);
                     emit_cm(&format!("Phase {} completed", phase_id));
-                    self.flog(LogLevel::Info, "phase", &format!("Phase {} completed", phase_id));
                 }
                 Err(e) => {
                     let error_msg = format!("Phase {} failed: {}", phase_id, e);
                     error!("{}", error_msg);
                     emit_cm(&format!("Phase {} failed: {}", phase_id, e));
-                    self.flog(LogLevel::Error, "phase", &error_msg);
                     self.log_manager.log_error(&error_msg)?;
                     self.state
                         .log_records
@@ -385,7 +335,6 @@ impl Manager {
             // Check for shutdown signal after phase completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received after phase completion, exiting gracefully");
-                self.flog(LogLevel::Warn, "manager", "Shutdown signal received after phase completion");
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
             }
@@ -394,7 +343,6 @@ impl Manager {
         self.manager_state = ManagerState::Idle;
         info!("Manager run loop completed");
         emit_cm("Run loop completed");
-        self.flog(LogLevel::Info, "manager", "Execution loop completed");
         Ok(())
     }
 
@@ -778,7 +726,6 @@ impl Manager {
     pub fn execute_phase(&mut self, phase_id: &str) -> Result<(), ManagerError> {
         info!("Executing phase: {}", phase_id);
         emit_cm(&format!("Executing phase: {}", phase_id));
-        self.flog(LogLevel::Info, "phase", &format!("Executing phase: {}", phase_id));
 
         // Mark phase as in progress
         self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
@@ -821,7 +768,6 @@ impl Manager {
                         }
                         self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
                         self.clear_phase_implem_completion(phase_id);
-                        self.flog(LogLevel::Info, "phase", &format!("Phase {} completed (resumed review approved)", phase_id));
                     }
                     Verdict::NeedsFixes => {
                         // Defer all tasks
@@ -829,7 +775,6 @@ impl Manager {
                             self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
                         }
                         self.clear_phase_implem_completion(phase_id);
-                        self.flog(LogLevel::Warn, "phase", &format!("Phase {} deferred: review cycle exhausted", phase_id));
                     }
                 }
                 return Ok(());
@@ -884,10 +829,8 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.manager_state = ManagerState::WaitingForAgent;
-        self.flog(LogLevel::Info, "agent", &format!("Agent spawned for PHASE_IMPLEM {}", phase_id));
         let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")?;
         let output = handle.wait()?;
-        self.flog(LogLevel::Info, "agent", &format!("Agent completed for PHASE_IMPLEM {}", phase_id));
 
         // Log full response to phase logger
         let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code);
@@ -998,7 +941,6 @@ impl Manager {
                     }
                     self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
                     self.clear_phase_implem_completion(phase_id);
-                    self.flog(LogLevel::Info, "phase", &format!("Phase {} completed (review approved)", phase_id));
                 }
                 Verdict::NeedsFixes => {
                     // Defer all tasks
@@ -1011,7 +953,6 @@ impl Manager {
                             .push(LogManager::create_task_deferred_record(&task.id, &reason));
                     }
                     self.clear_phase_implem_completion(phase_id);
-                    self.flog(LogLevel::Warn, "phase", &format!("Phase {} deferred: {}", phase_id, reason));
                 }
             }
         } else {
@@ -1097,10 +1038,8 @@ impl Manager {
                 commit_hash: None,
             });
 
-            self.flog(LogLevel::Info, "agent", &format!("Spawning PHASE_REVIEW for {}", phase_id));
             let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")?;
             let review_output = review_handle.wait()?;
-            self.flog(LogLevel::Info, "agent", &format!("PHASE_REVIEW completed for {}", phase_id));
 
             // Log full response
             let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code);
@@ -1202,10 +1141,8 @@ impl Manager {
                         commit_hash: None,
                     });
 
-                    self.flog(LogLevel::Info, "agent", &format!("Spawning PHASE_FIX for {}", phase_id));
                     let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")?;
                     let fix_output = fix_handle.wait()?;
-                    self.flog(LogLevel::Info, "agent", &format!("PHASE_FIX completed for {}", phase_id));
 
                     let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code);
 
@@ -1275,7 +1212,6 @@ impl Manager {
     fn update_state(&mut self) -> Result<(), ManagerError> {
         save_state(&self.state, &self.config.state_path)?;
         debug!("State saved to {:?}", self.config.state_path);
-        self.flog(LogLevel::Debug, "state", &format!("State saved to {:?}", self.config.state_path));
 
         // Regenerate LOG.md from log_records
         self.regenerate_log_md()?;
@@ -1406,11 +1342,6 @@ impl Manager {
 
         // All tasks in phase completed - run build verification
         emit_cm(&format!("Phase {} complete, verifying build...", phase_id));
-        self.flog(
-            LogLevel::Info,
-            "build",
-            &format!("Phase {} complete, running build verification", phase_id),
-        );
         self.manager_state = ManagerState::Verifying;
 
         let build_result = self.build_verifier.verify_all();
@@ -1418,11 +1349,6 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 emit_cm(&format!("Build PASSED for phase {}", phase_id));
-                self.flog(
-                    LogLevel::Info,
-                    "build",
-                    &format!("Build PASSED for phase {}", phase_id),
-                );
                 let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
@@ -1454,11 +1380,6 @@ impl Manager {
                     "Build FAILED for phase {}, injecting fix task",
                     phase_id
                 ));
-                self.flog(
-                    LogLevel::Warn,
-                    "build",
-                    &format!("Build FAILED for phase {}: {}", phase_id, err_msg),
-                );
 
                 let build_output = crate::build::BuildOutput {
                     success: false,
@@ -1527,11 +1448,6 @@ impl Manager {
 
         self.state.add_task_to_phase(phase_id, task)?;
         emit_cm(&format!("Injected build-fix task: {}", task_id));
-        self.flog(
-            LogLevel::Info,
-            "task",
-            &format!("Injected build-fix task: {}", task_id),
-        );
         Ok(())
     }
 
@@ -1567,18 +1483,13 @@ impl Manager {
     fn preflight_git_check(&self) -> Result<(), ManagerError> {
         let git = GitRunner::new(self.config.working_dir.clone());
         match git.is_clean() {
-            Ok(true) => {
-                self.flog(LogLevel::Info, "git", "Preflight check: working tree is clean");
-                Ok(())
-            }
+            Ok(true) => Ok(()),
             Ok(false) => {
                 let msg = "Working tree has uncommitted changes. Commit or stash them before running cm.";
-                self.flog(LogLevel::Error, "git", msg);
                 Err(ManagerError::TaskNotRunnable(msg.to_string()))
             }
             Err(e) => {
                 warn!("Preflight git check failed (git not available?): {}", e);
-                self.flog(LogLevel::Warn, "git", &format!("Preflight git check failed: {}", e));
                 // Don't block execution if git isn't available
                 Ok(())
             }
@@ -1612,11 +1523,6 @@ impl Manager {
         let commit_id = git.commit(&message)?;
         let hash = commit_id.0.clone();
 
-        self.flog(
-            LogLevel::Info,
-            "git",
-            &format!("Committed {} changes for {}: {}", agent_label, task_id, hash),
-        );
         emit_cm(&format!("Committed {} changes: {}", agent_label, &hash[..8.min(hash.len())]));
 
         // Record commit hash in agent history

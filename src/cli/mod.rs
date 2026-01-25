@@ -71,10 +71,6 @@ pub enum CliError {
     #[error("generate error: {0}")]
     GenerateError(#[from] GenerateError),
 
-    /// File log error.
-    #[error("file log error: {0}")]
-    FileLogError(#[from] crate::log::FileLogError),
-
     /// Phase log error.
     #[error("phase log error: {0}")]
     PhaseLogError(#[from] crate::log::PhaseLogError),
@@ -155,7 +151,7 @@ pub struct Cli {
     #[arg(long)]
     pub sanity_check: bool,
 
-    /// Prune cm.log entries older than 24 hours.
+    /// Prune phase log entries older than 24 hours.
     #[arg(long)]
     pub prune: bool,
 }
@@ -320,9 +316,6 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
             config = config.working_dir(cwd);
         }
     }
-
-    // Wire verbose flag for file logger level
-    config.verbose = cli.verbose;
 
     debug!("Final ManagerConfig: {:?}", config);
     Ok(config)
@@ -851,33 +844,14 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
 
 /// Execute the prune mode.
 ///
-/// Prunes cm.log and all phase log entries older than 24 hours.
+/// Prunes all phase log entries older than 24 hours.
 fn execute_prune(cli: &Cli) -> Result<(), CliError> {
     let cm_dir = cli
         .state
         .parent()
         .unwrap_or(std::path::Path::new("."));
 
-    let file_log_path = cm_dir.join("cm.log");
     let logs_dir = cm_dir.join("logs");
-
-    let mut total_removed = 0;
-    let mut total_kept = 0;
-
-    // Prune main cm.log
-    if file_log_path.exists() {
-        info!("Pruning main log file: {:?}", file_log_path);
-        let logger = crate::log::FileLogger::new(file_log_path.clone())?;
-        let stats = logger.prune()?;
-        println!(
-            "Pruned cm.log: {} entries removed, {} entries kept",
-            stats.removed_count, stats.kept_count
-        );
-        total_removed += stats.removed_count;
-        total_kept += stats.kept_count;
-    } else {
-        println!("No main log file found at {:?}", file_log_path);
-    }
 
     // Prune all phase logs
     if logs_dir.exists() {
@@ -887,17 +861,9 @@ fn execute_prune(cli: &Cli) -> Result<(), CliError> {
             "Pruned phase logs: {} entries removed, {} entries kept",
             stats.removed_count, stats.kept_count
         );
-        total_removed += stats.removed_count;
-        total_kept += stats.kept_count;
     } else {
         println!("No phase logs directory found at {:?}", logs_dir);
     }
-
-    // Print total summary
-    println!(
-        "\nTotal: {} entries removed, {} entries kept",
-        total_removed, total_kept
-    );
 
     Ok(())
 }

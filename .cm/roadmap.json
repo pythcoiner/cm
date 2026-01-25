@@ -136,13 +136,27 @@
         {
           "id": "phase-27-item-1",
           "name": "Add /run command for cm orchestration",
-          "completed": false,
+          "completed": true,
           "sub_items": [
-            { "name": "Create assets/run.md with orchestration prompt", "completed": false },
-            { "name": "Add RUN_COMMAND constant to src/command.rs", "completed": false },
-            { "name": "Update src/cli/init.rs with run command", "completed": false }
+            {
+              "id": "phase-27-item-1.sub-0",
+              "name": "Create assets/run.md with orchestration prompt",
+              "completed": true
+            },
+            {
+              "id": "phase-27-item-1.sub-1",
+              "name": "Add RUN_COMMAND constant to src/command.rs",
+              "completed": true
+            },
+            {
+              "id": "phase-27-item-1.sub-2",
+              "name": "Update src/cli/init.rs with run command",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-27.feat-run-command.impl-1"]
+          "linked_task_ids": [
+            "phase-27.feat-run-command.impl-1"
+          ]
         }
       ]
     },
@@ -156,14 +170,40 @@
           "name": "Remove LOG.md generation entirely",
           "completed": false,
           "sub_items": [
-            { "name": "Delete src/generate/log_md.rs", "completed": false },
-            { "name": "Update src/generate/mod.rs", "completed": false },
-            { "name": "Update src/cli/mod.rs regenerate command", "completed": false },
-            { "name": "Update tests/integration.rs", "completed": false },
-            { "name": "Update documentation (CLAUDE.md, README.md, assets/*.md)", "completed": false },
-            { "name": "Delete .cm/LOG.md", "completed": false }
+            {
+              "id": "phase-28-item-1.sub-0",
+              "name": "Delete src/generate/log_md.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-28-item-1.sub-1",
+              "name": "Update src/generate/mod.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-28-item-1.sub-2",
+              "name": "Update src/cli/mod.rs regenerate command",
+              "completed": false
+            },
+            {
+              "id": "phase-28-item-1.sub-3",
+              "name": "Update tests/integration.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-28-item-1.sub-4",
+              "name": "Update documentation (CLAUDE.md, README.md, assets/*.md)",
+              "completed": false
+            },
+            {
+              "id": "phase-28-item-1.sub-5",
+              "name": "Delete .cm/LOG.md",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-28.feat-remove-log-md.impl-1"]
+          "linked_task_ids": [
+            "phase-28.feat-remove-log-md.impl-1"
+          ]
         }
       ]
     },
@@ -177,12 +217,30 @@
           "name": "Add --reset flag to reset a phase",
           "completed": false,
           "sub_items": [
-            { "name": "Add reset: Option<String> to Cli struct", "completed": false },
-            { "name": "Add dispatch in run() function", "completed": false },
-            { "name": "Implement execute_reset() function", "completed": false },
-            { "name": "Update CLAUDE.md documentation", "completed": false }
+            {
+              "id": "phase-29-item-1.sub-0",
+              "name": "Add reset: Option<String> to Cli struct",
+              "completed": false
+            },
+            {
+              "id": "phase-29-item-1.sub-1",
+              "name": "Add dispatch in run() function",
+              "completed": false
+            },
+            {
+              "id": "phase-29-item-1.sub-2",
+              "name": "Implement execute_reset() function",
+              "completed": false
+            },
+            {
+              "id": "phase-29-item-1.sub-3",
+              "name": "Update CLAUDE.md documentation",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-29.feat-reset-flag.impl-1"]
+          "linked_task_ids": [
+            "phase-29.feat-reset-flag.impl-1"
+          ]
         }
       ]
     },
@@ -196,11 +254,25 @@
           "name": "Add Step 0 prerequisites check to /cm wizard",
           "completed": false,
           "sub_items": [
-            { "name": "Add Step 0 section to assets/cm.md", "completed": false },
-            { "name": "Check for .cm/agents/ directory", "completed": false },
-            { "name": "Provide guidance to run cm init", "completed": false }
+            {
+              "id": "phase-30-item-1.sub-0",
+              "name": "Add Step 0 section to assets/cm.md",
+              "completed": false
+            },
+            {
+              "id": "phase-30-item-1.sub-1",
+              "name": "Check for .cm/agents/ directory",
+              "completed": false
+            },
+            {
+              "id": "phase-30-item-1.sub-2",
+              "name": "Provide guidance to run cm init",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-30.feat-cm-prereq.impl-1"]
+          "linked_task_ids": [
+            "phase-30.feat-cm-prereq.impl-1"
+          ]
         }
       ]
     },
@@ -214,11 +286,25 @@
           "name": "Add .cm/*.log to root .gitignore during cm init",
           "completed": false,
           "sub_items": [
-            { "name": "Add ensure_gitignore_entry() function", "completed": false },
-            { "name": "Call from execute_init_in_dir()", "completed": false },
-            { "name": "Add tests for new and existing .gitignore", "completed": false }
+            {
+              "id": "phase-31-item-1.sub-0",
+              "name": "Add ensure_gitignore_entry() function",
+              "completed": false
+            },
+            {
+              "id": "phase-31-item-1.sub-1",
+              "name": "Call from execute_init_in_dir()",
+              "completed": false
+            },
+            {
+              "id": "phase-31-item-1.sub-2",
+              "name": "Add tests for new and existing .gitignore",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-31.feat-gitignore.impl-1"]
+          "linked_task_ids": [
+            "phase-31.feat-gitignore.impl-1"
+          ]
         }
       ]
     }

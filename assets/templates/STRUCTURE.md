@@ -1,4 +1,4 @@
-# Project Structure
+# ga Project Structure
 
 This file describes the architecture and organization of this project. Fill in the sections below to help agents understand your codebase.
 

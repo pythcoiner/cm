@@ -151,12 +151,12 @@ Status: **Not Started** (0/0)
 
 ## Phase 27: Add /run Command
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add /run command for cm orchestration
-  - [ ] Create assets/run.md with orchestration prompt
-  - [ ] Add RUN_COMMAND constant to src/command.rs
-  - [ ] Update src/cli/init.rs with run command
+- [x] Add /run command for cm orchestration
+  - [x] Create assets/run.md with orchestration prompt
+  - [x] Add RUN_COMMAND constant to src/command.rs
+  - [x] Update src/cli/init.rs with run command
 
 ---
 
@@ -233,9 +233,9 @@ Status: **Not Started** (0/1)
 | Phase 18: Regenerate MD After Skills | Not Started | 0/0 |
 | Phase 23: Detailed File Logging | Not Started | 0/0 |
 | Phase 26: Skills to Commands Migration | Not Started | 0/0 |
-| Phase 27: Add /run Command | Not Started | 0/4 |
+| Phase 27: Add /run Command | Complete | 4/4 |
 | Phase 28: Remove LOG.md Generation | Not Started | 0/7 |
 | Phase 29: Add --reset Flag | Not Started | 0/5 |
 | Phase 30: Add /cm Prerequisites Check | Not Started | 0/4 |
 | Phase 31: Add .cm/*.log to .gitignore | Not Started | 0/4 |
-| **Total** | | **0/24** |
+| **Total** | | **4/24** |

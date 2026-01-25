@@ -1,8 +1,7 @@
-//! Per-phase TRACE logging for detailed agent interaction tracking.
+//! Per-phase logging for detailed agent interaction tracking.
 //!
 //! Each phase gets its own log file in `.cm/logs/` directory containing full
-//! prompts and responses for all agents within that phase. These are separate
-//! from the main `cm.log` (operational debug log) and `LOG.md` (audit trail).
+//! prompts and responses for all agents within that phase.
 
 use std::collections::HashMap;
 use std::fs::{self, File, OpenOptions};
@@ -10,10 +9,34 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use thiserror::Error;
 
-use crate::log::file_logger::{parse_log_timestamp, PruneStats};
+/// Statistics from a log pruning operation.
+#[derive(Debug, Clone)]
+pub struct PruneStats {
+    /// Number of log lines removed.
+    pub removed_count: usize,
+    /// Number of log lines kept.
+    pub kept_count: usize,
+}
+
+/// Parse the timestamp from a log line.
+///
+/// Expected format: `[YYYY-MM-DD HH:MM:SS.mmm] ...`
+/// Returns None if the line doesn't match the expected format.
+pub fn parse_log_timestamp(line: &str) -> Option<DateTime<Utc>> {
+    if !line.starts_with('[') {
+        return None;
+    }
+
+    let end_bracket = line.find(']')?;
+    let timestamp_str = &line[1..end_bracket];
+
+    chrono::NaiveDateTime::parse_from_str(timestamp_str, "%Y-%m-%d %H:%M:%S%.3f")
+        .ok()
+        .map(|naive| naive.and_utc())
+}
 
 /// Errors that can occur during phase logging.
 #[derive(Debug, Error)]
@@ -271,32 +294,34 @@ fn prune_log_file(
     })
 }
 
-/// Extract phase ID from a task ID.
+/// Extract phase ID from a task ID or phase ID.
 ///
-/// Handles task IDs like:
-/// - `phase-21.task-1` -> Some("phase-21")
-/// - `phase-0.5.task-1` -> Some("phase-0.5")
-/// - `invalid` -> None
-///
-/// Uses `rfind(".task-")` to find the split point between phase and task.
+/// Handles both:
+/// - Task IDs: `phase-21.task-1` -> Some("phase-21")
+/// - Phase IDs: `phase-21` -> Some("phase-21")
+/// - Decimal phases: `phase-0.5.task-1` -> Some("phase-0.5"), `phase-0.5` -> Some("phase-0.5")
+/// - Invalid: `invalid` -> None
 ///
 /// # Arguments
 ///
-/// * `task_id` - The task ID to parse
+/// * `id` - The task ID or phase ID to parse
 ///
 /// # Returns
 ///
-/// The phase ID if the task ID is valid, None otherwise.
-pub fn extract_phase_id(task_id: &str) -> Option<&str> {
-    let split_index = task_id.rfind(".task-")?;
-    let phase_id = &task_id[..split_index];
-
-    // Basic validation: phase ID should start with "phase-"
-    if phase_id.starts_with("phase-") {
-        Some(phase_id)
-    } else {
-        None
+/// The phase ID if valid, None otherwise.
+pub fn extract_phase_id(id: &str) -> Option<&str> {
+    // Must start with "phase-"
+    if !id.starts_with("phase-") {
+        return None;
     }
+
+    // If it contains ".task-", extract the phase part
+    if let Some(split_index) = id.rfind(".task-") {
+        return Some(&id[..split_index]);
+    }
+
+    // Otherwise it's already a phase ID (e.g., "phase-27" or "phase-0.5")
+    Some(id)
 }
 
 #[cfg(test)]
@@ -331,10 +356,17 @@ mod tests {
     }
 
     #[test]
+    fn test_extract_phase_id_direct() {
+        // Phase IDs passed directly (not as part of task ID) should work
+        assert_eq!(extract_phase_id("phase-21"), Some("phase-21"));
+        assert_eq!(extract_phase_id("phase-1"), Some("phase-1"));
+        assert_eq!(extract_phase_id("phase-0.5"), Some("phase-0.5"));
+    }
+
+    #[test]
     fn test_extract_phase_id_invalid() {
         assert_eq!(extract_phase_id("invalid"), None);
         assert_eq!(extract_phase_id("task-1"), None);
-        assert_eq!(extract_phase_id("phase-21"), None);
         assert_eq!(extract_phase_id("notphase-1.task-1"), None);
         assert_eq!(extract_phase_id(""), None);
     }
