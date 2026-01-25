@@ -6,12 +6,14 @@
 
 use std::collections::HashMap;
 use std::fs::{self, File, OpenOptions};
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use thiserror::Error;
+
+use crate::log::file_logger::{parse_log_timestamp, PruneStats};
 
 /// Errors that can occur during phase logging.
 #[derive(Debug, Error)]
@@ -173,6 +175,100 @@ impl PhaseLogger {
 
         self.write_to_phase(phase_id, &content)
     }
+
+    /// Prune all phase log files older than 24 hours.
+    ///
+    /// Iterates over all `.log` files in `.cm/logs/` and applies the same
+    /// 24-hour pruning logic as the main `cm.log` file.
+    ///
+    /// # Arguments
+    ///
+    /// * `logs_dir` - The logs directory (`.cm/logs/`)
+    ///
+    /// # Returns
+    ///
+    /// Combined statistics from all pruned files.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if reading the directory or pruning fails.
+    pub fn prune_all(logs_dir: &Path) -> Result<PruneStats, PhaseLogError> {
+        let duration = Duration::hours(24);
+        let cutoff = Utc::now() - duration;
+
+        let mut total_removed = 0;
+        let mut total_kept = 0;
+
+        // Ensure directory exists
+        if !logs_dir.exists() {
+            return Ok(PruneStats {
+                removed_count: 0,
+                kept_count: 0,
+            });
+        }
+
+        // Iterate over all .log files in the directory
+        for entry in fs::read_dir(logs_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            // Skip if not a file or not a .log file
+            if !path.is_file() || path.extension().and_then(|s| s.to_str()) != Some("log") {
+                continue;
+            }
+
+            // Prune this file
+            let stats = prune_log_file(&path, cutoff)?;
+            total_removed += stats.removed_count;
+            total_kept += stats.kept_count;
+        }
+
+        Ok(PruneStats {
+            removed_count: total_removed,
+            kept_count: total_kept,
+        })
+    }
+}
+
+/// Prune a single log file, removing entries older than the cutoff.
+///
+/// Lines with unparseable timestamps are kept (conservative approach).
+fn prune_log_file(
+    path: &Path,
+    cutoff: chrono::DateTime<Utc>,
+) -> Result<PruneStats, PhaseLogError> {
+    let reader = BufReader::new(File::open(path)?);
+    let mut kept_lines = Vec::new();
+    let mut removed_count = 0;
+
+    for line in reader.lines() {
+        let line = line?;
+        match parse_log_timestamp(&line) {
+            Some(ts) if ts < cutoff => {
+                removed_count += 1;
+            }
+            _ => {
+                kept_lines.push(line);
+            }
+        }
+    }
+
+    let kept_count = kept_lines.len();
+
+    // Rewrite the file with only kept lines
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(path)?;
+    for line in &kept_lines {
+        writeln!(file, "{}", line)?;
+    }
+    file.flush()?;
+
+    Ok(PruneStats {
+        removed_count,
+        kept_count,
+    })
 }
 
 /// Extract phase ID from a task ID.
@@ -411,5 +507,119 @@ mod tests {
 
         // Should have 10 entries
         assert_eq!(content.matches("PROMPT: IMPLEM").count(), 10);
+    }
+
+    #[test]
+    fn test_prune_all_empty_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let logs_dir = temp_dir.path().join("logs");
+        fs::create_dir_all(&logs_dir).unwrap();
+
+        let stats = PhaseLogger::prune_all(&logs_dir).unwrap();
+        assert_eq!(stats.removed_count, 0);
+        assert_eq!(stats.kept_count, 0);
+    }
+
+    #[test]
+    fn test_prune_all_nonexistent_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let logs_dir = temp_dir.path().join("nonexistent");
+
+        let stats = PhaseLogger::prune_all(&logs_dir).unwrap();
+        assert_eq!(stats.removed_count, 0);
+        assert_eq!(stats.kept_count, 0);
+    }
+
+    #[test]
+    fn test_prune_all_keeps_recent() {
+        let temp_dir = TempDir::new().unwrap();
+        let logger = PhaseLogger::new(temp_dir.path()).unwrap();
+
+        // Add recent entries to multiple phases
+        logger
+            .log_prompt("phase-1.task-1", "IMPLEM", "Recent prompt 1")
+            .unwrap();
+        logger
+            .log_prompt("phase-2.task-1", "IMPLEM", "Recent prompt 2")
+            .unwrap();
+
+        let logs_dir = temp_dir.path().join("logs");
+        let stats = PhaseLogger::prune_all(&logs_dir).unwrap();
+
+        // All recent entries should be kept (no removal)
+        assert_eq!(stats.removed_count, 0);
+        // Phase logger writes multi-line entries, so we just verify no lines were removed
+    }
+
+    #[test]
+    fn test_prune_all_removes_old() {
+        use std::io::Write;
+
+        let temp_dir = TempDir::new().unwrap();
+        let logs_dir = temp_dir.path().join("logs");
+        fs::create_dir_all(&logs_dir).unwrap();
+
+        // Write old entries directly with past timestamps (format matches parse_log_timestamp)
+        let phase1_log = logs_dir.join("phase-1.log");
+        let mut file1 = File::create(&phase1_log).unwrap();
+        writeln!(
+            file1,
+            "[2020-01-01 00:00:00.000] Old line 1"
+        )
+        .unwrap();
+        writeln!(
+            file1,
+            "[2020-01-01 00:00:01.000] Old line 2"
+        )
+        .unwrap();
+        drop(file1);
+
+        let phase2_log = logs_dir.join("phase-2.log");
+        let mut file2 = File::create(&phase2_log).unwrap();
+        writeln!(
+            file2,
+            "[2020-01-01 00:00:00.000] Old line 3"
+        )
+        .unwrap();
+        drop(file2);
+
+        let stats = PhaseLogger::prune_all(&logs_dir).unwrap();
+
+        // Should remove 3 old lines, keep 0
+        assert_eq!(stats.removed_count, 3);
+        assert_eq!(stats.kept_count, 0);
+
+        // Verify files are empty
+        let content1 = fs::read_to_string(&phase1_log).unwrap();
+        assert!(content1.is_empty());
+
+        let content2 = fs::read_to_string(&phase2_log).unwrap();
+        assert!(content2.is_empty());
+    }
+
+    #[test]
+    fn test_prune_all_ignores_non_log_files() {
+        let temp_dir = TempDir::new().unwrap();
+        let logs_dir = temp_dir.path().join("logs");
+        fs::create_dir_all(&logs_dir).unwrap();
+
+        // Create a non-.log file
+        let other_file = logs_dir.join("readme.txt");
+        fs::write(&other_file, "This is a readme").unwrap();
+
+        // Create a .log file with old timestamp
+        let log_file = logs_dir.join("phase-1.log");
+        fs::write(&log_file, "[2020-01-01 00:00:00.000] Old line\n").unwrap();
+
+        let stats = PhaseLogger::prune_all(&logs_dir).unwrap();
+
+        // Should only process .log files (1 old line removed)
+        assert_eq!(stats.removed_count, 1);
+        assert_eq!(stats.kept_count, 0);
+
+        // Non-.log file should be untouched
+        assert!(other_file.exists());
+        let content = fs::read_to_string(&other_file).unwrap();
+        assert_eq!(content, "This is a readme");
     }
 }

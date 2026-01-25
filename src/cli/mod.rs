@@ -74,6 +74,10 @@ pub enum CliError {
     /// File log error.
     #[error("file log error: {0}")]
     FileLogError(#[from] crate::log::FileLogError),
+
+    /// Phase log error.
+    #[error("phase log error: {0}")]
+    PhaseLogError(#[from] crate::log::PhaseLogError),
 }
 
 /// Claude Code Manager - Automated agent coordination for software development.
@@ -827,27 +831,52 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
 
 /// Execute the prune mode.
 ///
-/// Prunes cm.log entries older than 24 hours.
+/// Prunes cm.log and all phase log entries older than 24 hours.
 fn execute_prune(cli: &Cli) -> Result<(), CliError> {
-    let file_log_path = cli
+    let cm_dir = cli
         .state
         .parent()
-        .unwrap_or(std::path::Path::new("."))
-        .join("cm.log");
+        .unwrap_or(std::path::Path::new("."));
 
-    info!("Pruning log file: {:?}", file_log_path);
+    let file_log_path = cm_dir.join("cm.log");
+    let logs_dir = cm_dir.join("logs");
 
-    if !file_log_path.exists() {
-        println!("No log file found at {:?}", file_log_path);
-        return Ok(());
+    let mut total_removed = 0;
+    let mut total_kept = 0;
+
+    // Prune main cm.log
+    if file_log_path.exists() {
+        info!("Pruning main log file: {:?}", file_log_path);
+        let logger = crate::log::FileLogger::new(file_log_path.clone())?;
+        let stats = logger.prune()?;
+        println!(
+            "Pruned cm.log: {} entries removed, {} entries kept",
+            stats.removed_count, stats.kept_count
+        );
+        total_removed += stats.removed_count;
+        total_kept += stats.kept_count;
+    } else {
+        println!("No main log file found at {:?}", file_log_path);
     }
 
-    let logger = crate::log::FileLogger::new(file_log_path)?;
-    let stats = logger.prune()?;
+    // Prune all phase logs
+    if logs_dir.exists() {
+        info!("Pruning phase logs in: {:?}", logs_dir);
+        let stats = crate::log::PhaseLogger::prune_all(&logs_dir)?;
+        println!(
+            "Pruned phase logs: {} entries removed, {} entries kept",
+            stats.removed_count, stats.kept_count
+        );
+        total_removed += stats.removed_count;
+        total_kept += stats.kept_count;
+    } else {
+        println!("No phase logs directory found at {:?}", logs_dir);
+    }
 
+    // Print total summary
     println!(
-        "Pruned {} entries, kept {} entries",
-        stats.removed_count, stats.kept_count
+        "\nTotal: {} entries removed, {} entries kept",
+        total_removed, total_kept
     );
 
     Ok(())

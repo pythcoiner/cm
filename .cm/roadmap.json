@@ -2232,23 +2232,23 @@
         {
           "id": "27.3",
           "name": "Integrate PhaseLogger into Manager",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add phase_logger field to Manager",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log prompts in execute_implem/review/fix",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log responses in execute_implem/review/fix",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log in run_review_cycle",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
