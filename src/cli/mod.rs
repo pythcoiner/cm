@@ -9,14 +9,13 @@ mod init;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use log::{debug, info, warn};
 use thiserror::Error;
 
 use crate::config::{ConfigError, ConfigFile};
-use crate::generate::{generate_log_md, generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
+use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_roadmap, load_state, save_state, validate_all, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
@@ -126,10 +125,6 @@ pub struct Cli {
     /// Claude model to use.
     #[arg(long, value_name = "MODEL")]
     pub model: Option<String>,
-
-    /// Agent timeout in seconds.
-    #[arg(long, value_name = "SECONDS")]
-    pub timeout: Option<u64>,
 
     /// Maximum cycles per task before deferring.
     #[arg(long, value_name = "N")]
@@ -263,9 +258,6 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
         if let Some(model) = cf.model {
             config = config.model(model);
         }
-        if let Some(timeout_secs) = cf.timeout_secs {
-            config = config.timeout(Duration::from_secs(timeout_secs));
-        }
         if let Some(max_cycles) = cf.max_cycles {
             config = config.max_cycles(max_cycles);
         }
@@ -280,9 +272,6 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     // 4. Apply CLI overrides (highest precedence)
     if let Some(ref model) = cli.model {
         config = config.model(model.clone());
-    }
-    if let Some(timeout_secs) = cli.timeout {
-        config = config.timeout(Duration::from_secs(timeout_secs));
     }
     if let Some(max_cycles) = cli.max_cycles {
         config = config.max_cycles(max_cycles);
@@ -720,28 +709,14 @@ fn status_icon(status: &TaskStatus) -> &'static str {
 
 /// Execute the regenerate mode.
 ///
-/// Regenerates markdown files (LOG.md, ROADMAP.md) from JSON state files.
+/// Regenerates markdown files (ROADMAP.md) from JSON state files.
 fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
     info!("Regenerate mode: regenerating markdown files from JSON");
 
     let mut files_regenerated = 0;
 
-    // Regenerate LOG.md from tasks.json log_records
+    // Load state for TASKS.md generation
     let state = load_state(&cli.state)?;
-    let log_path = cli
-        .log_path
-        .clone()
-        .unwrap_or_else(|| {
-            cli.state
-                .parent()
-                .unwrap_or(std::path::Path::new("."))
-                .join("LOG.md")
-        });
-
-    let log_content = generate_log_md(&state.log_records);
-    write_md_file(&log_content, &log_path)?;
-    println!("Regenerated: {:?} ({} records)", log_path, state.log_records.len());
-    files_regenerated += 1;
 
     // Regenerate ROADMAP.md from roadmap.json if it exists
     let roadmap_json_path = cli
@@ -1123,12 +1098,6 @@ mod tests {
     }
 
     #[test]
-    fn test_cli_parse_timeout() {
-        let cli = Cli::parse_from(["cm", "--timeout", "600"]);
-        assert_eq!(cli.timeout, Some(600));
-    }
-
-    #[test]
     fn test_cli_parse_max_cycles() {
         let cli = Cli::parse_from(["cm", "--max-cycles", "10"]);
         assert_eq!(cli.max_cycles, Some(10));
@@ -1153,7 +1122,6 @@ mod tests {
             "--config", "/path/to/config.toml",
             "--state", "/path/to/tasks.json",
             "--model", "claude-opus-4-5-20251101",
-            "--timeout", "600",
             "--max-cycles", "10",
             "--log-path", "/tmp/LOG.md",
             "--working-dir", "/home/user/project",
@@ -1163,7 +1131,6 @@ mod tests {
         assert_eq!(cli.config, Some(PathBuf::from("/path/to/config.toml")));
         assert_eq!(cli.state, PathBuf::from("/path/to/tasks.json"));
         assert_eq!(cli.model, Some("claude-opus-4-5-20251101".to_string()));
-        assert_eq!(cli.timeout, Some(600));
         assert_eq!(cli.max_cycles, Some(10));
         assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
         assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
@@ -1177,7 +1144,6 @@ mod tests {
 
         assert_eq!(config.state_path, PathBuf::from("/tmp/tasks.json"));
         assert_eq!(config.model, "claude-sonnet-4-5-20250929");
-        assert_eq!(config.timeout, Duration::from_secs(300));
         assert_eq!(config.max_cycles, 5);
     }
 
@@ -1187,7 +1153,6 @@ mod tests {
             "cm",
             "--state", "/tmp/tasks.json",
             "--model", "claude-opus-4-5-20251101",
-            "--timeout", "600",
             "--max-cycles", "10",
             "--log-path", "/custom/LOG.md",
             "--working-dir", "/custom/dir",
@@ -1195,7 +1160,6 @@ mod tests {
         let config = build_manager_config(&cli).unwrap();
 
         assert_eq!(config.model, "claude-opus-4-5-20251101");
-        assert_eq!(config.timeout, Duration::from_secs(600));
         assert_eq!(config.max_cycles, 10);
         assert_eq!(config.log_path, PathBuf::from("/custom/LOG.md"));
         assert_eq!(config.working_dir, PathBuf::from("/custom/dir"));

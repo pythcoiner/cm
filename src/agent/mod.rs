@@ -34,10 +34,6 @@ pub enum AgentError {
     #[error("failed to read agent output: {0}")]
     OutputError(String),
 
-    /// The agent timed out.
-    #[error("agent timed out")]
-    Timeout,
-
     /// The agent was interrupted.
     #[error("agent was interrupted")]
     Interrupted,
@@ -64,24 +60,21 @@ pub struct AgentOutput {
 
 /// Spawns and manages Claude agent processes.
 ///
-/// The spawner configures agent execution parameters like model and timeout,
+/// The spawner configures agent execution parameters like model,
 /// then spawns agent processes that run in separate threads.
 pub struct AgentSpawner {
     /// Model to use for the agent.
     model: String,
-    /// Timeout for agent execution.
-    timeout: Duration,
 }
 
 impl AgentSpawner {
-    /// Create a new agent spawner with the specified model and timeout.
+    /// Create a new agent spawner with the specified model.
     ///
     /// # Arguments
     ///
     /// * `model` - The model identifier to use (e.g., "claude-sonnet-4-5-20250929")
-    /// * `timeout` - Maximum time to wait for the agent to complete
-    pub fn new(model: String, timeout: Duration) -> Self {
-        Self { model, timeout }
+    pub fn new(model: String) -> Self {
+        Self { model }
     }
 
     /// Spawn a new agent process with the given prompt.
@@ -101,7 +94,6 @@ impl AgentSpawner {
     pub fn spawn(&self, prompt: &str, task_id: &str, agent_label: &str) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
-        let timeout = self.timeout;
         let task_id_owned = task_id.to_string();
         let prompt_owned = prompt.to_string();
         let model_owned = self.model.clone();
@@ -133,7 +125,7 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
+            run_agent_thread(&mut child, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
         });
 
         Ok(AgentHandle {
@@ -164,7 +156,6 @@ impl AgentSpawner {
     ) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
-        let timeout = self.timeout;
         let task_id_owned = task_id.to_string();
         let prompt_owned = prompt.to_string();
         let session_id_owned = session_id.to_string();
@@ -196,7 +187,7 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
+            run_agent_thread(&mut child, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
         });
 
         Ok(AgentHandle {
@@ -210,11 +201,6 @@ impl AgentSpawner {
     /// Get the model being used by this spawner.
     pub fn model(&self) -> &str {
         &self.model
-    }
-
-    /// Get the timeout configured for this spawner.
-    pub fn timeout(&self) -> Duration {
-        self.timeout
     }
 }
 
@@ -240,7 +226,6 @@ impl AgentHandle {
     /// # Errors
     ///
     /// Returns an error if:
-    /// - The agent times out (`AgentError::Timeout`)
     /// - The agent is interrupted (`AgentError::Interrupted`)
     /// - Output cannot be read (`AgentError::OutputError`)
     pub fn wait(mut self) -> Result<AgentOutput, AgentError> {
@@ -276,16 +261,15 @@ impl AgentHandle {
     }
 }
 
-/// Run the agent in a thread, handling timeout and interruption.
+/// Run the agent in a thread, handling interruption.
 fn run_agent_thread(
     child: &mut Child,
-    timeout: Duration,
     stop_flag: Arc<AtomicBool>,
     task_id: &str,
     agent_label: &str,
 ) -> Result<AgentOutput, AgentError> {
     let start = Instant::now();
-    let check_interval = Duration::from_millis(100);
+    let check_interval = std::time::Duration::from_millis(100);
     let mut last_progress_secs = 0u64;
 
     // Spawn reader threads IMMEDIATELY to avoid pipe buffer overflow
@@ -306,7 +290,7 @@ fn run_agent_thread(
         })
     });
 
-    // Wait for process to complete, checking for timeout and stop flag
+    // Wait for process to complete, checking for stop flag
     loop {
         // Check if we should stop
         if stop_flag.load(Ordering::SeqCst) {
@@ -315,15 +299,6 @@ fn run_agent_thread(
             let _ = child.kill();
             let _ = child.wait();
             return Err(AgentError::Interrupted);
-        }
-
-        // Check if timed out
-        if start.elapsed() > timeout {
-            eprint!("\r{:80}\r", "");
-            std::io::stderr().flush().ok();
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(AgentError::Timeout);
         }
 
         // Update progress every second
@@ -385,16 +360,13 @@ fn run_agent_thread(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_agent_spawner_creation() {
-        let spawner = AgentSpawner::new(
-            "claude-sonnet-4-5-20250929".to_string(),
-            Duration::from_secs(300),
-        );
+        let spawner = AgentSpawner::new("claude-sonnet-4-5-20250929".to_string());
 
         assert_eq!(spawner.model(), "claude-sonnet-4-5-20250929");
-        assert_eq!(spawner.timeout(), Duration::from_secs(300));
     }
 
     #[test]
@@ -404,9 +376,6 @@ mod tests {
 
         let err = AgentError::SpawnFailed("permission denied".to_string());
         assert!(err.to_string().contains("permission denied"));
-
-        let err = AgentError::Timeout;
-        assert!(err.to_string().contains("timed out"));
 
         let err = AgentError::Interrupted;
         assert!(err.to_string().contains("interrupted"));

@@ -594,12 +594,10 @@ fn test_manager_config_builder_pattern() {
     let config = ManagerConfig::new(PathBuf::from("/tmp/.cm/tasks.json"))
         .log_path(PathBuf::from("/tmp/.cm/custom.log.md"))
         .model("claude-opus-4-5-20251101".to_string())
-        .timeout(std::time::Duration::from_secs(600))
         .max_cycles(10);
 
     assert_eq!(config.log_path, PathBuf::from("/tmp/.cm/custom.log.md"));
     assert_eq!(config.model, "claude-opus-4-5-20251101");
-    assert_eq!(config.timeout, std::time::Duration::from_secs(600));
     assert_eq!(config.max_cycles, 10);
 }
 

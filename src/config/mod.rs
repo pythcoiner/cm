@@ -34,7 +34,6 @@ pub enum ConfigError {
 ///
 /// ```toml
 /// model = "claude-sonnet-4-5-20250929"
-/// timeout_secs = 300
 /// max_cycles = 5
 /// log_path = ".cm/LOG.md"
 /// working_dir = "."
@@ -44,9 +43,6 @@ pub enum ConfigError {
 pub struct ConfigFile {
     /// The Claude model to use for agent spawning.
     pub model: Option<String>,
-
-    /// Timeout for agent execution in seconds.
-    pub timeout_secs: Option<u64>,
 
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: Option<u32>,
@@ -104,7 +100,6 @@ impl ConfigFile {
     /// Check if all fields are None (empty config).
     pub fn is_empty(&self) -> bool {
         self.model.is_none()
-            && self.timeout_secs.is_none()
             && self.max_cycles.is_none()
             && self.log_path.is_none()
             && self.working_dir.is_none()
@@ -120,7 +115,6 @@ mod tests {
     fn test_config_file_default() {
         let config = ConfigFile::default();
         assert!(config.model.is_none());
-        assert!(config.timeout_secs.is_none());
         assert!(config.max_cycles.is_none());
         assert!(config.log_path.is_none());
         assert!(config.working_dir.is_none());
@@ -140,7 +134,6 @@ mod tests {
 
         let content = r#"
 model = "claude-opus-4-5-20251101"
-timeout_secs = 600
 max_cycles = 10
 log_path = "/tmp/LOG.md"
 working_dir = "/home/user/project"
@@ -151,7 +144,6 @@ working_dir = "/home/user/project"
         let config = ConfigFile::load(&config_path).unwrap();
 
         assert_eq!(config.model, Some("claude-opus-4-5-20251101".to_string()));
-        assert_eq!(config.timeout_secs, Some(600));
         assert_eq!(config.max_cycles, Some(10));
         assert_eq!(config.log_path, Some(PathBuf::from("/tmp/LOG.md")));
         assert_eq!(
@@ -179,7 +171,6 @@ max_cycles = 3
             config.model,
             Some("claude-sonnet-4-5-20250929".to_string())
         );
-        assert!(config.timeout_secs.is_none());
         assert_eq!(config.max_cycles, Some(3));
         assert!(config.log_path.is_none());
         assert!(config.working_dir.is_none());
@@ -237,7 +228,6 @@ max_cycles = 3
     fn test_config_file_serialize() {
         let config = ConfigFile {
             model: Some("test-model".to_string()),
-            timeout_secs: Some(100),
             max_cycles: Some(5),
             log_path: Some(PathBuf::from("/tmp/log.md")),
             working_dir: None,
@@ -245,7 +235,6 @@ max_cycles = 3
 
         let toml_str = toml::to_string_pretty(&config).unwrap();
         assert!(toml_str.contains("model = \"test-model\""));
-        assert!(toml_str.contains("timeout_secs = 100"));
         assert!(toml_str.contains("max_cycles = 5"));
     }
 }

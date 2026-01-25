@@ -19,7 +19,7 @@ use crate::tui::{ManagerEvent, TuiCommand};
 
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
-use crate::generate::{generate_log_md, write_md_file, GenerateError};
+use crate::generate::{write_md_file, GenerateError};
 use crate::log::{LogError, LogManager, PhaseLogger, PhaseLogError};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
@@ -104,8 +104,6 @@ pub struct ManagerConfig {
     pub working_dir: PathBuf,
     /// Model to use for agent spawning.
     pub model: String,
-    /// Timeout for agent execution.
-    pub timeout: Duration,
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: u32,
 }
@@ -127,7 +125,6 @@ impl ManagerConfig {
             roadmap_md_path: parent.join("ROADMAP.md"),
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
             model: "claude-sonnet-4-5-20250929".to_string(),
-            timeout: Duration::from_secs(300),
             max_cycles: 5,
         }
     }
@@ -147,12 +144,6 @@ impl ManagerConfig {
     /// Set the model.
     pub fn model(mut self, model: String) -> Self {
         self.model = model;
-        self
-    }
-
-    /// Set the timeout.
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
         self
     }
 
@@ -217,7 +208,7 @@ impl Manager {
     /// - The state file is invalid
     pub fn new(config: ManagerConfig, shutdown_flag: Arc<AtomicBool>) -> Result<Self, ManagerError> {
         let state = load_state(&config.state_path)?;
-        let agent_spawner = AgentSpawner::new(config.model.clone(), config.timeout);
+        let agent_spawner = AgentSpawner::new(config.model.clone());
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
         let log_manager = LogManager::new(config.log_path.clone());
 
@@ -1208,13 +1199,10 @@ impl Manager {
         }
     }
 
-    /// Save the current state to disk and regenerate LOG.md.
+    /// Save the current state to disk.
     fn update_state(&mut self) -> Result<(), ManagerError> {
         save_state(&self.state, &self.config.state_path)?;
         debug!("State saved to {:?}", self.config.state_path);
-
-        // Regenerate LOG.md from log_records
-        self.regenerate_log_md()?;
 
         // Save roadmap and regenerate ROADMAP.md if loaded
         if let Some(ref roadmap) = self.roadmap_state {
@@ -1231,14 +1219,6 @@ impl Manager {
             }
         }
 
-        Ok(())
-    }
-
-    /// Regenerate LOG.md from the log_records in state.
-    fn regenerate_log_md(&self) -> Result<(), ManagerError> {
-        let content = generate_log_md(&self.state.log_records);
-        write_md_file(&content, &self.config.log_path)?;
-        debug!("LOG.md regenerated at {:?}", self.config.log_path);
         Ok(())
     }
 
@@ -1614,12 +1594,10 @@ mod tests {
         let config = ManagerConfig::new(PathBuf::from("/tmp/tasks.json"))
             .log_path(PathBuf::from("/tmp/custom.md"))
             .model("claude-opus-4-5-20251101".to_string())
-            .timeout(Duration::from_secs(600))
             .max_cycles(10);
 
         assert_eq!(config.log_path, PathBuf::from("/tmp/custom.md"));
         assert_eq!(config.model, "claude-opus-4-5-20251101");
-        assert_eq!(config.timeout, Duration::from_secs(600));
         assert_eq!(config.max_cycles, 10);
     }
 
