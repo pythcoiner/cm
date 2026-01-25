@@ -920,27 +920,27 @@
         {
           "id": "15.5.1",
           "name": "Move build verification from per-task to per-phase execution",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add state helper methods (all_phase_tasks_completed, find_phase_for_task, mark_phase_status, add_task_to_phase)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update next_runnable_task for phase gating",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Remove per-task verify_all() from execute_implem and execute_fix",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add check_phase_completion and inject_build_fix_task methods",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Integrate into run(), run_with_channels(), and step() loops",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -957,31 +957,31 @@
         {
           "id": "16.1",
           "name": "Create src/state/validate.rs",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "SanityError enum with thiserror",
-              "completed": false
+              "completed": true
             },
             {
               "name": "JSON syntax validation",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Schema compliance validation",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Cross-reference validation (roadmap_item_id, linked_task_ids)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Duplicate ID detection",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Orphaned reference detection",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -991,19 +991,19 @@
         {
           "id": "16.2",
           "name": "Add --sanity-check flag to CLI",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add flag to Cli struct",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Implement execute_sanity_check()",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Display validation results with colors",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1013,27 +1013,27 @@
         {
           "id": "16.3",
           "name": "Update assets/cm.md skill workflow",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add Step 7: Run cm --sanity-check after generation",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add iteration loop if validation fails",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add Step 8: Ask about .gitignore (default no)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add Step 9: Auto-generate commit message",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add Step 10: Ask user confirmation and commit",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1043,31 +1043,31 @@
         {
           "id": "16.4",
           "name": "Add unit tests for validation",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Test valid JSON files pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test invalid JSON syntax detected",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test missing required fields detected",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test invalid cross-references detected",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test duplicate IDs detected",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test orphaned references detected",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1077,19 +1077,19 @@
         {
           "id": "16.5",
           "name": "Add sanity check to assets/feat.md",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add Step 9: Validate Changes after file updates",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Run cm --sanity-check, fix errors, repeat until pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Renumber Step 9 (Completion) to Step 10",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1099,19 +1099,19 @@
         {
           "id": "16.6",
           "name": "Add sanity check to assets/fix.md",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add Step 8: Validate Changes after file updates",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Run cm --sanity-check, fix errors, repeat until pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Renumber Step 8 (Completion) to Step 9",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1128,27 +1128,27 @@
         {
           "id": "17.1",
           "name": "Refactor assets/cm.md questions",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Split Step 1 into 3 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Split Step 2 into 4 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keep Step 3 as single optional question",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keep Step 4 as single question",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keep Step 5 confirmation as single block",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1158,23 +1158,23 @@
         {
           "id": "17.2",
           "name": "Refactor assets/feat.md questions",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Split Step 1 into 3 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Split Step 2 into 4 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Split Step 5 into 4 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keep confirmation as single block",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1184,19 +1184,19 @@
         {
           "id": "17.3",
           "name": "Refactor assets/fix.md questions",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Split Step 1 into 4 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Split Step 2 into 2 single questions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keep confirmation as single block",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1206,27 +1206,27 @@
         {
           "id": "17.4",
           "name": "Rebuild and verify skills",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build --release",
-              "completed": false
+              "completed": true
             },
             {
               "name": "cm init --force",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test /cm skill manually",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test /feat skill manually",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test /fix skill manually",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1243,15 +1243,15 @@
         {
           "id": "18.1",
           "name": "Update assets/feat.md with regeneration step",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add step to run cm --regenerate after file updates",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Place before sanity check step",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1261,15 +1261,15 @@
         {
           "id": "18.2",
           "name": "Update assets/fix.md with regeneration step",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add step to run cm --regenerate after file updates",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Place before sanity check step",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1286,19 +1286,19 @@
         {
           "id": "19.1",
           "name": "Update assets/feat.md scope limitations",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add CRITICAL: Scope Limitations section",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update file update step to only edit JSON",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Remove cm run from next steps",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1308,19 +1308,19 @@
         {
           "id": "19.2",
           "name": "Update assets/fix.md scope limitations",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add CRITICAL: Scope Limitations section",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update file update step to only edit JSON",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Remove cm run from next steps",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1330,23 +1330,23 @@
         {
           "id": "19.3",
           "name": "Reinstall skills and verify",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build",
-              "completed": false
+              "completed": true
             },
             {
               "name": "cm init --force",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify feat skill has scope limitations",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify fix skill has scope limitations",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1363,19 +1363,19 @@
         {
           "id": "20.1",
           "name": "Simplify assets/feat.md input",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Replace Step 1 to only ask for description",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Remove user story references",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update templates",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1385,15 +1385,15 @@
         {
           "id": "20.2",
           "name": "Simplify assets/fix.md input",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Replace Step 1 to only ask for description",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Remove summary/observed/expected/repro prompts",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1403,23 +1403,23 @@
         {
           "id": "20.3",
           "name": "Reinstall and verify simplified skills",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build",
-              "completed": false
+              "completed": true
             },
             {
               "name": "cm init --force",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify feat skill simplified input",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify fix skill simplified input",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1436,19 +1436,19 @@
         {
           "id": "21.1",
           "name": "Add agent templates generation to /cm skill",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Generate .cm/agents/MANAGER.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Generate .cm/agents/IMPLEMENTER.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Generate .cm/agents/REVIEWER.md",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1458,23 +1458,23 @@
         {
           "id": "21.2",
           "name": "Add STRUCTURE.md and ACTIONS.md generation",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add questions for structure info",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add questions for actions info",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Generate .cm/STRUCTURE.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Generate .cm/ACTIONS.md",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1484,23 +1484,23 @@
         {
           "id": "21.3",
           "name": "Reinstall and verify new /cm outputs",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build",
-              "completed": false
+              "completed": true
             },
             {
               "name": "cm init --force",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify agent templates generated",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify STRUCTURE.md and ACTIONS.md generated",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1517,19 +1517,19 @@
         {
           "id": "22.1",
           "name": "Update CLI: TUI default, add --daemon flag",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Remove --tui flag",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add --daemon flag",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Invert execution logic",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1539,19 +1539,19 @@
         {
           "id": "22.2",
           "name": "Add task selection prompt to manager",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Show pending tasks before running",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Prompt: [s]ingle / [a]ll / [q]uit",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Never auto-implement without confirmation",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1561,19 +1561,19 @@
         {
           "id": "22.3",
           "name": "Implement TUI task selection widget",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Task list with pending highlighted",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Keyboard controls: s/a/q/arrows",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Prompt bar at bottom",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1583,19 +1583,19 @@
         {
           "id": "22.4",
           "name": "Implement daemon mode stdin prompt",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Print pending tasks to stdout",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Read selection from stdin",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Prompt again after task completes",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1605,19 +1605,19 @@
         {
           "id": "22.5",
           "name": "Update tests for new default mode",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Update CLI tests for --daemon",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update integration tests",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify all tests pass",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1634,27 +1634,27 @@
         {
           "id": "23.1",
           "name": "Create FileLogger module",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "LogLevel enum with Display and PartialOrd",
-              "completed": false
+              "completed": true
             },
             {
               "name": "FileLogError enum with thiserror",
-              "completed": false
+              "completed": true
             },
             {
               "name": "FileLogger struct with Mutex<File>",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Core methods: new(), with_level(), log()",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Convenience methods: debug(), info(), warn(), error()",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1664,23 +1664,23 @@
         {
           "id": "23.2",
           "name": "Add prune functionality",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "PruneStats struct",
-              "completed": false
+              "completed": true
             },
             {
               "name": "parse_log_timestamp() helper",
-              "completed": false
+              "completed": true
             },
             {
               "name": "prune() method (24h default)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "prune_older_than() method",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1690,15 +1690,15 @@
         {
           "id": "23.3",
           "name": "Export FileLogger from log module",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add mod file_logger declaration",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add pub use re-exports",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1708,19 +1708,19 @@
         {
           "id": "23.4",
           "name": "Add --prune CLI flag",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add prune flag to Cli struct",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Implement execute_prune() function",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Wire up in CLI dispatch",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1730,23 +1730,23 @@
         {
           "id": "23.5",
           "name": "Add FileLogger to Manager",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add file_log_path to ManagerConfig",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add verbose flag to ManagerConfig",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add file_logger field to Manager",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Initialize FileLogger in Manager::new()",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1756,27 +1756,27 @@
         {
           "id": "23.6",
           "name": "Add logging calls throughout Manager",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Log state load/save operations",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log task selection and completion",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log agent spawn and completion with duration",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log build verification results",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Log shutdown and signal handling",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1786,27 +1786,27 @@
         {
           "id": "23.7",
           "name": "Add unit tests for FileLogger",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Test file creation and log levels",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test log format",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test timestamp parsing",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test pruning functionality",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test concurrent logging",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1827,19 +1827,19 @@
           "sub_items": [
             {
               "name": "YAML frontmatter (name, description, user-invocable)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Skill body with save pipeline instructions",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Scope limitations (no implementation)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Error handling sections",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1862,15 +1862,15 @@
           "sub_items": [
             {
               "name": "Add END_SKILL import",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add SkillFile entry to SKILLS array",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add /end to available skills output",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1884,11 +1884,11 @@
           "sub_items": [
             {
               "name": "Remove Steps 8-11 (file updates, regenerate, validate, completion)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add Step 8: Handoff to /end",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1902,11 +1902,11 @@
           "sub_items": [
             {
               "name": "Remove Steps 7-10 (file updates, regenerate, validate, completion)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add Step 7: Handoff to /end",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1920,15 +1920,15 @@
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "cm init --force installs /end skill",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify feat/fix skills have /end handoff",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
