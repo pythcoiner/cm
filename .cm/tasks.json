@@ -2511,7 +2511,7 @@
           "id": "phase-27.task-1",
           "name": "Add TRACE level to LogLevel enum",
           "type": "implement",
-          "status": "completed",
+          "status": "pending",
           "depends_on": [],
           "context": {
             "files_to_read": [
@@ -2520,33 +2520,14 @@
             "prior_review_issues": []
           },
           "instructions": "Add TRACE log level to FileLogger:\n\n1. Add `Trace` variant to `LogLevel` enum (before Debug):\n   ```rust\n   pub enum LogLevel {\n       /// Full trace logging (prompts, responses, all details).\n       Trace,\n       Debug,\n       Info,\n       Warn,\n       Error,\n   }\n   ```\n\n2. Update `Display` impl to handle `Trace => \"TRACE\"`\n\n3. Add `trace()` convenience method to `FileLogger`\n\n4. Update test `test_log_level_ordering` to verify `Trace < Debug`\n\n5. Update test `test_log_level_display` to verify `Trace` displays as \"TRACE\"\n\n6. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [
-            {
-              "attempt_number": 1,
-              "agent_id": "fbe7b865-fbaa-4758-84be-be7e96570583",
-              "started_at": "2026-01-25T07:08:36.403446466Z",
-              "completed_at": "2026-01-25T07:10:10.493533855Z",
-              "status": "success",
-              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Add TRACE level to LogLevel enum\n\n### Instructions\n\nAdd TRACE log level to FileLogger:\n\n1. Add `Trace` variant to `LogLevel` enum (before Debug):\n   ```rust\n   pub enum LogLevel {\n       /// Full trace logging (prompts, responses, all details).\n       Trace,\n       Debug,\n       Info,\n       Warn,\n       Error,\n   }\n   ```\n\n2. Update `Display` impl to handle `Trace => \"TRACE\"`\n\n3. Add `trace()` convenience method to `FileLogger`\n\n4. Update test `test_log_level_ordering` to verify `Trace < Debug`\n\n5. Update test `test_log_level_display` to verify `Trace` displays as \"TRACE\"\n\n6. Ensure `cargo build` and `cargo clippy` pass\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
-              "response": {
-                "status": "success",
-                "files_created": [],
-                "files_modified": [
-                  "src/log/file_logger.rs"
-                ],
-                "commands_run": [],
-                "message": "Added TRACE log level to FileLogger enum, Display impl, trace() convenience method, and updated tests"
-              }
-            }
-          ],
-          "roadmap_item_id": "27.1",
-          "review_cycles_completed": 0
+          "attempts": [],
+          "roadmap_item_id": "27.1"
         },
         {
           "id": "phase-27.task-2",
           "name": "Create PhaseLogger struct",
           "type": "implement",
-          "status": "in_progress",
+          "status": "pending",
           "depends_on": [
             "phase-27.task-1"
           ],
@@ -2558,31 +2539,8 @@
             "prior_review_issues": []
           },
           "instructions": "Create PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [
-            {
-              "attempt_number": 1,
-              "agent_id": "f40f1a93-760e-45d8-9db1-826356e539c6",
-              "started_at": "2026-01-25T07:10:40.695459109Z",
-              "completed_at": "2026-01-25T07:12:32.172345530Z",
-              "status": "success",
-              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Create PhaseLogger struct\n\n### Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
-              "response": {
-                "status": "success",
-                "files_created": [
-                  "src/log/phase_logger.rs"
-                ],
-                "files_modified": [
-                  "src/log/mod.rs"
-                ],
-                "commands_run": [],
-                "message": "Created PhaseLogger struct for per-phase TRACE logging with full prompt/response capture"
-              }
-            }
-          ],
-          "roadmap_item_id": "27.2",
-          "implem_completed_at": "2026-01-25T07:12:32.172345530Z",
-          "baseline_commit": "HEAD",
-          "review_cycles_completed": 5
+          "attempts": [],
+          "roadmap_item_id": "27.2"
         },
         {
           "id": "phase-27.task-3",
@@ -3437,6 +3395,12 @@
       "task_id": "phase-27.task-2",
       "agent_type": "implem",
       "started_at": "2026-01-25T08:19:27.266726028Z"
+    },
+    {
+      "id": "8f6951b1-f2d1-4a5a-99dc-96b8f049df53",
+      "task_id": "phase-27.task-3",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T08:22:59.918299213Z"
     }
   ],
   "log_records": [
@@ -5881,6 +5845,36 @@
       "data": {
         "type": "error",
         "message": "Task phase-27.task-2 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0"
+      }
+    },
+    {
+      "id": "3a1bd724-f82c-47ca-afbf-83542f8cb259",
+      "timestamp": "2026-01-25T08:22:59.911599271Z",
+      "action": "task_complete",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "407b4d2b-9b76-499a-aab1-e79ef53a3311",
+      "timestamp": "2026-01-25T08:22:59.918298622Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-3",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you coul\n\n... [truncated, 2084 more bytes]"
+      }
+    },
+    {
+      "id": "9b503b99-6c13-4a08-ab76-fbaf84dc1d37",
+      "timestamp": "2026-01-25T08:23:29.068623001Z",
+      "action": "error",
+      "data": {
+        "type": "error",
+        "message": "Task phase-27.task-3 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0"
       }
     }
   ]
