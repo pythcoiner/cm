@@ -346,15 +346,15 @@ Status: **Complete** (3/3)
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **In Progress** (1/4)
+Status: **In Progress** (2/4)
 
 - [x] Create default template assets and update cm init
   - [x] Create assets/templates/ with 5 template files
   - [x] Update src/command.rs with new constants
   - [x] Update src/cli/init.rs to write templates to .cm/
-- [ ] Load agent templates from disk at runtime
-  - [ ] Update src/agent/prompt.rs to read .cm/agents/*.md
-  - [ ] Auto-install missing templates from embedded defaults
+- [x] Load agent templates from disk at runtime
+  - [x] Update src/agent/prompt.rs to read .cm/agents/*.md
+  - [x] Auto-install missing templates from embedded defaults
 - [ ] Update /cm skill to customize templates
   - [ ] Add step to customize ACTIONS.md with commands
   - [ ] Add step to customize STRUCTURE.md
@@ -540,10 +540,10 @@ Status: **Complete** (7/7)
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Complete | 12/12 |
-| Phase 21: Agent Templates & Project Documentation | In Progress | 4/14 |
+| Phase 21: Agent Templates & Project Documentation | In Progress | 7/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Complete | 20/20 |
 | Phase 23: Detailed File Logging | Complete | 35/35 |
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| **Total** | | **298/308** |
+| **Total** | | **301/308** |

@@ -1151,7 +1151,7 @@
           "id": "phase-21.task-2",
           "name": "Load agent templates from disk at runtime",
           "type": "implement",
-          "status": "in_progress",
+          "status": "completed",
           "depends_on": [
             "phase-21.task-1"
           ],
@@ -2985,6 +2985,31 @@
       "completed_at": "2026-01-25T06:51:57.192410380Z",
       "exit_status": 0,
       "commit_hash": "1f43406bdd9124e79258c340b29de9dedc6d90a5"
+    },
+    {
+      "id": "990aafb9-477c-46df-abd6-f089287d851e",
+      "task_id": "phase-21.task-2",
+      "agent_type": "review",
+      "started_at": "2026-01-25T06:52:03.663617339Z",
+      "completed_at": "2026-01-25T06:52:30.009525155Z",
+      "exit_status": 0
+    },
+    {
+      "id": "9aa042fb-c118-4f85-ad9b-b5469dbe50cc",
+      "task_id": "phase-21.task-2",
+      "agent_type": "fix",
+      "started_at": "2026-01-25T06:52:30.010049575Z",
+      "completed_at": "2026-01-25T06:53:08.471638038Z",
+      "exit_status": 0,
+      "commit_hash": "a57ae3c4ddb855cadc2dc9575690c6285514d3c2"
+    },
+    {
+      "id": "9c8dc807-5147-4845-9cb7-435e477aae2a",
+      "task_id": "phase-21.task-2",
+      "agent_type": "review",
+      "started_at": "2026-01-25T06:53:12.060695744Z",
+      "completed_at": "2026-01-25T06:53:41.623072498Z",
+      "exit_status": 0
     }
   ],
   "log_records": [
@@ -5018,6 +5043,69 @@
         "type": "agent_spawn",
         "agent_type": "fix",
         "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Load agent templates from disk at runtime\n\n### Original Instructions\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nTemplate loading implemented correctly with good test coverage, but has minor issues: missing MANAGER template integration, error handling could be improved (use log::error instead of log::warn for IO failures), and FIX.md template file needs verification in assets/templates/\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/agent/prompt.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT fix the issues:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not fix the issues\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "69928783-5db3-4863-93ac-2205765a9770",
+      "timestamp": "2026-01-25T06:52:03.663615606Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Load agent templates from disk at runtime\n\n### What was requested\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex 715d826..dc533ac 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -2841,15 +2841,14 @@ Update assets/cm.md to generate agent template files:\n **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0\n \n \n-[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n+[2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n \n ### Agent Spawn\n \n-**Type:** Implem\n-**Task:** phase-21.task-1\n+**Type:** implem\n \n <details>\n-<summary>Prompt</summary>\n+<summary>Prompt Preview</summary>\n \n ```\n You are an IMPLEMENTATION agent. Your task is to implement the following:\n@@ -2864,144 +2863,321 @@ Create default template files and update cm init to install them:\n    - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n    - IMPLEMENTER.md - Generic implementer agent instructions\n    - REVIEWER.md - Generic reviewer agent instructions\n-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n-   - ACTIONS\n\n... [truncated, 67750 more bytes]"
+      }
+    },
+    {
+      "id": "e6ec1887-6c3c-4b05-9100-012ebf838aff",
+      "timestamp": "2026-01-25T06:52:30.009753662Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "46bd5971-d0ed-469a-82e9-41d673b79469",
+      "timestamp": "2026-01-25T06:52:30.010046780Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Load agent templates from disk at runtime\n\n### Original Instructions\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nTemplate loading correctly implemented with proper fallback mechanism, comprehensive tests, and all 4 agent types integrated. FIX template properly added across all necessary files.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/agent/prompt.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT fix the issues:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not fix the issues\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "707d1898-1f0b-40f9-91f3-5b9f4f4532b0",
+      "timestamp": "2026-01-25T06:53:12.060694642Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Load agent templates from disk at runtime\n\n### What was requested\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex 715d826..76ae6c1 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -2841,15 +2841,14 @@ Update assets/cm.md to generate agent template files:\n **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0\n \n \n-[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n+[2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n \n ### Agent Spawn\n \n-**Type:** Implem\n-**Task:** phase-21.task-1\n+**Type:** implem\n \n <details>\n-<summary>Prompt</summary>\n+<summary>Prompt Preview</summary>\n \n ```\n You are an IMPLEMENTATION agent. Your task is to implement the following:\n@@ -2864,144 +2863,389 @@ Create default template files and update cm init to install them:\n    - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n    - IMPLEMENTER.md - Generic implementer agent instructions\n    - REVIEWER.md - Generic reviewer agent instructions\n-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n-   - ACTIONS\n\n... [truncated, 74576 more bytes]"
+      }
+    },
+    {
+      "id": "e72647cd-2e0a-4894-aed4-ede4d7ac51da",
+      "timestamp": "2026-01-25T06:53:41.623145655Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "c8523d77-264b-4453-8820-719bed3a4b02",
+      "timestamp": "2026-01-25T06:53:41.623338225Z",
+      "action": "task_complete",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
       }
     }
   ]

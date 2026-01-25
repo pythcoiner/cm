@@ -1458,15 +1458,15 @@
         {
           "id": "21.2",
           "name": "Load agent templates from disk at runtime",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Update src/agent/prompt.rs to read .cm/agents/*.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Auto-install missing templates from embedded defaults",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

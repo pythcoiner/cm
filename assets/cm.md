@@ -141,8 +141,18 @@ Wait for the user's response before proceeding.
 > - What are the main directories? (e.g., src/, tests/, docs/)
 > - What is the entry point? (e.g., main.rs, index.ts)
 > - Any key configuration files? (e.g., Cargo.toml, package.json)
+>
+> This will be used to customize `.cm/STRUCTURE.md`. You can skip this to use the default template.
 
 Wait for the user's response before proceeding.
+
+**If the user provides structure information:**
+- Store it for STRUCTURE.md customization in Step 8
+- Plan to populate the template sections with specific details
+
+**If the user skips:**
+- Use the default STRUCTURE.md template as-is
+- The template sections will remain as placeholders for manual editing later
 
 ---
 
@@ -155,8 +165,18 @@ Wait for the user's response before proceeding.
 > - Building the project? (e.g., `cargo build`, `npm run build`)
 > - Running tests? (e.g., `cargo test`, `npm test`)
 > - Linting/checking? (e.g., `cargo clippy`, `npm run lint`)
+>
+> This will be used to customize `.cm/ACTIONS.md`. You can skip this to use the default template.
 
 Wait for the user's response before proceeding.
+
+**If the user provides build/test/lint commands:**
+- Store them for ACTIONS.md customization in Step 8
+- Replace placeholder commands in the template with actual commands
+
+**If the user skips:**
+- Use the default ACTIONS.md template as-is
+- The template will contain placeholder text like `[build command]` for manual editing later
 
 ---
 
@@ -213,8 +233,14 @@ Once confirmed, generate all files in the `.cm/` directory:
 7. Generate `.cm/agents/MANAGER.md` using the Manager Agent Template below
 8. Generate `.cm/agents/IMPLEMENTER.md` using the Implementer Agent Template below
 9. Generate `.cm/agents/REVIEWER.md` using the Reviewer Agent Template below
-10. Generate `.cm/STRUCTURE.md` from project structure info
-11. Generate `.cm/ACTIONS.md` from build/test commands
+10. Generate `.cm/STRUCTURE.md`:
+    - If user provided project structure info in Step 5: customize template with specific directories, entry points, and config files
+    - If user skipped Step 5: use default STRUCTURE.md template with placeholder text
+    - If file doesn't exist, create it from template
+11. Generate `.cm/ACTIONS.md`:
+    - If user provided build/test/lint commands in Step 6: customize template with actual commands
+    - If user skipped Step 6: use default ACTIONS.md template with placeholder text like `[build command]`
+    - If file doesn't exist, create it from template
 
 **Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (LOG.md, ROADMAP.md) can be regenerated from JSON at any time using `cm --regenerate`.
 
@@ -752,6 +778,8 @@ This agent reviews code changes for [Project Name].
 
 ### STRUCTURE.md Template
 
+Default template (used when user skips customization):
+
 ```markdown
 # Project Structure
 
@@ -765,7 +793,27 @@ This agent reviews code changes for [Project Name].
 [Key config files]
 ```
 
+Customized template (when user provides structure info):
+
+```markdown
+# Project Structure
+
+## Directories
+- `[directory1]/` - [purpose]
+- `[directory2]/` - [purpose]
+- `[directory3]/` - [purpose]
+
+## Entry Points
+- `[entry_point_file]` - [description]
+
+## Configuration
+- `[config_file1]` - [description]
+- `[config_file2]` - [description]
+```
+
 ### ACTIONS.md Template
+
+Default template (used when user skips customization):
 
 ```markdown
 # Build & Test Actions
@@ -783,6 +831,27 @@ This agent reviews code changes for [Project Name].
 ## Lint
 ```bash
 [lint command]
+```
+```
+
+Customized template (when user provides commands):
+
+```markdown
+# Build & Test Actions
+
+## Build
+```bash
+[actual build command provided by user]
+```
+
+## Test
+```bash
+[actual test command provided by user]
+```
+
+## Lint
+```bash
+[actual lint command provided by user]
 ```
 ```
 
