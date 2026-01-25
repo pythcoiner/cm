@@ -2968,6 +2968,23 @@
       "completed_at": "2026-01-25T06:48:35.801891105Z",
       "exit_status": 0,
       "commit_hash": "2436ee75525b68ad824a4e14e9dccd66fbcc0ad2"
+    },
+    {
+      "id": "6b2a8534-3b04-4775-92b3-11b002070841",
+      "task_id": "phase-21.task-2",
+      "agent_type": "review",
+      "started_at": "2026-01-25T06:48:42.864075326Z",
+      "completed_at": "2026-01-25T06:49:11.009337980Z",
+      "exit_status": 0
+    },
+    {
+      "id": "2f77c0c9-2c91-4973-b6dd-23a876843fab",
+      "task_id": "phase-21.task-2",
+      "agent_type": "fix",
+      "started_at": "2026-01-25T06:49:11.009793692Z",
+      "completed_at": "2026-01-25T06:51:57.192410380Z",
+      "exit_status": 0,
+      "commit_hash": "1f43406bdd9124e79258c340b29de9dedc6d90a5"
     }
   ],
   "log_records": [
@@ -4969,6 +4986,38 @@
         "type": "agent_spawn",
         "agent_type": "fix",
         "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Load agent templates from disk at runtime\n\n### Original Instructions\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nTemplate loading implemented correctly but missing MANAGER template integration, has unsafe error handling, and inconsistent FIX agent template usage\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/agent/prompt.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT fix the issues:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not fix the issues\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "9562b7d9-81af-41dd-8c28-d72567eba2fc",
+      "timestamp": "2026-01-25T06:48:42.864073853Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Load agent templates from disk at runtime\n\n### What was requested\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex 715d826..af3473f 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -2841,15 +2841,14 @@ Update assets/cm.md to generate agent template files:\n **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0\n \n \n-[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n+[2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n \n ### Agent Spawn\n \n-**Type:** Implem\n-**Task:** phase-21.task-1\n+**Type:** implem\n \n <details>\n-<summary>Prompt</summary>\n+<summary>Prompt Preview</summary>\n \n ```\n You are an IMPLEMENTATION agent. Your task is to implement the following:\n@@ -2864,27 +2863,98 @@ Create default template files and update cm init to install them:\n    - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n    - IMPLEMENTER.md - Generic implementer agent instructions\n    - REVIEWER.md - Generic reviewer agent instructions\n-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n-   - ACTIONS.m\n\n... [truncated, 50172 more bytes]"
+      }
+    },
+    {
+      "id": "30689a35-699a-41b3-85db-7e5b19fc2b91",
+      "timestamp": "2026-01-25T06:49:11.009518207Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "976817e8-5c3c-4c0e-89b9-ef2aa83254fb",
+      "timestamp": "2026-01-25T06:49:11.009792459Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Load agent templates from disk at runtime\n\n### Original Instructions\n\nUpdate agent prompt building to load templates from disk:\n\n1. Update src/agent/prompt.rs to:\n   - Read .cm/agents/MANAGER.md for manager agent prompt\n   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt\n   - Read .cm/agents/REVIEWER.md for reviewer agent prompt\n\n2. If file is missing, write embedded default to disk first, then read it\n   - This ensures files always exist for users to customize\n\n3. Add helper function to ensure template exists:\n   - fn ensure_template(path, default_content) -> Result<String>\n   - If path doesn't exist, write default_content to it\n   - Return contents of file\n\n4. Add tests for runtime loading behavior\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nTemplate loading implemented correctly with good test coverage, but has minor issues: missing MANAGER template integration, error handling could be improved (use log::error instead of log::warn for IO failures), and FIX.md template file needs verification in assets/templates/\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/agent/prompt.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT fix the issues:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not fix the issues\"\n}\n```\n"
       }
     }
   ]

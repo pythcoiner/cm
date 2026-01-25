@@ -3025,6 +3025,74 @@ Update agent prompt building to load templates from disk:
 
 ### Agent Spawn
 
+**Type:** review
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are a REVIEW agent. Review the following code changes made by an implementation agent.
+
+## Original Task: Load agent templates from disk at runtime
+
+### What was requested
+
+Update agent prompt building to load templates from disk:
+
+1. Update src/agent/prompt.rs to:
+   - Read .cm/agents/MANAGER.md for manager agent prompt
+   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt
+   - Read .cm/agents/REVIEWER.md for reviewer agent prompt
+
+2. If file is missing, write embedded default to
+
+... [truncated, 1535 more bytes]
+```
+
+</details>
+
+[2026-01-25 06:49:11 UTC] **REVIEW_RESULT**
+
+### Review Result: NEEDS_FIXES
+
+**Issues Found:** 0
+
+
+[2026-01-25 06:49:11 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
+**Type:** fix
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are a FIX agent. Fix the issues found during code review.
+
+## Original Task: Load agent templates from disk at runtime
+
+### Original Instructions
+
+Update agent prompt building to load templates from disk:
+
+1. Update src/agent/prompt.rs to:
+   - Read .cm/agents/MANAGER.md for manager agent prompt
+   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt
+   - Read .cm/agents/REVIEWER.md for reviewer agent prompt
+
+2. If file is missing, write embedded default to disk first, then read it
+
+
+... [truncated, 1244 more bytes]
+```
+
+</details>
+
+[2026-01-25 06:52:03 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
 **Type:** Review
 **Task:** phase-21.task-2
 
@@ -3059,7 +3127,7 @@ Update agent prompt building to load templates from disk:
 
 ```diff
 diff --git a/.cm/LOG.md b/.cm/LOG.md
-index 715d826..af3473f 100644
+index 715d826..dc533ac 100644
 --- a/.cm/LOG.md
 +++ b/.cm/LOG.md
 @@ -2841,15 +2841,14 @@ Update assets/cm.md to generate agent template files:
@@ -3081,19 +3149,19 @@ index 715d826..af3473f 100644
  
  ```
  You are an IMPLEMENTATION agent. Your task is to implement the following:
-@@ -2864,27 +2863,98 @@ Create default template files and update cm init to install them:
+@@ -2864,144 +2863,321 @@ Create default template files and update cm init to install them:
     - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
     - IMPLEMENTER.md - Generic implementer agent instructions
     - REVIEWER.md - Generic reviewer agent instructions
 -   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)
--   - ACTIONS.m
+-   - ACTIONS
 
-... [truncated, 50172 more bytes]
+... [truncated, 67750 more bytes]
 ```
 
 </details>
 
-[2026-01-25 06:49:11 UTC] **AGENT_COMPLETE**
+[2026-01-25 06:52:30 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
@@ -3101,19 +3169,19 @@ index 715d826..af3473f 100644
 <summary>Raw Response</summary>
 
 ```
-Template loading implemented correctly with good test coverage, but has minor issues: missing MANAGER template integration, error handling could be improved (use log::error instead of log::warn for IO failures), and FIX.md template file needs verification in assets/templates/
+Template loading correctly implemented with proper fallback mechanism, comprehensive tests, and all 4 agent types integrated. FIX template properly added across all necessary files.
 ```
 
 </details>
 
-[2026-01-25 06:49:11 UTC] **REVIEW_RESULT**
+[2026-01-25 06:52:30 UTC] **REVIEW_RESULT**
 
 ### Review Result: NEEDS_FIXES
 
 No issues found.
 
 
-[2026-01-25 06:49:11 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+[2026-01-25 06:52:30 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
 
 ### Agent Spawn
 
@@ -3151,7 +3219,7 @@ Update agent prompt building to load templates from disk:
 
 The following issues were found during review. Fix all of them:
 
-Template loading implemented correctly with good test coverage, but has minor issues: missing MANAGER template integration, error handling could be improved (use log::error instead of log::warn for IO failures), and FIX.md template file needs verification in assets/templates/
+Template loading correctly implemented with proper fallback mechanism, comprehensive tests, and all 4 agent types integrated. FIX template properly added across all necessary files.
 
 ### Files to Read for Context
 
@@ -3185,18 +3253,15 @@ If you could NOT fix the issues:
 
 </details>
 
-[2026-01-25 06:51:57 UTC] **AGENT_COMPLETE**
+[2026-01-25 06:53:08 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
-
-**Files Modified:**
-- `src/agent/prompt.rs`
 
 <details>
 <summary>Raw Response</summary>
 
 ```
-Fixed missing MANAGER template integration, improved error handling to use log::error instead of log::warn for IO failures, and verified FIX.md template exists
+No fixes needed - review confirmed implementation is correct. All 4 agent templates (MANAGER, IMPLEMENTER, REVIEWER, FIX) properly load from disk with fallback to embedded defaults. Comprehensive tests pass.
 ```
 
 </details>
