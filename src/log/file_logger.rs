@@ -16,6 +16,8 @@ use thiserror::Error;
 /// Log level for file logger entries.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {
+    /// Full trace logging (prompts, responses, all details).
+    Trace,
     /// Detailed debug information (state saves, prompt previews, blocked tasks).
     Debug,
     /// Major milestones (task start/complete, agent spawn).
@@ -29,6 +31,7 @@ pub enum LogLevel {
 impl fmt::Display for LogLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            LogLevel::Trace => write!(f, "TRACE"),
             LogLevel::Debug => write!(f, "DEBUG"),
             LogLevel::Info => write!(f, "INFO"),
             LogLevel::Warn => write!(f, "WARN"),
@@ -115,6 +118,11 @@ impl FileLogger {
         file.flush()?;
 
         Ok(())
+    }
+
+    /// Log at TRACE level.
+    pub fn trace(&self, component: &str, message: &str) -> Result<(), FileLogError> {
+        self.log(LogLevel::Trace, component, message)
     }
 
     /// Log at DEBUG level.
@@ -349,6 +357,7 @@ mod tests {
 
     #[test]
     fn test_log_level_display() {
+        assert_eq!(format!("{}", LogLevel::Trace), "TRACE");
         assert_eq!(format!("{}", LogLevel::Debug), "DEBUG");
         assert_eq!(format!("{}", LogLevel::Info), "INFO");
         assert_eq!(format!("{}", LogLevel::Warn), "WARN");
@@ -357,6 +366,7 @@ mod tests {
 
     #[test]
     fn test_log_level_ordering() {
+        assert!(LogLevel::Trace < LogLevel::Debug);
         assert!(LogLevel::Debug < LogLevel::Info);
         assert!(LogLevel::Info < LogLevel::Warn);
         assert!(LogLevel::Warn < LogLevel::Error);
