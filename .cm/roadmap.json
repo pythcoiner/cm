@@ -1435,19 +1435,19 @@
       "items": [
         {
           "id": "21.1",
-          "name": "Add agent templates generation to /cm skill",
+          "name": "Create default template assets and update cm init",
           "completed": false,
           "sub_items": [
             {
-              "name": "Generate .cm/agents/MANAGER.md",
+              "name": "Create assets/templates/ with 5 template files",
               "completed": false
             },
             {
-              "name": "Generate .cm/agents/IMPLEMENTER.md",
+              "name": "Update src/command.rs with new constants",
               "completed": false
             },
             {
-              "name": "Generate .cm/agents/REVIEWER.md",
+              "name": "Update src/cli/init.rs to write templates to .cm/",
               "completed": false
             }
           ],
@@ -1457,54 +1457,60 @@
         },
         {
           "id": "21.2",
-          "name": "Add STRUCTURE.md and ACTIONS.md generation",
+          "name": "Load agent templates from disk at runtime",
           "completed": false,
           "sub_items": [
             {
-              "name": "Add questions for structure info",
+              "name": "Update src/agent/prompt.rs to read .cm/agents/*.md",
               "completed": false
             },
             {
-              "name": "Add questions for actions info",
-              "completed": false
-            },
-            {
-              "name": "Generate .cm/STRUCTURE.md",
-              "completed": false
-            },
-            {
-              "name": "Generate .cm/ACTIONS.md",
+              "name": "Auto-install missing templates from embedded defaults",
               "completed": false
             }
           ],
           "linked_task_ids": [
-            "phase-21.task-1"
+            "phase-21.task-2"
           ]
         },
         {
           "id": "21.3",
-          "name": "Reinstall and verify new /cm outputs",
+          "name": "Update /cm skill to customize templates",
           "completed": false,
           "sub_items": [
             {
-              "name": "cargo build",
+              "name": "Add step to customize ACTIONS.md with commands",
               "completed": false
             },
             {
-              "name": "cm init --force",
-              "completed": false
-            },
-            {
-              "name": "Verify agent templates generated",
-              "completed": false
-            },
-            {
-              "name": "Verify STRUCTURE.md and ACTIONS.md generated",
+              "name": "Add step to customize STRUCTURE.md",
               "completed": false
             }
           ],
           "linked_task_ids": [
-            "phase-21.task-1"
+            "phase-21.task-3"
+          ]
+        },
+        {
+          "id": "21.4",
+          "name": "Test and verify template system",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Test cm init creates templates",
+              "completed": false
+            },
+            {
+              "name": "Test runtime auto-install of missing templates",
+              "completed": false
+            },
+            {
+              "name": "Test user customizations are preserved",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-21.task-4"
           ]
         }
       ]

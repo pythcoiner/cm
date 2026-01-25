@@ -346,22 +346,22 @@ Status: **Complete** (3/3)
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **Not Started** (0/3)
+Status: **Not Started** (0/4)
 
-- [ ] Add agent templates generation to /cm skill
-  - [ ] Generate .cm/agents/MANAGER.md
-  - [ ] Generate .cm/agents/IMPLEMENTER.md
-  - [ ] Generate .cm/agents/REVIEWER.md
-- [ ] Add STRUCTURE.md and ACTIONS.md generation
-  - [ ] Add questions for structure info
-  - [ ] Add questions for actions info
-  - [ ] Generate .cm/STRUCTURE.md
-  - [ ] Generate .cm/ACTIONS.md
-- [ ] Reinstall and verify new /cm outputs
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify agent templates generated
-  - [ ] Verify STRUCTURE.md and ACTIONS.md generated
+- [ ] Create default template assets and update cm init
+  - [ ] Create assets/templates/ with 5 template files
+  - [ ] Update src/command.rs with new constants
+  - [ ] Update src/cli/init.rs to write templates to .cm/
+- [ ] Load agent templates from disk at runtime
+  - [ ] Update src/agent/prompt.rs to read .cm/agents/*.md
+  - [ ] Auto-install missing templates from embedded defaults
+- [ ] Update /cm skill to customize templates
+  - [ ] Add step to customize ACTIONS.md with commands
+  - [ ] Add step to customize STRUCTURE.md
+- [ ] Test and verify template system
+  - [ ] Test cm init creates templates
+  - [ ] Test runtime auto-install of missing templates
+  - [ ] Test user customizations are preserved
 
 ---
 
