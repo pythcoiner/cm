@@ -1107,7 +1107,7 @@
           "id": "phase-21.task-1",
           "name": "Create default template assets and update cm init",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-20.task-3"
           ],
@@ -1119,7 +1119,32 @@
             "prior_review_issues": []
           },
           "instructions": "Create default template files and update cm init to install them:\n\n1. Create assets/templates/ directory with 5 files:\n   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n   - IMPLEMENTER.md - Generic implementer agent instructions\n   - REVIEWER.md - Generic reviewer agent instructions\n   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n   - ACTIONS.md - Generic build/test actions template (empty command sections)\n\n2. Update src/command.rs to add 5 new constants:\n   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE\n   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE\n\n3. Update src/cli/init.rs:\n   - Add TemplateFile struct with path and content fields\n   - Add TEMPLATES constant array\n   - Create .cm/ and .cm/agents/ directories\n   - Write template files (respect --force flag)\n   - Add tests for template creation\n\n4. Templates must work as-is with no placeholders - no default commands",
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "d08d13a6-593f-4277-91ea-2e174916f7b5",
+              "started_at": "2026-01-25T06:37:14.643129532Z",
+              "completed_at": "2026-01-25T06:38:58.962587192Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Create default template assets and update cm init\n\n### Instructions\n\nCreate default template files and update cm init to install them:\n\n1. Create assets/templates/ directory with 5 files:\n   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n   - IMPLEMENTER.md - Generic implementer agent instructions\n   - REVIEWER.md - Generic reviewer agent instructions\n   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n   - ACTIONS.md - Generic build/test actions template (empty command sections)\n\n2. Update src/command.rs to add 5 new constants:\n   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE\n   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE\n\n3. Update src/cli/init.rs:\n   - Add TemplateFile struct with path and content fields\n   - Add TEMPLATES constant array\n   - Create .cm/ and .cm/agents/ directories\n   - Write template files (respect --force flag)\n   - Add tests for template creation\n\n4. Templates must work as-is with no placeholders - no default commands\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/init.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [
+                  "assets/templates/MANAGER.md",
+                  "assets/templates/IMPLEMENTER.md",
+                  "assets/templates/REVIEWER.md",
+                  "assets/templates/STRUCTURE.md",
+                  "assets/templates/ACTIONS.md"
+                ],
+                "files_modified": [
+                  "src/command.rs",
+                  "src/cli/init.rs"
+                ],
+                "commands_run": [],
+                "message": "Created 5 default template files (MANAGER.md, IMPLEMENTER.md, REVIEWER.md, STRUCTURE.md, ACTIONS.md) and updated cm init to install them to .cm/agents/ directory. All templates use generic language with no placeholders and empty sections for users to customize."
+              }
+            }
+          ],
           "roadmap_item_id": "21.1"
         },
         {
@@ -2882,6 +2907,23 @@
       "task_id": "phase-21.task-1",
       "agent_type": "implem",
       "started_at": "2026-01-25T05:32:42.342900320Z"
+    },
+    {
+      "id": "d08d13a6-593f-4277-91ea-2e174916f7b5",
+      "task_id": "phase-21.task-1",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T06:37:14.643129532Z",
+      "completed_at": "2026-01-25T06:38:58.920932470Z",
+      "exit_status": 0,
+      "commit_hash": "5cbc55fa74b91da5eee2458d0d27c85eb7ba901d"
+    },
+    {
+      "id": "e78c23be-572f-4d4e-b4ea-5621f5a3ca77",
+      "task_id": "phase-21.task-1",
+      "agent_type": "review",
+      "started_at": "2026-01-25T06:39:03.124795493Z",
+      "completed_at": "2026-01-25T06:40:01.422846655Z",
+      "exit_status": 0
     }
   ],
   "log_records": [
@@ -4776,6 +4818,59 @@
       "data": {
         "type": "error",
         "message": "Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0"
+      }
+    },
+    {
+      "id": "b8ce2381-4bd0-473d-aca9-14a0832964fd",
+      "timestamp": "2026-01-25T06:37:14.643128810Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Create default template assets and update cm init\n\n### Instructions\n\nCreate default template files and update cm init to install them:\n\n1. Create assets/templates/ directory with 5 files:\n   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n   - IMPLEMENTER.md - Generic implementer agent instructions\n   - REVIEWER.md - Generic reviewer agent instructions\n   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n   - ACTIONS.md - Generic build/test actions template (empty command sections)\n\n2. Update src/command.rs to add 5 new constants:\n   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE\n   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE\n\n3. Update src/cli/init.rs:\n   - Add TemplateFile struct with path and content fields\n   - Add TEMPLATES constant array\n   - Create .cm/ and .cm/agents/ directories\n   - Write template files (respect --force flag)\n   - Add tests for template creation\n\n4. Templates must work as-is with no placeholders - no default commands\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/init.rs\n- src/command.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "79274381-254c-49b4-ab73-033739562b33",
+      "timestamp": "2026-01-25T06:39:03.121818078Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "eaefca92-2280-4a47-8b21-bb191c139103",
+      "timestamp": "2026-01-25T06:39:03.124794050Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Create default template assets and update cm init\n\n### What was requested\n\nCreate default template files and update cm init to install them:\n\n1. Create assets/templates/ directory with 5 files:\n   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n   - IMPLEMENTER.md - Generic implementer agent instructions\n   - REVIEWER.md - Generic reviewer agent instructions\n   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)\n   - ACTIONS.md - Generic build/test actions template (empty command sections)\n\n2. Update src/command.rs to add 5 new constants:\n   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE\n   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE\n\n3. Update src/cli/init.rs:\n   - Add TemplateFile struct with path and content fields\n   - Add TEMPLATES constant array\n   - Create .cm/ and .cm/agents/ directories\n   - Write template files (respect --force flag)\n   - Add tests for template creation\n\n4. Templates must work as-is with no placeholders - no default commands\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex c78f3ad..715d826 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -2937,3 +2937,99 @@ Created 5 template files in assets/templates/ and updated cm init to install the\n \n </details>\n \n+[2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1\n+\n+### Agent Spawn\n+\n+**Type:** Implem\n+**Task:** phase-21.task-1\n+\n+<details>\n+<summary>Prompt</summary>\n+\n+```\n+You are an IMPLEMENTATION agent. Your task is to implement the following:\n+\n+## Task: Create default template assets and update cm init\n+\n+### Instructions\n+\n+Create default template files and update cm init to install them:\n+\n+1. Create assets/templates/ directory with 5 files:\n+   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)\n+   - IMPLEM\n\n... [truncated, 3233 more bytes]"
+      }
+    },
+    {
+      "id": "da8d5101-dbc8-467b-a175-6f244e9fa95c",
+      "timestamp": "2026-01-25T06:40:01.422914973Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "a6aea768-f775-4f08-9e47-955fb58d7d4d",
+      "timestamp": "2026-01-25T06:40:01.423322494Z",
+      "action": "task_complete",
+      "task_id": "phase-21.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
       }
     }
   ]

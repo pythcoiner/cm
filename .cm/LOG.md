@@ -2841,111 +2841,14 @@ Update assets/cm.md to generate agent template files:
 **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
 
-[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
-
-### Agent Spawn
-
-**Type:** Implem
-**Task:** phase-21.task-1
-
-<details>
-<summary>Prompt</summary>
-
-```
-You are an IMPLEMENTATION agent. Your task is to implement the following:
-
-## Task: Create default template assets and update cm init
-
-### Instructions
-
-Create default template files and update cm init to install them:
-
-1. Create assets/templates/ directory with 5 files:
-   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
-   - IMPLEMENTER.md - Generic implementer agent instructions
-   - REVIEWER.md - Generic reviewer agent instructions
-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)
-   - ACTIONS.md - Generic build/test actions template (empty command sections)
-
-2. Update src/command.rs to add 5 new constants:
-   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE
-   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE
-
-3. Update src/cli/init.rs:
-   - Add TemplateFile struct with path and content fields
-   - Add TEMPLATES constant array
-   - Create .cm/ and .cm/agents/ directories
-   - Write template files (respect --force flag)
-   - Add tests for template creation
-
-4. Templates must work as-is with no placeholders - no default commands
-
-### Files to Read for Context
-
-Read the following files to understand the existing codebase:
-
-- src/cli/init.rs
-- src/command.rs
-
-### Output Format
-
-When you are done, you MUST end your response with a JSON code block in this exact format.
-
-If you successfully completed the task:
-```json
-{
-  "status": "success",
-  "summary": "Brief description of what you did",
-  "files_created": ["list", "of", "new", "files"],
-  "files_modified": ["list", "of", "modified", "files"]
-}
-```
-
-If you could NOT complete the task:
-```json
-{
-  "status": "failed",
-  "error": "Detailed explanation of why you could not complete the task"
-}
-```
-
-```
-
-</details>
-
-[2026-01-25 06:27:16 UTC] **AGENT_COMPLETE**
-
-### Agent Response
-
-**Files Created:**
-- `assets/templates/MANAGER.md`
-- `assets/templates/IMPLEMENTER.md`
-- `assets/templates/REVIEWER.md`
-- `assets/templates/STRUCTURE.md`
-- `assets/templates/ACTIONS.md`
-
-**Files Modified:**
-- `src/command.rs`
-- `src/cli/init.rs`
-
-<details>
-<summary>Raw Response</summary>
-
-```
-Created 5 template files in assets/templates/ and updated cm init to install them to .cm/agents/ directory with proper --force flag support and comprehensive tests
-```
-
-</details>
-
 [2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
 
 ### Agent Spawn
 
-**Type:** Implem
-**Task:** phase-21.task-1
+**Type:** implem
 
 <details>
-<summary>Prompt</summary>
+<summary>Prompt Preview</summary>
 
 ```
 You are an IMPLEMENTATION agent. Your task is to implement the following:
@@ -2960,27 +2863,98 @@ Create default template files and update cm init to install them:
    - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
    - IMPLEMENTER.md - Generic implementer agent instructions
    - REVIEWER.md - Generic reviewer agent instructions
-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)
-   - ACTIONS.md - Generic build/test actions template (empty command sections)
+   - STRUCTU
 
-2. Update src/command.rs to add 5 new constants:
-   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE
-   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE
+... [truncated, 1261 more bytes]
+```
 
-3. Update src/cli/init.rs:
-   - Add TemplateFile struct with path and content fields
-   - Add TEMPLATES constant array
-   - Create .cm/ and .cm/agents/ directories
-   - Write template files (respect --force flag)
-   - Add tests for template creation
+</details>
 
-4. Templates must work as-is with no placeholders - no default commands
+[2026-01-25 06:39:03 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 06:39:03 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
+
+### Agent Spawn
+
+**Type:** review
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are a REVIEW agent. Review the following code changes made by an implementation agent.
+
+## Original Task: Create default template assets and update cm init
+
+### What was requested
+
+Create default template files and update cm init to install them:
+
+1. Create assets/templates/ directory with 5 files:
+   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
+   - IMPLEMENTER.md - Generic implementer agent instructions
+   - REVIEWER.md - Generic reviewer
+
+... [truncated, 1534 more bytes]
+```
+
+</details>
+
+[2026-01-25 06:40:01 UTC] **REVIEW_RESULT**
+
+### Review Result: APPROVED
+
+**Issues Found:** 0
+
+
+[2026-01-25 06:40:01 UTC] **TASK_COMPLETE** | Task: phase-21.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-25 06:40:01 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
+**Type:** Implem
+**Task:** phase-21.task-2
+
+<details>
+<summary>Prompt</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Load agent templates from disk at runtime
+
+### Instructions
+
+Update agent prompt building to load templates from disk:
+
+1. Update src/agent/prompt.rs to:
+   - Read .cm/agents/MANAGER.md for manager agent prompt
+   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt
+   - Read .cm/agents/REVIEWER.md for reviewer agent prompt
+
+2. If file is missing, write embedded default to disk first, then read it
+   - This ensures files always exist for users to customize
+
+3. Add helper function to ensure template exists:
+   - fn ensure_template(path, default_content) -> Result<String>
+   - If path doesn't exist, write default_content to it
+   - Return contents of file
+
+4. Add tests for runtime loading behavior
 
 ### Files to Read for Context
 
 Read the following files to understand the existing codebase:
 
-- src/cli/init.rs
+- src/agent/prompt.rs
 - src/command.rs
 
 ### Output Format
@@ -3009,26 +2983,18 @@ If you could NOT complete the task:
 
 </details>
 
-[2026-01-25 06:38:58 UTC] **AGENT_COMPLETE**
+[2026-01-25 06:44:27 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
-**Files Created:**
-- `assets/templates/MANAGER.md`
-- `assets/templates/IMPLEMENTER.md`
-- `assets/templates/REVIEWER.md`
-- `assets/templates/STRUCTURE.md`
-- `assets/templates/ACTIONS.md`
-
 **Files Modified:**
-- `src/command.rs`
-- `src/cli/init.rs`
+- `src/agent/prompt.rs`
 
 <details>
 <summary>Raw Response</summary>
 
 ```
-Created 5 default template files (MANAGER.md, IMPLEMENTER.md, REVIEWER.md, STRUCTURE.md, ACTIONS.md) and updated cm init to install them to .cm/agents/ directory. All templates use generic language with no placeholders and empty sections for users to customize.
+Updated agent prompt building to load templates from disk at runtime with fallback to embedded defaults
 ```
 
 </details>

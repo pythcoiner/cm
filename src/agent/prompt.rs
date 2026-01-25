@@ -5,6 +5,36 @@
 //! task-specific context, never global knowledge.
 
 use crate::state::{ReviewIssue, Task};
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+
+/// Ensures an agent template file exists on disk.
+///
+/// If the file doesn't exist, writes the default content to it first.
+/// Returns the contents of the file.
+///
+/// # Arguments
+///
+/// * `path` - Path to the template file
+/// * `default_content` - Default content to write if file doesn't exist
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or written.
+fn ensure_template(path: &Path, default_content: &str) -> io::Result<String> {
+    // If file doesn't exist, create it with default content
+    if !path.exists() {
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, default_content)?;
+    }
+
+    // Read and return the file contents
+    fs::read_to_string(path)
+}
 
 /// Builds prompts for different types of agent tasks.
 ///
@@ -27,8 +57,14 @@ impl PromptBuilder {
     pub fn build_implem_prompt(task: &Task) -> String {
         let mut prompt = String::new();
 
-        // Header
-        prompt.push_str("You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n");
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/IMPLEMENTER.md");
+        let template = ensure_template(&template_path, crate::command::IMPLEMENTER_TEMPLATE)
+            .unwrap_or_else(|_| crate::command::IMPLEMENTER_TEMPLATE.to_string());
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
 
         // Task name and instructions
         prompt.push_str(&format!("## Task: {}\n\n", task.name));
@@ -54,7 +90,7 @@ impl PromptBuilder {
             prompt.push_str("\n\n");
         }
 
-        // Output format instructions
+        // Output format instructions (kept inline for consistency)
         prompt.push_str("### Output Format\n\n");
         prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
         prompt.push_str("If you successfully completed the task:\n");
@@ -92,8 +128,14 @@ impl PromptBuilder {
     pub fn build_review_prompt(task: &Task, code_to_review: &str) -> String {
         let mut prompt = String::new();
 
-        // Header
-        prompt.push_str("You are a REVIEW agent. Your task is to review the following code:\n\n");
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
+        let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
+            .unwrap_or_else(|_| crate::command::REVIEWER_TEMPLATE.to_string());
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
 
         // Task name and instructions
         prompt.push_str(&format!("## Review Task: {}\n\n", task.name));
@@ -250,8 +292,14 @@ impl PromptBuilder {
     pub fn build_auto_review_prompt(task: &Task, diff: &str) -> String {
         let mut prompt = String::new();
 
-        // Header
-        prompt.push_str("You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n");
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
+        let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
+            .unwrap_or_else(|_| crate::command::REVIEWER_TEMPLATE.to_string());
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
 
         // Original task context
         prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
@@ -411,6 +459,7 @@ impl SeverityExt for ReviewIssue {
 mod tests {
     use super::*;
     use crate::state::{Severity, TaskContext, TaskStatus, TaskType};
+    use std::fs;
 
     fn create_test_task() -> Task {
         Task {
@@ -436,7 +485,8 @@ mod tests {
         let prompt = PromptBuilder::build_implem_prompt(&task);
 
         assert!(prompt.contains("Test Task"));
-        assert!(prompt.contains("IMPLEMENTATION agent"));
+        // Now loading from template, so check for template content or task header
+        assert!(prompt.contains("## Task: Test Task"));
     }
 
     #[test]
@@ -479,8 +529,9 @@ mod tests {
         let code = "fn foo() { bar(); }";
         let prompt = PromptBuilder::build_review_prompt(&task, code);
 
-        assert!(prompt.contains("REVIEW agent"));
+        // Now loading from template, so check for code and task header instead
         assert!(prompt.contains(code));
+        assert!(prompt.contains("## Review Task: Test Task"));
     }
 
     #[test]
@@ -545,5 +596,109 @@ mod tests {
 
         // Should not contain code style section when None
         assert!(!prompt.contains("### Code Style Guidelines"));
+    }
+
+    #[test]
+    fn test_ensure_template_creates_file_if_missing() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let template_path = temp_dir.path().join("test_template.md");
+        let default_content = "# Test Template\n\nThis is a test.";
+
+        // File should not exist initially
+        assert!(!template_path.exists());
+
+        // Call ensure_template
+        let result = ensure_template(&template_path, default_content);
+
+        // Should succeed
+        assert!(result.is_ok());
+
+        // File should now exist
+        assert!(template_path.exists());
+
+        // Contents should match default
+        let contents = result.unwrap();
+        assert_eq!(contents, default_content);
+    }
+
+    #[test]
+    fn test_ensure_template_reads_existing_file() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let template_path = temp_dir.path().join("existing_template.md");
+        let existing_content = "# Existing Content\n\nThis already exists.";
+        let default_content = "# Default Content\n\nThis should not be used.";
+
+        // Create the file with existing content
+        fs::write(&template_path, existing_content).unwrap();
+
+        // Call ensure_template
+        let result = ensure_template(&template_path, default_content);
+
+        // Should succeed
+        assert!(result.is_ok());
+
+        // Contents should be the existing content, not the default
+        let contents = result.unwrap();
+        assert_eq!(contents, existing_content);
+    }
+
+    #[test]
+    fn test_ensure_template_creates_parent_directory() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let template_path = temp_dir.path().join("subdir/nested/template.md");
+        let default_content = "# Test Template";
+
+        // Parent directories should not exist
+        assert!(!template_path.parent().unwrap().exists());
+
+        // Call ensure_template
+        let result = ensure_template(&template_path, default_content);
+
+        // Should succeed
+        assert!(result.is_ok());
+
+        // Parent directories and file should now exist
+        assert!(template_path.parent().unwrap().exists());
+        assert!(template_path.exists());
+    }
+
+    #[test]
+    fn test_build_implem_prompt_loads_template() {
+        let task = create_test_task();
+        let prompt = PromptBuilder::build_implem_prompt(&task);
+
+        // Should contain content from IMPLEMENTER template or fallback
+        // We can't guarantee the exact content, but we can check that a prompt was built
+        assert!(!prompt.is_empty());
+        assert!(prompt.contains("## Task: Test Task"));
+        assert!(prompt.contains("Implement the foo function that does bar"));
+    }
+
+    #[test]
+    fn test_build_review_prompt_loads_template() {
+        let task = create_test_task();
+        let code = "fn foo() { bar(); }";
+        let prompt = PromptBuilder::build_review_prompt(&task, code);
+
+        // Should contain the code to review
+        assert!(prompt.contains(code));
+        assert!(prompt.contains("## Review Task: Test Task"));
+    }
+
+    #[test]
+    fn test_build_auto_review_prompt_loads_template() {
+        let task = create_test_task();
+        let diff = "+fn new_function() {}\n-fn old_function() {}";
+        let prompt = PromptBuilder::build_auto_review_prompt(&task, diff);
+
+        // Should contain the diff
+        assert!(prompt.contains(diff));
+        assert!(prompt.contains("## Original Task: Test Task"));
     }
 }

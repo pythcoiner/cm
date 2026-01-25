@@ -1436,19 +1436,19 @@
         {
           "id": "21.1",
           "name": "Create default template assets and update cm init",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Create assets/templates/ with 5 template files",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update src/command.rs with new constants",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update src/cli/init.rs to write templates to .cm/",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
