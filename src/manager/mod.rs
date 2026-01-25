@@ -450,19 +450,43 @@ impl Manager {
                 let phase_ids: Vec<String> = nums_part
                     .split_whitespace()
                     .flat_map(|token| {
-                        if let Some((start, end)) = token.split_once('-') {
+                        if let Some((start_str, end_str)) = token.split_once('-') {
                             // Range: "3-6" -> ["phase-3", "phase-4", "phase-5", "phase-6"]
-                            let start: u32 = start.parse().unwrap_or(0);
-                            let end: u32 = end.parse().unwrap_or(0);
+                            // Parse with proper error handling
+                            let start = match start_str.parse::<u32>() {
+                                Ok(n) => n,
+                                Err(_) => {
+                                    println!("Invalid phase number: {}", token);
+                                    return vec![];
+                                }
+                            };
+                            let end = match end_str.parse::<u32>() {
+                                Ok(n) => n,
+                                Err(_) => {
+                                    println!("Invalid phase number: {}", token);
+                                    return vec![];
+                                }
+                            };
+                            // Validate range
+                            if start > end {
+                                println!("Invalid range: {}-{} (start must be <= end)", start, end);
+                                return vec![];
+                            }
                             (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
                         } else {
                             // Single: "3" -> ["phase-3"]
-                            vec![format!("phase-{}", token)]
+                            // Validate it's a number
+                            if token.parse::<u32>().is_ok() {
+                                vec![format!("phase-{}", token)]
+                            } else {
+                                println!("Invalid phase number: {}", token);
+                                vec![]
+                            }
                         }
                     })
                     .collect();
                 if phase_ids.is_empty() {
-                    println!("No phase numbers provided.");
+                    println!("No valid phase numbers provided.");
                     self.prompt_task_selection()
                 } else {
                     Ok(TaskSelection::Phases(phase_ids))
