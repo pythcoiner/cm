@@ -515,7 +515,7 @@ Status: **Complete** (7/7)
 
 ## Phase 27: Per-Phase TRACE Logging
 
-Status: **In Progress** (3/6)
+Status: **Complete** (6/6)
 
 - [x] Add TRACE level to LogLevel enum
   - [x] Add Trace variant before Debug
@@ -533,18 +533,18 @@ Status: **In Progress** (3/6)
   - [x] Log prompts in execute_implem/review/fix
   - [x] Log responses in execute_implem/review/fix
   - [x] Log in run_review_cycle
-- [ ] Update --prune for per-phase logs
-  - [ ] Add prune_all() function
-  - [ ] Update execute_prune() in CLI
-- [ ] Add unit tests for PhaseLogger
-  - [ ] Test extract_phase_id
-  - [ ] Test directory creation
-  - [ ] Test log file creation and format
-  - [ ] Test multiple phases create separate files
-- [ ] Build and verify per-phase logging
-  - [ ] cargo build + clippy + test pass
-  - [ ] Verify PhaseLogger integration
-  - [ ] Verify TRACE level added
+- [x] Update --prune for per-phase logs
+  - [x] Add prune_all() function
+  - [x] Update execute_prune() in CLI
+- [x] Add unit tests for PhaseLogger
+  - [x] Test extract_phase_id
+  - [x] Test directory creation
+  - [x] Test log file creation and format
+  - [x] Test multiple phases create separate files
+- [x] Build and verify per-phase logging
+  - [x] cargo build + clippy + test pass
+  - [x] Verify PhaseLogger integration
+  - [x] Verify TRACE level added
 
 ---
 
@@ -559,6 +559,19 @@ Status: **Not Started** (0/1)
   - [ ] Modify run_review_cycle() to prompt on max cycles
   - [ ] Save IMPLEM completion state before review cycle
   - [ ] Resume at REVIEW on --continue when IMPLEM completed
+
+---
+
+## Phase 30: Fix Roadmap Subitem Updates
+
+Status: **Not Started** (0/1)
+
+- [ ] Fix roadmap subitem ID lookup
+  - [ ] Add optional id field to RoadmapSubItem
+  - [ ] Add ensure_subitem_ids() method
+  - [ ] Update load_roadmap() for backward compatibility
+  - [ ] Update sync_roadmap_item() to use ID-based lookup
+  - [ ] Update validation to recognize subitem IDs
 
 ---
 
@@ -595,6 +608,7 @@ Status: **Not Started** (0/1)
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| Phase 27: Per-Phase TRACE Logging | In Progress | 16/28 |
+| Phase 27: Per-Phase TRACE Logging | Complete | 28/28 |
 | Phase 28: FIX Cycle Retry & Resume | Not Started | 0/7 |
-| **Total** | | **324/343** |
+| Phase 30: Fix Roadmap Subitem Updates | Not Started | 0/6 |
+| **Total** | | **336/349** |
