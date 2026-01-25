@@ -214,223 +214,223 @@ Status: **Complete** (8/8)
 
 ## Phase 15.5: Phase-Level Build Verification
 
-Status: **Complete** (1/1)
+Status: **Not Started** (0/1)
 
-- [x] Move build verification from per-task to per-phase execution
-  - [x] Add state helper methods (all_phase_tasks_completed, find_phase_for_task, mark_phase_status, add_task_to_phase)
-  - [x] Update next_runnable_task for phase gating
-  - [x] Remove per-task verify_all() from execute_implem and execute_fix
-  - [x] Add check_phase_completion and inject_build_fix_task methods
-  - [x] Integrate into run(), run_with_channels(), and step() loops
+- [ ] Move build verification from per-task to per-phase execution
+  - [ ] Add state helper methods (all_phase_tasks_completed, find_phase_for_task, mark_phase_status, add_task_to_phase)
+  - [ ] Update next_runnable_task for phase gating
+  - [ ] Remove per-task verify_all() from execute_implem and execute_fix
+  - [ ] Add check_phase_completion and inject_build_fix_task methods
+  - [ ] Integrate into run(), run_with_channels(), and step() loops
 
 ---
 
 ## Phase 16: Sanity Check Workflow
 
-Status: **Not Started** (0/6)
+Status: **Complete** (6/6)
 
-- [ ] Create src/state/validate.rs
-  - [ ] SanityError enum with thiserror
-  - [ ] JSON syntax validation
-  - [ ] Schema compliance validation
-  - [ ] Cross-reference validation (roadmap_item_id, linked_task_ids)
-  - [ ] Duplicate ID detection
-  - [ ] Orphaned reference detection
-- [ ] Add --sanity-check flag to CLI
-  - [ ] Add flag to Cli struct
-  - [ ] Implement execute_sanity_check()
-  - [ ] Display validation results with colors
-- [ ] Update assets/cm.md skill workflow
-  - [ ] Add Step 7: Run cm --sanity-check after generation
-  - [ ] Add iteration loop if validation fails
-  - [ ] Add Step 8: Ask about .gitignore (default no)
-  - [ ] Add Step 9: Auto-generate commit message
-  - [ ] Add Step 10: Ask user confirmation and commit
-- [ ] Add unit tests for validation
-  - [ ] Test valid JSON files pass
-  - [ ] Test invalid JSON syntax detected
-  - [ ] Test missing required fields detected
-  - [ ] Test invalid cross-references detected
-  - [ ] Test duplicate IDs detected
-  - [ ] Test orphaned references detected
-- [ ] Add sanity check to assets/feat.md
-  - [ ] Add Step 9: Validate Changes after file updates
-  - [ ] Run cm --sanity-check, fix errors, repeat until pass
-  - [ ] Renumber Step 9 (Completion) to Step 10
-- [ ] Add sanity check to assets/fix.md
-  - [ ] Add Step 8: Validate Changes after file updates
-  - [ ] Run cm --sanity-check, fix errors, repeat until pass
-  - [ ] Renumber Step 8 (Completion) to Step 9
+- [x] Create src/state/validate.rs
+  - [x] SanityError enum with thiserror
+  - [x] JSON syntax validation
+  - [x] Schema compliance validation
+  - [x] Cross-reference validation (roadmap_item_id, linked_task_ids)
+  - [x] Duplicate ID detection
+  - [x] Orphaned reference detection
+- [x] Add --sanity-check flag to CLI
+  - [x] Add flag to Cli struct
+  - [x] Implement execute_sanity_check()
+  - [x] Display validation results with colors
+- [x] Update assets/cm.md skill workflow
+  - [x] Add Step 7: Run cm --sanity-check after generation
+  - [x] Add iteration loop if validation fails
+  - [x] Add Step 8: Ask about .gitignore (default no)
+  - [x] Add Step 9: Auto-generate commit message
+  - [x] Add Step 10: Ask user confirmation and commit
+- [x] Add unit tests for validation
+  - [x] Test valid JSON files pass
+  - [x] Test invalid JSON syntax detected
+  - [x] Test missing required fields detected
+  - [x] Test invalid cross-references detected
+  - [x] Test duplicate IDs detected
+  - [x] Test orphaned references detected
+- [x] Add sanity check to assets/feat.md
+  - [x] Add Step 9: Validate Changes after file updates
+  - [x] Run cm --sanity-check, fix errors, repeat until pass
+  - [x] Renumber Step 9 (Completion) to Step 10
+- [x] Add sanity check to assets/fix.md
+  - [x] Add Step 8: Validate Changes after file updates
+  - [x] Run cm --sanity-check, fix errors, repeat until pass
+  - [x] Renumber Step 8 (Completion) to Step 9
 
 ---
 
 ## Phase 17: Concise One-at-a-Time Questions in Skills
 
-Status: **Not Started** (0/4)
+Status: **Complete** (4/4)
 
-- [ ] Refactor assets/cm.md questions
-  - [ ] Split Step 1 into 3 single questions
-  - [ ] Split Step 2 into 4 single questions
-  - [ ] Keep Step 3 as single optional question
-  - [ ] Keep Step 4 as single question
-  - [ ] Keep Step 5 confirmation as single block
-- [ ] Refactor assets/feat.md questions
-  - [ ] Split Step 1 into 3 single questions
-  - [ ] Split Step 2 into 4 single questions
-  - [ ] Split Step 5 into 4 single questions
-  - [ ] Keep confirmation as single block
-- [ ] Refactor assets/fix.md questions
-  - [ ] Split Step 1 into 4 single questions
-  - [ ] Split Step 2 into 2 single questions
-  - [ ] Keep confirmation as single block
-- [ ] Rebuild and verify skills
-  - [ ] cargo build --release
-  - [ ] cm init --force
-  - [ ] Test /cm skill manually
-  - [ ] Test /feat skill manually
-  - [ ] Test /fix skill manually
+- [x] Refactor assets/cm.md questions
+  - [x] Split Step 1 into 3 single questions
+  - [x] Split Step 2 into 4 single questions
+  - [x] Keep Step 3 as single optional question
+  - [x] Keep Step 4 as single question
+  - [x] Keep Step 5 confirmation as single block
+- [x] Refactor assets/feat.md questions
+  - [x] Split Step 1 into 3 single questions
+  - [x] Split Step 2 into 4 single questions
+  - [x] Split Step 5 into 4 single questions
+  - [x] Keep confirmation as single block
+- [x] Refactor assets/fix.md questions
+  - [x] Split Step 1 into 4 single questions
+  - [x] Split Step 2 into 2 single questions
+  - [x] Keep confirmation as single block
+- [x] Rebuild and verify skills
+  - [x] cargo build --release
+  - [x] cm init --force
+  - [x] Test /cm skill manually
+  - [x] Test /feat skill manually
+  - [x] Test /fix skill manually
 
 ---
 
 ## Phase 18: Regenerate MD After Skills
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] Update assets/feat.md with regeneration step
-  - [ ] Add step to run cm --regenerate after file updates
-  - [ ] Place before sanity check step
-- [ ] Update assets/fix.md with regeneration step
-  - [ ] Add step to run cm --regenerate after file updates
-  - [ ] Place before sanity check step
+- [x] Update assets/feat.md with regeneration step
+  - [x] Add step to run cm --regenerate after file updates
+  - [x] Place before sanity check step
+- [x] Update assets/fix.md with regeneration step
+  - [x] Add step to run cm --regenerate after file updates
+  - [x] Place before sanity check step
 
 ---
 
 ## Phase 19: Skills No Auto-Implement
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Update assets/feat.md scope limitations
-  - [ ] Add CRITICAL: Scope Limitations section
-  - [ ] Update file update step to only edit JSON
-  - [ ] Remove cm run from next steps
-- [ ] Update assets/fix.md scope limitations
-  - [ ] Add CRITICAL: Scope Limitations section
-  - [ ] Update file update step to only edit JSON
-  - [ ] Remove cm run from next steps
-- [ ] Reinstall skills and verify
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify feat skill has scope limitations
-  - [ ] Verify fix skill has scope limitations
+- [x] Update assets/feat.md scope limitations
+  - [x] Add CRITICAL: Scope Limitations section
+  - [x] Update file update step to only edit JSON
+  - [x] Remove cm run from next steps
+- [x] Update assets/fix.md scope limitations
+  - [x] Add CRITICAL: Scope Limitations section
+  - [x] Update file update step to only edit JSON
+  - [x] Remove cm run from next steps
+- [x] Reinstall skills and verify
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify feat skill has scope limitations
+  - [x] Verify fix skill has scope limitations
 
 ---
 
 ## Phase 20: Simplify Skill Input
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Simplify assets/feat.md input
-  - [ ] Replace Step 1 to only ask for description
-  - [ ] Remove user story references
-  - [ ] Update templates
-- [ ] Simplify assets/fix.md input
-  - [ ] Replace Step 1 to only ask for description
-  - [ ] Remove summary/observed/expected/repro prompts
-- [ ] Reinstall and verify simplified skills
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify feat skill simplified input
-  - [ ] Verify fix skill simplified input
+- [x] Simplify assets/feat.md input
+  - [x] Replace Step 1 to only ask for description
+  - [x] Remove user story references
+  - [x] Update templates
+- [x] Simplify assets/fix.md input
+  - [x] Replace Step 1 to only ask for description
+  - [x] Remove summary/observed/expected/repro prompts
+- [x] Reinstall and verify simplified skills
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify feat skill simplified input
+  - [x] Verify fix skill simplified input
 
 ---
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Add agent templates generation to /cm skill
-  - [ ] Generate .cm/agents/MANAGER.md
-  - [ ] Generate .cm/agents/IMPLEMENTER.md
-  - [ ] Generate .cm/agents/REVIEWER.md
-- [ ] Add STRUCTURE.md and ACTIONS.md generation
-  - [ ] Add questions for structure info
-  - [ ] Add questions for actions info
-  - [ ] Generate .cm/STRUCTURE.md
-  - [ ] Generate .cm/ACTIONS.md
-- [ ] Reinstall and verify new /cm outputs
-  - [ ] cargo build
-  - [ ] cm init --force
-  - [ ] Verify agent templates generated
-  - [ ] Verify STRUCTURE.md and ACTIONS.md generated
+- [x] Add agent templates generation to /cm skill
+  - [x] Generate .cm/agents/MANAGER.md
+  - [x] Generate .cm/agents/IMPLEMENTER.md
+  - [x] Generate .cm/agents/REVIEWER.md
+- [x] Add STRUCTURE.md and ACTIONS.md generation
+  - [x] Add questions for structure info
+  - [x] Add questions for actions info
+  - [x] Generate .cm/STRUCTURE.md
+  - [x] Generate .cm/ACTIONS.md
+- [x] Reinstall and verify new /cm outputs
+  - [x] cargo build
+  - [x] cm init --force
+  - [x] Verify agent templates generated
+  - [x] Verify STRUCTURE.md and ACTIONS.md generated
 
 ---
 
 ## Phase 22: TUI Default Mode + Interactive Task Selection
 
-Status: **Not Started** (0/5)
+Status: **Complete** (5/5)
 
-- [ ] Update CLI: TUI default, add --daemon flag
-  - [ ] Remove --tui flag
-  - [ ] Add --daemon flag
-  - [ ] Invert execution logic
-- [ ] Add task selection prompt to manager
-  - [ ] Show pending tasks before running
-  - [ ] Prompt: [s]ingle / [a]ll / [q]uit
-  - [ ] Never auto-implement without confirmation
-- [ ] Implement TUI task selection widget
-  - [ ] Task list with pending highlighted
-  - [ ] Keyboard controls: s/a/q/arrows
-  - [ ] Prompt bar at bottom
-- [ ] Implement daemon mode stdin prompt
-  - [ ] Print pending tasks to stdout
-  - [ ] Read selection from stdin
-  - [ ] Prompt again after task completes
-- [ ] Update tests for new default mode
-  - [ ] Update CLI tests for --daemon
-  - [ ] Update integration tests
-  - [ ] Verify all tests pass
+- [x] Update CLI: TUI default, add --daemon flag
+  - [x] Remove --tui flag
+  - [x] Add --daemon flag
+  - [x] Invert execution logic
+- [x] Add task selection prompt to manager
+  - [x] Show pending tasks before running
+  - [x] Prompt: [s]ingle / [a]ll / [q]uit
+  - [x] Never auto-implement without confirmation
+- [x] Implement TUI task selection widget
+  - [x] Task list with pending highlighted
+  - [x] Keyboard controls: s/a/q/arrows
+  - [x] Prompt bar at bottom
+- [x] Implement daemon mode stdin prompt
+  - [x] Print pending tasks to stdout
+  - [x] Read selection from stdin
+  - [x] Prompt again after task completes
+- [x] Update tests for new default mode
+  - [x] Update CLI tests for --daemon
+  - [x] Update integration tests
+  - [x] Verify all tests pass
 
 ---
 
 ## Phase 23: Detailed File Logging
 
-Status: **Not Started** (0/7)
+Status: **Complete** (7/7)
 
-- [ ] Create FileLogger module
-  - [ ] LogLevel enum with Display and PartialOrd
-  - [ ] FileLogError enum with thiserror
-  - [ ] FileLogger struct with Mutex<File>
-  - [ ] Core methods: new(), with_level(), log()
-  - [ ] Convenience methods: debug(), info(), warn(), error()
-- [ ] Add prune functionality
-  - [ ] PruneStats struct
-  - [ ] parse_log_timestamp() helper
-  - [ ] prune() method (24h default)
-  - [ ] prune_older_than() method
-- [ ] Export FileLogger from log module
-  - [ ] Add mod file_logger declaration
-  - [ ] Add pub use re-exports
-- [ ] Add --prune CLI flag
-  - [ ] Add prune flag to Cli struct
-  - [ ] Implement execute_prune() function
-  - [ ] Wire up in CLI dispatch
-- [ ] Add FileLogger to Manager
-  - [ ] Add file_log_path to ManagerConfig
-  - [ ] Add verbose flag to ManagerConfig
-  - [ ] Add file_logger field to Manager
-  - [ ] Initialize FileLogger in Manager::new()
-- [ ] Add logging calls throughout Manager
-  - [ ] Log state load/save operations
-  - [ ] Log task selection and completion
-  - [ ] Log agent spawn and completion with duration
-  - [ ] Log build verification results
-  - [ ] Log shutdown and signal handling
-- [ ] Add unit tests for FileLogger
-  - [ ] Test file creation and log levels
-  - [ ] Test log format
-  - [ ] Test timestamp parsing
-  - [ ] Test pruning functionality
-  - [ ] Test concurrent logging
+- [x] Create FileLogger module
+  - [x] LogLevel enum with Display and PartialOrd
+  - [x] FileLogError enum with thiserror
+  - [x] FileLogger struct with Mutex<File>
+  - [x] Core methods: new(), with_level(), log()
+  - [x] Convenience methods: debug(), info(), warn(), error()
+- [x] Add prune functionality
+  - [x] PruneStats struct
+  - [x] parse_log_timestamp() helper
+  - [x] prune() method (24h default)
+  - [x] prune_older_than() method
+- [x] Export FileLogger from log module
+  - [x] Add mod file_logger declaration
+  - [x] Add pub use re-exports
+- [x] Add --prune CLI flag
+  - [x] Add prune flag to Cli struct
+  - [x] Implement execute_prune() function
+  - [x] Wire up in CLI dispatch
+- [x] Add FileLogger to Manager
+  - [x] Add file_log_path to ManagerConfig
+  - [x] Add verbose flag to ManagerConfig
+  - [x] Add file_logger field to Manager
+  - [x] Initialize FileLogger in Manager::new()
+- [x] Add logging calls throughout Manager
+  - [x] Log state load/save operations
+  - [x] Log task selection and completion
+  - [x] Log agent spawn and completion with duration
+  - [x] Log build verification results
+  - [x] Log shutdown and signal handling
+- [x] Add unit tests for FileLogger
+  - [x] Test file creation and log levels
+  - [x] Test log format
+  - [x] Test timestamp parsing
+  - [x] Test pruning functionality
+  - [x] Test concurrent logging
 
 ---
 
@@ -439,25 +439,25 @@ Status: **Not Started** (0/7)
 Status: **Complete** (6/6)
 
 - [x] Create assets/end.md skill
-  - [ ] YAML frontmatter (name, description, user-invocable)
-  - [ ] Skill body with save pipeline instructions
-  - [ ] Scope limitations (no implementation)
-  - [ ] Error handling sections
+  - [x] YAML frontmatter (name, description, user-invocable)
+  - [x] Skill body with save pipeline instructions
+  - [x] Scope limitations (no implementation)
+  - [x] Error handling sections
 - [x] Register END_SKILL in src/skill.rs
 - [x] Register end skill in src/cli/init.rs
-  - [ ] Add END_SKILL import
-  - [ ] Add SkillFile entry to SKILLS array
-  - [ ] Add /end to available skills output
+  - [x] Add END_SKILL import
+  - [x] Add SkillFile entry to SKILLS array
+  - [x] Add /end to available skills output
 - [x] Modify assets/feat.md to delegate saves to /end
-  - [ ] Remove Steps 8-11 (file updates, regenerate, validate, completion)
-  - [ ] Add Step 8: Handoff to /end
+  - [x] Remove Steps 8-11 (file updates, regenerate, validate, completion)
+  - [x] Add Step 8: Handoff to /end
 - [x] Modify assets/fix.md to delegate saves to /end
-  - [ ] Remove Steps 7-10 (file updates, regenerate, validate, completion)
-  - [ ] Add Step 7: Handoff to /end
+  - [x] Remove Steps 7-10 (file updates, regenerate, validate, completion)
+  - [x] Add Step 7: Handoff to /end
 - [x] Build, reinstall skills, and verify
-  - [ ] cargo build + clippy + test pass
-  - [ ] cm init --force installs /end skill
-  - [ ] Verify feat/fix skills have /end handoff
+  - [x] cargo build + clippy + test pass
+  - [x] cm init --force installs /end skill
+  - [x] Verify feat/fix skills have /end handoff
 
 ---
 
@@ -501,14 +501,14 @@ Status: **Complete** (3/3)
 | Phase 14: Enable Signal Handling | Complete | 2/2 |
 | Phase 15: Deterministic Markdown Generation | Complete | 8/8 |
 | Phase 15.5: Phase-Level Build Verification | Complete | 6/6 |
-| Phase 16: Sanity Check Workflow | Not Started | 0/32 |
-| Phase 17: Concise One-at-a-Time Questions in Skills | Not Started | 0/21 |
-| Phase 18: Regenerate MD After Skills | Not Started | 0/6 |
-| Phase 19: Skills No Auto-Implement | Not Started | 0/13 |
-| Phase 20: Simplify Skill Input | Not Started | 0/12 |
-| Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
-| Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
-| Phase 23: Detailed File Logging | Not Started | 0/35 |
-| Phase 24: /end Skill | In Progress | 6/20 |
+| Phase 16: Sanity Check Workflow | Complete | 32/32 |
+| Phase 17: Concise One-at-a-Time Questions in Skills | Complete | 21/21 |
+| Phase 18: Regenerate MD After Skills | Complete | 6/6 |
+| Phase 19: Skills No Auto-Implement | Complete | 13/13 |
+| Phase 20: Simplify Skill Input | Complete | 12/12 |
+| Phase 21: Agent Templates & Project Documentation | Complete | 14/14 |
+| Phase 22: TUI Default Mode + Interactive Task Selection | Complete | 20/20 |
+| Phase 23: Detailed File Logging | Complete | 35/35 |
+| Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
-| **Total** | | **108/281** |
+| **Total** | | **281/281** |
