@@ -2,3 +2,4 @@ target/
 .claude/
 .todo
 .cm/cm.log
+*.log
