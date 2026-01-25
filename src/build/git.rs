@@ -209,7 +209,8 @@ impl GitRunner {
     ///
     /// Returns an error if the git command fails.
     pub fn is_clean(&self) -> Result<bool, BuildError> {
-        let output = self.run_git_command(&["status", "--porcelain"])?;
+        // Exclude .cm/ directory since cm manages its own state files there
+        let output = self.run_git_command(&["status", "--porcelain", "--", ":(exclude).cm/"])?;
         Ok(output.trim().is_empty())
     }
 
