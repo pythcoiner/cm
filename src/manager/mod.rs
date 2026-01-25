@@ -1091,7 +1091,9 @@ impl Manager {
                     if cycle + 1 >= max_cycles {
                         cycle += 1;
                         self.update_phase_review_cycles(phase_id, cycle);
-                        continue;
+                        warn!("Phase {} reached max cycles ({}), deferring", phase_id, max_cycles);
+                        emit_cm(&format!("Phase {} deferred after {} cycles", phase_id, max_cycles));
+                        return Ok(Verdict::NeedsFixes);
                     }
 
                     // Re-fetch phase for fix prompt

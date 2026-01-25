@@ -110,6 +110,22 @@ If you could NOT complete all tasks:
 }
 ```
 
+## Plan Compliance
+
+If a **Phase Plan** is provided above, you **MUST** follow it completely:
+
+1. **Re-read the plan** before starting implementation
+2. **Address ALL items** - numbered steps, bullet points, specific requirements
+3. **If the plan mentions tests** - you MUST add those tests (this is non-negotiable)
+4. **If the plan mentions specific files** - you MUST modify those files as described
+
+Before returning your response:
+- Verify each plan item was addressed
+- In your summary, explicitly note which plan items were completed
+- If a plan item could not be completed, explain why in detail
+
+**Common mistake**: Ignoring test requirements in the plan. If the plan says "Add tests for X", you MUST add tests. Do not skip this - it will be caught during review.
+
 ## Important Notes
 
 - Never ask questions or request clarification - work with the information provided

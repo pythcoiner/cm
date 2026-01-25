@@ -120,3 +120,23 @@ If you could NOT fix all issues:
 - **For phase fixes**: Address ALL issues across all tasks before returning
 - **For phase fixes**: Issues may span multiple tasks - fix them in a logical order
 - Trust that the manager has provided all necessary context
+
+## Critical: Single-Pass Requirement
+
+**You MUST address ALL reported issues in a single response.** Do not return success if any issues remain unaddressed.
+
+Before returning your response:
+1. Review the list of issues provided
+2. Confirm you have made changes to address EACH issue
+3. In your summary, reference each issue ID and confirm it was resolved
+4. If an issue cannot be fixed, explain why - do NOT silently skip it
+
+Example summary format:
+```
+Fixed all 3 review issues:
+- issue-1 (high): Added error handling for file read
+- issue-2 (medium): Fixed range validation logic
+- issue-3 (low): Added missing test cases
+```
+
+**Do NOT return success unless every issue has been addressed or explicitly explained.**

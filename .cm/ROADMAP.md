@@ -290,13 +290,13 @@ Status: **Complete** (1/1)
 
 ## Phase 38: Add Model Selection Flag
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add --model flag with sonnet/opus shorthand
-  - [ ] Add ModelChoice enum with ValueEnum derive
-  - [ ] Change model field to Option<ModelChoice> in Cli struct
-  - [ ] Map enum to strings in build_manager_config()
-  - [ ] Update default model to 'sonnet' in ManagerConfig
+- [x] Add --model flag with sonnet/opus shorthand
+  - [x] Add ModelChoice enum with ValueEnum derive
+  - [x] Change model field to Option<ModelChoice> in Cli struct
+  - [x] Map enum to strings in build_manager_config()
+  - [x] Update default model to 'sonnet' in ManagerConfig
 
 ---
 
@@ -336,5 +336,5 @@ Status: **Not Started** (0/1)
 | Phase 35: Remove TUI Module | Complete | 7/7 |
 | Phase 36: Remove Unused MANAGER.md | Complete | 6/6 |
 | Phase 37: Add Phase Range Selection | Complete | 4/4 |
-| Phase 38: Add Model Selection Flag | Not Started | 0/5 |
-| **Total** | | **62/67** |
+| Phase 38: Add Model Selection Flag | Complete | 5/5 |
+| **Total** | | **67/67** |

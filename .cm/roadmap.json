@@ -583,27 +583,27 @@
         {
           "id": "phase-38-item-1",
           "name": "Add --model flag with sonnet/opus shorthand",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-38-item-1.sub-0",
               "name": "Add ModelChoice enum with ValueEnum derive",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-38-item-1.sub-1",
               "name": "Change model field to Option<ModelChoice> in Cli struct",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-38-item-1.sub-2",
               "name": "Map enum to strings in build_manager_config()",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-38-item-1.sub-3",
               "name": "Update default model to 'sonnet' in ManagerConfig",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

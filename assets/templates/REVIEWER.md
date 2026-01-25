@@ -44,6 +44,30 @@ When reviewing a phase with multiple tasks:
 - Check that task implementations don't conflict
 - Ensure changes work together as a coherent whole
 
+### Plan Compliance Check
+
+If a phase plan is provided above, you **MUST** verify:
+
+1. **All numbered/bulleted items** in the plan were implemented
+2. **Any tests mentioned** in the plan were actually added
+3. **Any specific file changes** mentioned in the plan were completed
+
+If any plan items were NOT addressed, report them as issues:
+- Use severity `"high"` for missing plan items
+- Use id format `"plan-not-implemented-{item}"` (e.g., "plan-not-implemented-tests")
+- Be specific about what was required vs what was actually done
+
+Example:
+```json
+{
+  "id": "plan-not-implemented-tests",
+  "severity": "high",
+  "location": "src/module.rs",
+  "problem": "The plan explicitly required 'Add test cases for range parsing' but no tests were added",
+  "suggested_fix": "Add test cases in the test module covering: valid ranges, invalid ranges, edge cases"
+}
+```
+
 ### Provide Actionable Feedback
 
 For each issue:
