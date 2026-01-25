@@ -2544,7 +2544,7 @@
           "id": "phase-27.task-2",
           "name": "Create PhaseLogger struct",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-1"
           ],
@@ -2556,7 +2556,23 @@
             "prior_review_issues": []
           },
           "instructions": "Create PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "f5ce8984-e733-4053-9dfe-8007dc7e17de",
+              "started_at": "2026-01-25T08:27:42.926125211Z",
+              "completed_at": "2026-01-25T08:29:15.765084995Z",
+              "status": "success",
+              "prompt": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n\n## Important Notes\n\n- Never ask questions or request clarification - work with the information provided\n- If the task is ambiguous, make reasonable assumptions based on codebase patterns\n- If you encounter blockers, return a \"failed\" status with details\n- Focus solely on completing the single task assigned to you\n- Trust that the manager has provided all necessary context\n\n\n---\n\n## Task: Create PhaseLogger struct\n\n### Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [],
+                "commands_run": [],
+                "message": "PhaseLogger struct already implemented with all required functionality, tests pass, build and clippy clean"
+              }
+            }
+          ],
           "roadmap_item_id": "27.2",
           "review_cycles_completed": 0
         },
@@ -3435,6 +3451,23 @@
       "agent_type": "review",
       "started_at": "2026-01-25T08:27:20.370373149Z",
       "completed_at": "2026-01-25T08:27:42.906720013Z",
+      "exit_status": 0
+    },
+    {
+      "id": "f5ce8984-e733-4053-9dfe-8007dc7e17de",
+      "task_id": "phase-27.task-2",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T08:27:42.926125211Z",
+      "completed_at": "2026-01-25T08:29:15.695930417Z",
+      "exit_status": 0,
+      "commit_hash": "321846ab38811cd80e2caa0187adc3464b994ae6"
+    },
+    {
+      "id": "f70aeae2-9e54-46fe-850d-97a7b8455cff",
+      "task_id": "phase-27.task-2",
+      "agent_type": "review",
+      "started_at": "2026-01-25T08:29:19.383739347Z",
+      "completed_at": "2026-01-25T08:30:07.062973824Z",
       "exit_status": 0
     }
   ],
@@ -5960,6 +5993,59 @@
       "timestamp": "2026-01-25T08:27:42.906859965Z",
       "action": "task_complete",
       "task_id": "phase-27.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "81cb7292-4ce0-4ac5-9fde-da40e5ca3cc9",
+      "timestamp": "2026-01-25T08:27:42.926119891Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you coul\n\n... [truncated, 2402 more bytes]"
+      }
+    },
+    {
+      "id": "3a0ffa5a-38b4-4e6c-accb-f94922c55056",
+      "timestamp": "2026-01-25T08:29:19.378333524Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "4a0fdbdb-540b-4d4e-b134-54ee20c69192",
+      "timestamp": "2026-01-25T08:29:19.383737975Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze failed verification results and provide actionable feedback for fixing issues.\n\n## Your Responsibilities\n\n1. **Analyze Failures**: Review build errors, lint warnings, and test failures\n2. **Identify Root Causes**: Determine why the verification failed\n3. **Provide Feedback**: Give clear, specific instructions for fixing the issues\n4. **Prioritize Issues**: List problems in order of importance\n5. **Output Results**: Return a JSON response with review findings\n\n## Context You Receive\n\nYou are provided with:\n- The original task description\n- The implementation attempt that failed\n- Verification output (build/lint/test errors)\n- List of files that were modified\n- Code style guidelines\n\nYou do NOT have access to:\n- Other tasks or implementations\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Focus on Verification Failures\n\nOnly review issues that caused verification to fail:\n- Build errors (compilation failures)\n- Lint warnings (clippy issues)\n- Test failures (failing test cases)\n\nDon't comment on:\n- Code style preferences if linting passes\n- Theoretical improvements unrelated to failures\n- Design decisions that don't affect verification\n\n### Provide Actionable Feedback\n\nFor each issue:\n- Quote the exact error message\n- Identify the file and line number\n- Explain what's wrong\n- Suggest a specific fix\n- Prioritize by severity\n\n### Be Specific\n\nGood feedback:\n- \"In src/main.rs:42, the function returns Result<(), Error> but Error is not imported. Add 'use crate::Error;' at the top.\"\n\nBad feedback:\n- \"There are some import issues that need to be fixed.\"\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\n```json\n{\n  \"status\": \"issues_found\",\n  \"issues\": [\n    {\n      \"file\": \"path/to/file.rs\",\n      \"line\": 42,\n      \"severity\": \"error\",\n      \"message\": \"Brief description of the issue\",\n      \"suggestion\": \"Speci\n\n... [truncated, 18429 more bytes]"
+      }
+    },
+    {
+      "id": "4ea9a75e-3fc2-450f-bcd8-bafbab879612",
+      "timestamp": "2026-01-25T08:30:07.063196560Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "c1d10dcd-3e5f-4ff8-ab47-45f4ae974fbc",
+      "timestamp": "2026-01-25T08:30:07.063453951Z",
+      "action": "task_complete",
+      "task_id": "phase-27.task-2",
       "data": {
         "type": "task_complete",
         "status": "completed"

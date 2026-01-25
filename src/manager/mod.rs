@@ -20,7 +20,7 @@ use crate::tui::{ManagerEvent, TuiCommand};
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
 use crate::generate::{generate_log_md, write_md_file, GenerateError};
-use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager};
+use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager, PhaseLogger, PhaseLogError};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
     AttemptStatus, PhaseStatus, RoadmapState, StateError, Task, TaskAttempt, TaskContext,
@@ -71,6 +71,10 @@ pub enum ManagerError {
     /// An error occurred while writing to the file log.
     #[error("file log error: {0}")]
     FileLogError(#[from] FileLogError),
+
+    /// An error occurred while writing to the phase log.
+    #[error("phase log error: {0}")]
+    PhaseLogError(#[from] PhaseLogError),
 
     /// A task is not runnable due to dependencies or status.
     #[error("task not runnable: {0}")]
@@ -200,6 +204,8 @@ pub struct Manager {
     log_manager: LogManager,
     /// Persistent file logger for .cm/cm.log.
     file_logger: FileLogger,
+    /// Per-phase logger for full prompts and responses.
+    phase_logger: PhaseLogger,
     /// Current execution state.
     manager_state: ManagerState,
     /// Shutdown flag for graceful termination.
@@ -245,6 +251,10 @@ impl Manager {
         };
         let file_logger = FileLogger::new(config.file_log_path.clone())?.with_level(log_level);
 
+        // Initialize phase logger
+        let cm_dir = config.state_path.parent().unwrap_or(std::path::Path::new("."));
+        let phase_logger = PhaseLogger::new(cm_dir)?;
+
         // Load roadmap if available
         let roadmap_state = match load_roadmap(&config.roadmap_path) {
             Ok(roadmap) => {
@@ -273,6 +283,7 @@ impl Manager {
             build_verifier,
             log_manager,
             file_logger,
+            phase_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
             event_tx: None,
@@ -822,6 +833,9 @@ impl Manager {
         let prompt = PromptBuilder::build_implem_prompt(task);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
+        // Log full prompt to phase logger
+        let _ = self.phase_logger.log_prompt(&task.id, "IMPLEM", &prompt);
+
         // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Implem, &task.id, &prompt)?;
@@ -849,6 +863,9 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id, "IMPLEM")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for IMPLEM task {}", task.id));
+
+        // Log full response to phase logger
+        let _ = self.phase_logger.log_response(&task.id, "IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code);
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -1058,6 +1075,9 @@ impl Manager {
         let prompt = PromptBuilder::build_review_prompt(task, &code_to_review);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
+        // Log full prompt to phase logger
+        let _ = self.phase_logger.log_prompt(&task.id, "REVIEW", &prompt);
+
         // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Review, &task.id, &prompt)?;
@@ -1085,6 +1105,9 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id, "REVIEW")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for REVIEW task {}", task.id));
+
+        // Log full response to phase logger
+        let _ = self.phase_logger.log_response(&task.id, "REVIEW", &output.stdout, output.duration.as_secs(), output.exit_code);
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -1205,6 +1228,9 @@ impl Manager {
         let prompt = PromptBuilder::build_fix_prompt(task, &issues);
         debug!("Prompt: {}", &prompt[..prompt.len().min(500)]);
 
+        // Log full prompt to phase logger
+        let _ = self.phase_logger.log_prompt(&task.id, "FIX", &prompt);
+
         // Log agent spawn (both to file and to state records)
         self.log_manager
             .log_agent_spawn(&AgentType::Fix, &task.id, &prompt)?;
@@ -1232,6 +1258,9 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, &task.id, "FIX")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for FIX task {}", task.id));
+
+        // Log full response to phase logger
+        let _ = self.phase_logger.log_response(&task.id, "FIX", &output.stdout, output.duration.as_secs(), output.exit_code);
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -1473,6 +1502,9 @@ impl Manager {
             // Build auto-review prompt and spawn REVIEW agent
             let review_prompt = PromptBuilder::build_auto_review_prompt(task, &diff);
 
+            // Log full prompt to phase logger
+            let _ = self.phase_logger.log_prompt(&task.id, "AUTO_REVIEW", &review_prompt);
+
             self.log_manager
                 .log_agent_spawn(&AgentType::Review, &task.id, &review_prompt)?;
             self.state.log_records.push(
@@ -1496,6 +1528,9 @@ impl Manager {
             let review_handle = self.agent_spawner.spawn(&review_prompt, &task.id, "REVIEW")?;
             let review_output = review_handle.wait()?;
             self.flog(LogLevel::Info, "agent", &format!("Auto-REVIEW completed for task {}", task.id));
+
+            // Log full response to phase logger
+            let _ = self.phase_logger.log_response(&task.id, "AUTO_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code);
 
             // Parse review response
             let review_response = match ResponseParser::parse(&review_output.stdout) {
@@ -1582,6 +1617,9 @@ impl Manager {
                     // Spawn FIX agent with the review feedback
                     let fix_prompt = PromptBuilder::build_auto_fix_prompt(task, &review_response.message);
 
+                    // Log full prompt to phase logger
+                    let _ = self.phase_logger.log_prompt(&task.id, "AUTO_FIX", &fix_prompt);
+
                     self.log_manager
                         .log_agent_spawn(&AgentType::Fix, &task.id, &fix_prompt)?;
                     self.state.log_records.push(
@@ -1605,6 +1643,9 @@ impl Manager {
                     let fix_handle = self.agent_spawner.spawn(&fix_prompt, &task.id, "FIX")?;
                     let fix_output = fix_handle.wait()?;
                     self.flog(LogLevel::Info, "agent", &format!("Auto-FIX completed for task {}", task.id));
+
+                    // Log full response to phase logger
+                    let _ = self.phase_logger.log_response(&task.id, "AUTO_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code);
 
                     // Update invocation
                     if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
