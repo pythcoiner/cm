@@ -12,6 +12,8 @@ use std::sync::Mutex;
 use chrono::{DateTime, Duration, Utc};
 use thiserror::Error;
 
+use crate::state::AgentResponse;
+
 /// Statistics from a log pruning operation.
 #[derive(Debug, Clone)]
 pub struct PruneStats {
@@ -166,9 +168,10 @@ impl PhaseLogger {
     ///
     /// * `task_id` - The task ID (e.g., "phase-21.task-1")
     /// * `agent_type` - The type of agent (e.g., "IMPLEM", "REVIEW")
-    /// * `response` - The full response text
+    /// * `response` - The full response text (raw JSON)
     /// * `duration_secs` - How long the agent took to respond
     /// * `exit_code` - The exit code from the agent process (if available)
+    /// * `parsed` - Optional parsed agent response for formatted output
     ///
     /// # Errors
     ///
@@ -180,6 +183,7 @@ impl PhaseLogger {
         response: &str,
         duration_secs: u64,
         exit_code: Option<i32>,
+        parsed: Option<&AgentResponse>,
     ) -> Result<(), PhaseLogError> {
         let phase_id = extract_phase_id(task_id)
             .ok_or_else(|| PhaseLogError::InvalidTaskId(task_id.to_string()))?;
@@ -191,10 +195,55 @@ impl PhaseLogger {
             .map(|code| format!("Exit Code: {}", code))
             .unwrap_or_else(|| "Exit Code: N/A".to_string());
 
-        let content = format!(
-            "{}\n[{}] RESPONSE: {} for {} (Duration: {}s, {})\n{}\n\n{}\n",
-            separator, timestamp, agent_type, task_id, duration_secs, exit_code_str, separator, response
+        let mut content = format!(
+            "{}\n[{}] RESPONSE: {} for {} (Duration: {}s, {})\n{}\n",
+            separator, timestamp, agent_type, task_id, duration_secs, exit_code_str, separator
         );
+
+        // Extract and format assistant messages
+        let messages = extract_assistant_messages(response);
+        if !messages.is_empty() {
+            content.push_str("\n## Assistant Messages\n\n");
+            for (i, msg) in messages.iter().enumerate() {
+                content.push_str(msg);
+                content.push('\n');
+                if i < messages.len() - 1 {
+                    content.push_str("\n---\n\n");
+                }
+            }
+        }
+
+        // Add parsed result if available
+        if let Some(resp) = parsed {
+            content.push_str("\n## Parsed Result\n\n");
+            content.push_str(&format!("**Status:** {:?}\n", resp.status));
+            if !resp.message.is_empty() {
+                content.push_str(&format!("**Message:** {}\n", resp.message));
+            }
+            if !resp.files_created.is_empty() {
+                content.push_str("\n**Files Created:**\n");
+                for f in &resp.files_created {
+                    content.push_str(&format!("- `{}`\n", f));
+                }
+            }
+            if !resp.files_modified.is_empty() {
+                content.push_str("\n**Files Modified:**\n");
+                for f in &resp.files_modified {
+                    content.push_str(&format!("- `{}`\n", f));
+                }
+            }
+            if !resp.commands_run.is_empty() {
+                content.push_str("\n**Commands Run:**\n");
+                for c in &resp.commands_run {
+                    content.push_str(&format!("- `{}`\n", c));
+                }
+            }
+        }
+
+        // Raw response in collapsible section
+        content.push_str("\n---\n\n<details>\n<summary>Raw Response (click to expand)</summary>\n\n```json\n");
+        content.push_str(response);
+        content.push_str("\n```\n\n</details>\n\n");
 
         self.write_to_phase(phase_id, &content)
     }
@@ -292,6 +341,42 @@ fn prune_log_file(
         removed_count,
         kept_count,
     })
+}
+
+/// Extract text messages from streaming JSON response.
+///
+/// Parses the JSON array of streaming events and extracts all text content
+/// from assistant messages. Returns an empty vector if parsing fails.
+fn extract_assistant_messages(raw_json: &str) -> Vec<String> {
+    let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(raw_json) else {
+        return vec![];
+    };
+
+    let mut messages = vec![];
+    for event in events {
+        if event.get("type").and_then(|v| v.as_str()) != Some("assistant") {
+            continue;
+        }
+
+        let Some(content) = event
+            .get("message")
+            .and_then(|m| m.get("content"))
+            .and_then(|c| c.as_array())
+        else {
+            continue;
+        };
+
+        for item in content {
+            if item.get("type").and_then(|v| v.as_str()) == Some("text") {
+                if let Some(text) = item.get("text").and_then(|v| v.as_str()) {
+                    if !text.trim().is_empty() {
+                        messages.push(text.to_string());
+                    }
+                }
+            }
+        }
+    }
+    messages
 }
 
 /// Extract phase ID from a task ID or phase ID.
@@ -414,6 +499,7 @@ mod tests {
                 "Code looks good",
                 45,
                 Some(0),
+                None,
             )
             .unwrap();
 
@@ -433,7 +519,7 @@ mod tests {
         let logger = PhaseLogger::new(temp_dir.path()).unwrap();
 
         logger
-            .log_response("phase-3.task-1", "FIX", "Fixed the issue", 30, None)
+            .log_response("phase-3.task-1", "FIX", "Fixed the issue", 30, None, None)
             .unwrap();
 
         let log_file = temp_dir.path().join("logs/phase-3.log");
@@ -451,7 +537,7 @@ mod tests {
             .log_prompt("phase-1.task-1", "IMPLEM", "First prompt")
             .unwrap();
         logger
-            .log_response("phase-1.task-1", "IMPLEM", "First response", 10, Some(0))
+            .log_response("phase-1.task-1", "IMPLEM", "First response", 10, Some(0), None)
             .unwrap();
         logger
             .log_prompt("phase-1.task-2", "IMPLEM", "Second prompt")

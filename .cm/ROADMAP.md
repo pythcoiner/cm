@@ -176,13 +176,13 @@ Status: **Complete** (1/1)
 
 ## Phase 29: Add --reset Flag
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add --reset flag to reset a phase
-  - [ ] Add reset: Option<String> to Cli struct
-  - [ ] Add dispatch in run() function
-  - [ ] Implement execute_reset() function
-  - [ ] Update CLAUDE.md documentation
+- [x] Add --reset flag to reset a phase
+  - [x] Add reset: Option<String> to Cli struct
+  - [x] Add dispatch in run() function
+  - [x] Implement execute_reset() function
+  - [x] Update CLAUDE.md documentation
 
 ---
 
@@ -235,7 +235,7 @@ Status: **Not Started** (0/1)
 | Phase 26: Skills to Commands Migration | Not Started | 0/0 |
 | Phase 27: Add /run Command | Complete | 4/4 |
 | Phase 28: Remove LOG.md Generation | Complete | 7/7 |
-| Phase 29: Add --reset Flag | Not Started | 0/5 |
+| Phase 29: Add --reset Flag | Complete | 5/5 |
 | Phase 30: Add /cm Prerequisites Check | Not Started | 0/4 |
 | Phase 31: Add .cm/*.log to .gitignore | Not Started | 0/4 |
-| **Total** | | **11/24** |
+| **Total** | | **16/24** |

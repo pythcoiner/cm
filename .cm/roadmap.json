@@ -215,27 +215,27 @@
         {
           "id": "phase-29-item-1",
           "name": "Add --reset flag to reset a phase",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-29-item-1.sub-0",
               "name": "Add reset: Option<String> to Cli struct",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-29-item-1.sub-1",
               "name": "Add dispatch in run() function",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-29-item-1.sub-2",
               "name": "Implement execute_reset() function",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-29-item-1.sub-3",
               "name": "Update CLAUDE.md documentation",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

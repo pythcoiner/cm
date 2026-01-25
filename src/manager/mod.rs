@@ -823,9 +823,6 @@ impl Manager {
         let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")?;
         let output = handle.wait()?;
 
-        // Log full response to phase logger
-        let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code);
-
         // Parse the response
         let response = match ResponseParser::parse(&output.stdout) {
             Ok(resp) => resp,
@@ -852,6 +849,9 @@ impl Manager {
             }
             Err(e) => return Err(e.into()),
         };
+
+        // Log full response to phase logger (with parsed result)
+        let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code, Some(&response));
 
         // Log agent response
         self.log_manager.log_agent_response(&response)?;
@@ -1032,9 +1032,6 @@ impl Manager {
             let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")?;
             let review_output = review_handle.wait()?;
 
-            // Log full response
-            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code);
-
             // Parse review response
             let review_response = match ResponseParser::parse(&review_output.stdout) {
                 Ok(resp) => resp,
@@ -1061,6 +1058,9 @@ impl Manager {
                 }
                 Err(e) => return Err(e.into()),
             };
+
+            // Log full response to phase logger (with parsed result)
+            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code, Some(&review_response));
 
             // Update invocation
             if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == review_agent_id) {
@@ -1135,15 +1135,17 @@ impl Manager {
                     let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")?;
                     let fix_output = fix_handle.wait()?;
 
-                    let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code);
+                    // Parse and log with parsed response if available
+                    let fix_response = ResponseParser::parse(&fix_output.stdout).ok();
+                    let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code, fix_response.as_ref());
 
                     if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
                         inv.completed_at = Some(Utc::now());
                         inv.exit_status = fix_output.exit_code;
                     }
 
-                    if let Ok(fix_response) = ResponseParser::parse(&fix_output.stdout) {
-                        self.log_manager.log_agent_response(&fix_response)?;
+                    if let Some(ref resp) = fix_response {
+                        self.log_manager.log_agent_response(resp)?;
                     }
 
                     if !self.check_git_changes()? {
