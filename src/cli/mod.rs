@@ -6,6 +6,7 @@
 
 mod init;
 
+use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -17,7 +18,7 @@ use thiserror::Error;
 use crate::config::{ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
-use crate::state::{load_roadmap, load_state, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
+use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
@@ -888,6 +889,7 @@ fn execute_dry_run(cli: &Cli) -> Result<(), CliError> {
 /// Execute the reset mode.
 ///
 /// Resets a phase to pending status and clears all execution state.
+/// Also resets linked roadmap items and removes the phase log file.
 fn execute_reset(cli: &Cli) -> Result<(), CliError> {
     info!("Reset mode: resetting phase {:?}", cli.reset);
 
@@ -896,6 +898,13 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
 
     // Find and reset the phase
     let phase = state.get_phase_mut(phase_id)?;
+
+    // Collect roadmap item IDs linked to tasks in this phase (before resetting)
+    let roadmap_item_ids: Vec<String> = phase
+        .tasks
+        .iter()
+        .filter_map(|t| t.roadmap_item_id.clone())
+        .collect();
 
     // Reset phase fields
     phase.status = PhaseStatus::Pending;
@@ -920,6 +929,56 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
     println!("Phase '{}' reset to pending state", phase_id);
     println!("  - Phase status: pending");
     println!("  - {} task(s) reset", task_count);
+
+    // Reset roadmap.json items linked to this phase
+    let cm_dir = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new("."));
+    let roadmap_json_path = cm_dir.join("roadmap.json");
+
+    if roadmap_json_path.exists() && !roadmap_item_ids.is_empty() {
+        let mut roadmap = load_roadmap(&roadmap_json_path)?;
+        let mut items_reset = 0;
+
+        // Find and reset linked roadmap items
+        for roadmap_phase in &mut roadmap.phases {
+            for item in &mut roadmap_phase.items {
+                if roadmap_item_ids.contains(&item.id) {
+                    if item.completed {
+                        item.completed = false;
+                        items_reset += 1;
+                    }
+                    // Also reset all sub-items
+                    for sub_item in &mut item.sub_items {
+                        if sub_item.completed {
+                            sub_item.completed = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        if items_reset > 0 {
+            save_roadmap(&roadmap, &roadmap_json_path)?;
+
+            // Regenerate ROADMAP.md
+            let roadmap_md_path = cm_dir.join("ROADMAP.md");
+            let roadmap_content = generate_roadmap_md(&roadmap);
+            write_md_file(&roadmap_content, &roadmap_md_path)?;
+
+            println!("  - {} roadmap item(s) reset", items_reset);
+        }
+    }
+
+    // Remove phase log file
+    let logs_dir = cm_dir.join("logs");
+    let phase_log_path = logs_dir.join(format!("{}.log", phase_id));
+
+    if phase_log_path.exists() {
+        fs::remove_file(&phase_log_path)?;
+        println!("  - Removed phase log: {}", phase_log_path.display());
+    }
 
     Ok(())
 }
