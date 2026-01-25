@@ -316,32 +316,32 @@
         {
           "id": "phase-32-item-1",
           "name": "Add [p]hase <#...> option to run specific phases by number",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-32-item-1.sub-0",
               "name": "Add Phases(Vec<String>) variant to TaskSelection enum",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-32-item-1.sub-1",
               "name": "Update prompt text to show [p]hase <#...> option",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-32-item-1.sub-2",
               "name": "Add parsing for 'p 3 5 7' input format",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-32-item-1.sub-3",
               "name": "Add run_specific_phases() method",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-32-item-1.sub-4",
               "name": "Handle Phases variant in run_interactive()",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

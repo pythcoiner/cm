@@ -210,14 +210,14 @@ Status: **Complete** (1/1)
 
 ## Phase 32: Add Phase Selection by Number
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add [p]hase <#...> option to run specific phases by number
-  - [ ] Add Phases(Vec<String>) variant to TaskSelection enum
-  - [ ] Update prompt text to show [p]hase <#...> option
-  - [ ] Add parsing for 'p 3 5 7' input format
-  - [ ] Add run_specific_phases() method
-  - [ ] Handle Phases variant in run_interactive()
+- [x] Add [p]hase <#...> option to run specific phases by number
+  - [x] Add Phases(Vec<String>) variant to TaskSelection enum
+  - [x] Update prompt text to show [p]hase <#...> option
+  - [x] Add parsing for 'p 3 5 7' input format
+  - [x] Add run_specific_phases() method
+  - [x] Handle Phases variant in run_interactive()
 
 ---
 
@@ -280,7 +280,7 @@ Status: **Not Started** (0/2)
 | Phase 29: Add --reset Flag | Complete | 5/5 |
 | Phase 30: Add /cm Prerequisites Check | Complete | 4/4 |
 | Phase 31: Add .cm/logs/ to .gitignore | Complete | 4/4 |
-| Phase 32: Add Phase Selection by Number | Not Started | 0/6 |
+| Phase 32: Add Phase Selection by Number | Complete | 6/6 |
 | Phase 33: Add PLAN Agent Before IMPLEM | Not Started | 0/7 |
 | Phase 34: Add /split Command + Extend /end | Not Started | 0/8 |
-| **Total** | | **24/45** |
+| **Total** | | **30/45** |
