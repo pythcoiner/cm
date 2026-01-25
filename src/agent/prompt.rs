@@ -529,17 +529,62 @@ impl PromptBuilder {
         prompt
     }
 
-    /// Build a prompt for implementing ALL tasks in a phase.
+    /// Build a prompt for a plan agent to evaluate an initial plan.
     ///
-    /// This is the phase-level equivalent of `build_implem_prompt()`.
-    /// The agent receives all tasks in the phase and should implement
-    /// them in sequence within a single session.
+    /// The plan agent reviews the initial plan and optionally creates a more detailed version.
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - The phase to plan for
+    /// * `initial_plan` - The initial plan to evaluate
+    pub fn build_phase_plan_prompt(phase: &Phase, initial_plan: &str) -> String {
+        let mut prompt = String::new();
+
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/PLANNER.md");
+        let template = ensure_template(&template_path, crate::command::PLANNER_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::error!("Failed to load PLANNER template: {}, using embedded default", e);
+                crate::command::PLANNER_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
+
+        // Phase context
+        prompt.push_str(&format!("# Phase: {}\n\n", phase.name));
+
+        // Add initial plan
+        prompt.push_str("## Initial Plan\n\n");
+        prompt.push_str(initial_plan);
+        prompt.push_str("\n\n");
+
+        // Add task list for context
+        prompt.push_str("## Tasks in This Phase\n\n");
+        for task in &phase.tasks {
+            prompt.push_str(&format!("- **{}**: {}\n", task.id, task.name));
+        }
+        prompt.push('\n');
+
+        prompt
+    }
+
+    /// Build a prompt for implementing ALL tasks in a phase with an explicit plan.
+    ///
+    /// This variant accepts an explicit plan string instead of using phase.plan,
+    /// allowing the manager to substitute a detailed plan from the PLAN agent.
     ///
     /// # Arguments
     ///
     /// * `phase` - The phase being implemented
     /// * `tasks` - All pending tasks in the phase to implement
-    pub fn build_phase_implem_prompt(phase: &Phase, tasks: &[&Task]) -> String {
+    /// * `plan` - The explicit plan to use (from PLAN agent or original)
+    pub fn build_phase_implem_prompt_with_plan(
+        phase: &Phase,
+        tasks: &[&Task],
+        plan: &str,
+    ) -> String {
         let mut prompt = String::new();
 
         // Load template from disk (or create it if it doesn't exist)
@@ -561,10 +606,10 @@ impl PromptBuilder {
             tasks.len()
         ));
 
-        // Include phase plan if present
-        if !phase.plan.is_empty() {
+        // Include the provided plan if present
+        if !plan.is_empty() {
             prompt.push_str("### Phase Plan\n\n");
-            prompt.push_str(&phase.plan);
+            prompt.push_str(plan);
             prompt.push_str("\n\n");
         }
 
@@ -629,6 +674,20 @@ impl PromptBuilder {
         prompt.push_str("```\n");
 
         prompt
+    }
+
+    /// Build a prompt for implementing ALL tasks in a phase.
+    ///
+    /// This is the phase-level equivalent of `build_implem_prompt()`.
+    /// The agent receives all tasks in the phase and should implement
+    /// them in sequence within a single session.
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - The phase being implemented
+    /// * `tasks` - All pending tasks in the phase to implement
+    pub fn build_phase_implem_prompt(phase: &Phase, tasks: &[&Task]) -> String {
+        Self::build_phase_implem_prompt_with_plan(phase, tasks, &phase.plan)
     }
 
     /// Build a prompt for reviewing ALL changes in a phase.

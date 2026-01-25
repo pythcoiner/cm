@@ -846,9 +846,83 @@ impl Manager {
             .cloned()
             .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
 
-        // Build phase-level IMPLEM prompt
+        // === Run PLAN agent first to evaluate/enhance the initial plan ===
+        let initial_plan = phase.plan.clone();
+        let plan_prompt = PromptBuilder::build_phase_plan_prompt(&phase, &initial_plan);
+
+        info!("Spawning PLAN agent for {}", phase_id);
+        emit_cm(&format!("Spawning PLAN agent for {}", phase_id));
+
+        // Log prompt to phase logger
+        let _ = self.phase_logger.log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
+
+        // Log agent spawn
+        self.log_manager
+            .log_agent_spawn(&AgentType::Plan, phase_id, &plan_prompt)?;
+        self.state.log_records.push(
+            LogManager::create_agent_spawn_record(&AgentType::Plan, phase_id, &plan_prompt),
+        );
+
+        let plan_agent_id = Uuid::new_v4().to_string();
+        let plan_started = Utc::now();
+
+        self.state.agent_history.push(AgentInvocation {
+            id: plan_agent_id.clone(),
+            task_id: phase_id.to_string(),
+            agent_type: AgentType::Plan,
+            started_at: plan_started,
+            completed_at: None,
+            exit_status: None,
+            commit_hash: None,
+        });
+
+        let plan_handle = self.agent_spawner.spawn(&plan_prompt, phase_id, "PHASE_PLAN")?;
+        let plan_output = plan_handle.wait()?;
+
+        // Parse plan response
+        let plan_response = match ResponseParser::parse_plan_response(&plan_output.stdout) {
+            Ok(resp) => resp,
+            Err(AgentError::ParseError(msg)) => {
+                warn!("PLAN agent parse failed: {}, using original plan", msg);
+                // If parse fails, just use the original plan
+                crate::agent::PlanAgentResponse { plan: None }
+            }
+            Err(e) => return Err(e.into()),
+        };
+
+        // Update invocation completion
+        if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == plan_agent_id) {
+            inv.completed_at = Some(Utc::now());
+            inv.exit_status = plan_output.exit_code;
+        }
+
+        // Log response to phase logger
+        let _ = self.phase_logger.log_response(
+            phase_id,
+            "PHASE_PLAN",
+            &plan_output.stdout,
+            plan_output.duration.as_secs(),
+            plan_output.exit_code,
+            None, // No AgentResponse to log for PLAN agent
+        );
+
+        // Use detailed plan if provided, otherwise use original
+        let final_plan = match plan_response.plan {
+            Some(detailed) => {
+                info!("PLAN agent provided detailed plan for {}", phase_id);
+                emit_cm(&format!("PLAN agent: using detailed plan for {}", phase_id));
+                detailed
+            }
+            None => {
+                info!("PLAN agent: original plan sufficient for {}", phase_id);
+                emit_cm(&format!("PLAN agent: using original plan for {}", phase_id));
+                initial_plan
+            }
+        };
+
+        // === Build phase-level IMPLEM prompt with the final plan ===
         let task_refs: Vec<&Task> = pending_tasks.iter().collect();
-        let prompt = PromptBuilder::build_phase_implem_prompt(&phase, &task_refs);
+        let prompt = PromptBuilder::build_phase_implem_prompt_with_plan(&phase, &task_refs, &final_plan);
 
         // Log full prompt to phase logger
         let _ = self.phase_logger.log_prompt(phase_id, "PHASE_IMPLEM", &prompt);

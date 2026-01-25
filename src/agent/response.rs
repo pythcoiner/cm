@@ -90,6 +90,15 @@ pub struct ReviewIssueResponse {
     pub suggested_fix: String,
 }
 
+/// Response from a plan agent.
+///
+/// The plan agent evaluates an initial plan and optionally returns a more detailed version.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlanAgentResponse {
+    /// The detailed plan if created, or null if the original plan is sufficient.
+    pub plan: Option<String>,
+}
+
 /// Parses raw JSON output from Claude agents.
 ///
 /// The parser handles both well-formed JSON and gracefully handles
@@ -412,6 +421,56 @@ impl ResponseParser {
                 if end > start {
                     let potential_json = &text[start..=end];
                     if let Ok(parsed) = serde_json::from_str::<ReviewAgentResponse>(potential_json) {
+                        return Some(parsed);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Parse raw JSON output from claude CLI into a PlanAgentResponse.
+    ///
+    /// Similar to `parse_review_response()` but returns a `PlanAgentResponse`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgentError::ParseError` if the JSON cannot be parsed at all.
+    pub fn parse_plan_response(raw_json: &str) -> Result<PlanAgentResponse, AgentError> {
+        let trimmed = raw_json.trim();
+
+        // Get the result text from the raw JSON
+        let result_text = if trimmed.starts_with('[') {
+            Self::extract_result_from_streaming(trimmed)?
+        } else {
+            let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
+                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+            })?;
+            output.result
+        };
+
+        // Try to extract embedded JSON from the result text
+        let parsed = Self::extract_plan_response_json(&result_text);
+
+        Ok(parsed.unwrap_or(PlanAgentResponse { plan: None }))
+    }
+
+    /// Attempt to extract a PlanAgentResponse from embedded JSON in the text.
+    fn extract_plan_response_json(text: &str) -> Option<PlanAgentResponse> {
+        // Try to find JSON in code blocks first
+        if let Some(json_str) = Self::extract_json_from_code_block(text) {
+            if let Ok(parsed) = serde_json::from_str::<PlanAgentResponse>(&json_str) {
+                return Some(parsed);
+            }
+        }
+
+        // Try to find raw JSON object in the text
+        if let Some(start) = text.find('{') {
+            if let Some(end) = text.rfind('}') {
+                if end > start {
+                    let potential_json = &text[start..=end];
+                    if let Ok(parsed) = serde_json::from_str::<PlanAgentResponse>(potential_json) {
                         return Some(parsed);
                     }
                 }

@@ -350,6 +350,8 @@ pub struct AgentInvocation {
 pub enum AgentType {
     /// Main orchestration agent.
     Main,
+    /// Plan agent (evaluates and potentially enhances implementation plans).
+    Plan,
     /// Implementation agent.
     Implem,
     /// Review agent.
