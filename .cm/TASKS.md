@@ -151,51 +151,82 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ## phase-27: Add /run Command
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-27.feat-run-command.impl-1**: Add /run command for cm orchestration - Add the /run command that provides main agent orchestration instructions:
+- [x] **phase-27.feat-run-command.impl-1**: Add /run command for cm orchestration - Add the /run command that provides main agent orchestration instructions:
 
 ---
 
 ## phase-28: Remove LOG.md Generation
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-28.feat-remove-log-md.impl-1**: Remove LOG.md generation entirely - Remove LOG.md generation from the codebase entirely:
+- [x] **phase-28.feat-remove-log-md.impl-1**: Remove LOG.md generation entirely - Remove LOG.md generation from the codebase entirely:
 
 ---
 
 ## phase-29: Add --reset Flag
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-29.feat-reset-flag.impl-1**: Add --reset flag to reset a phase - Add a --reset <PHASE_ID> CLI flag that resets a phase to pending status:
+- [x] **phase-29.feat-reset-flag.impl-1**: Add --reset flag to reset a phase - Add a --reset <PHASE_ID> CLI flag that resets a phase to pending status:
 
 ---
 
 ## phase-30: Add /cm Prerequisites Check
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-30.feat-cm-prereq.impl-1**: Add Step 0 prerequisites check to /cm wizard - Add a Step 0 prerequisites check to the /cm wizard in `assets/cm.md`:
+- [x] **phase-30.feat-cm-prereq.impl-1**: Add Step 0 prerequisites check to /cm wizard - Add a Step 0 prerequisites check to the /cm wizard in `assets/cm.md`:
 
 ---
 
-## phase-31: Add .cm/*.log to .gitignore
+## phase-31: Add .cm/logs/ to .gitignore
 
 **Status:** Pending (0/1)
 
 ### Tasks
 
-- [ ] **phase-31.feat-gitignore.impl-1**: Add .cm/*.log to root .gitignore during cm init - Add `.cm/*.log` to root `.gitignore` during `cm init`:
+- [ ] **phase-31.feat-gitignore.impl-1**: Add .cm/logs/ to root .gitignore during cm init - # Plan: Add .cm/logs/ to .gitignore during cm init
+
+---
+
+## phase-32: Add Phase Selection by Number
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-32.feat-phase-select.impl-1**: Add [p]hase <#...> option to run specific phases by number - # Plan: Add Phase Selection by Number
+
+---
+
+## phase-33: Add PLAN Agent Before IMPLEM
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-33.feat-plan-agent.impl-1**: Add PLAN agent step before IMPLEM with conditional detailed planning - # Plan: Add PLAN Agent Before IMPLEM
+
+---
+
+## phase-34: Add /split Command + Extend /end
+
+**Status:** Pending (0/2)
+
+### Tasks
+
+- [ ] **phase-34.feat-split-command.impl-1**: Add /split command to refine PLAN.md into detailed phases - # Plan: Add /split Command + Extend /end for /cm Sessions
+- [ ] **phase-34.feat-end-cm-session.impl-2**: Extend /end to support /cm session finalization - # Plan: Add /split Command + Extend /end for /cm Sessions
 
 ---
 
@@ -224,9 +255,12 @@ This document shows phase plans and task status. Generated from tasks.json.
 | phase-18: Regenerate MD After Skills | Complete | 0 | 0 |
 | phase-23: Detailed File Logging | Complete | 0 | 0 |
 | phase-26: Skills to Commands Migration | Complete | 0 | 0 |
-| phase-27: Add /run Command | Pending | 1 | 0 |
-| phase-28: Remove LOG.md Generation | Pending | 1 | 0 |
-| phase-29: Add --reset Flag | Pending | 1 | 0 |
-| phase-30: Add /cm Prerequisites Check | Pending | 1 | 0 |
-| phase-31: Add .cm/*.log to .gitignore | Pending | 1 | 0 |
-| **Total** | | **5** | **0** |
+| phase-27: Add /run Command | Complete | 1 | 1 |
+| phase-28: Remove LOG.md Generation | Complete | 1 | 1 |
+| phase-29: Add --reset Flag | Complete | 1 | 1 |
+| phase-30: Add /cm Prerequisites Check | Complete | 1 | 1 |
+| phase-31: Add .cm/logs/ to .gitignore | Pending | 1 | 0 |
+| phase-32: Add Phase Selection by Number | Pending | 1 | 0 |
+| phase-33: Add PLAN Agent Before IMPLEM | Pending | 1 | 0 |
+| phase-34: Add /split Command + Extend... | Pending | 2 | 0 |
+| **Total** | | **9** | **4** |

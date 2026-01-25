@@ -188,23 +188,65 @@ Status: **Complete** (1/1)
 
 ## Phase 30: Add /cm Prerequisites Check
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add Step 0 prerequisites check to /cm wizard
-  - [ ] Add Step 0 section to assets/cm.md
-  - [ ] Check for .cm/agents/ directory
-  - [ ] Provide guidance to run cm init
+- [x] Add Step 0 prerequisites check to /cm wizard
+  - [x] Add Step 0 section to assets/cm.md
+  - [x] Check for .cm/agents/ directory
+  - [x] Provide guidance to run cm init
 
 ---
 
-## Phase 31: Add .cm/*.log to .gitignore
+## Phase 31: Add .cm/logs/ to .gitignore
 
 Status: **Not Started** (0/1)
 
-- [ ] Add .cm/*.log to root .gitignore during cm init
+- [ ] Add .cm/logs/ to root .gitignore during cm init
   - [ ] Add ensure_gitignore_entry() function
   - [ ] Call from execute_init_in_dir()
   - [ ] Add tests for new and existing .gitignore
+
+---
+
+## Phase 32: Add Phase Selection by Number
+
+Status: **Not Started** (0/1)
+
+- [ ] Add [p]hase <#...> option to run specific phases by number
+  - [ ] Add Phases(Vec<String>) variant to TaskSelection enum
+  - [ ] Update prompt text to show [p]hase <#...> option
+  - [ ] Add parsing for 'p 3 5 7' input format
+  - [ ] Add run_specific_phases() method
+  - [ ] Handle Phases variant in run_interactive()
+
+---
+
+## Phase 33: Add PLAN Agent Before IMPLEM
+
+Status: **Not Started** (0/1)
+
+- [ ] Add PLAN agent step before IMPLEM with conditional detailed planning
+  - [ ] Create PLANNER.md template in assets/templates/
+  - [ ] Add PLANNER_TEMPLATE to src/command.rs
+  - [ ] Add PlanAgentResponse struct to src/agent/response.rs
+  - [ ] Add build_phase_plan_prompt() to src/agent/prompt.rs
+  - [ ] Modify execute_phase() to run PLAN agent before IMPLEM
+  - [ ] Log PLAN agent prompt/response same as other agents
+
+---
+
+## Phase 34: Add /split Command + Extend /end
+
+Status: **Not Started** (0/2)
+
+- [ ] Add /split command to refine PLAN.md into detailed phases
+  - [ ] Create assets/split.md with split wizard
+  - [ ] Add SPLIT_COMMAND constant to src/command.rs
+  - [ ] Update src/cli/init.rs to deploy split.md
+- [ ] Extend /end to support /cm session finalization
+  - [ ] Add session type detection to assets/end.md
+  - [ ] Add PLAN.md parsing and JSON generation flow
+  - [ ] Generate tasks.json and roadmap.json from PLAN.md
 
 ---
 
@@ -236,6 +278,9 @@ Status: **Not Started** (0/1)
 | Phase 27: Add /run Command | Complete | 4/4 |
 | Phase 28: Remove LOG.md Generation | Complete | 7/7 |
 | Phase 29: Add --reset Flag | Complete | 5/5 |
-| Phase 30: Add /cm Prerequisites Check | Not Started | 0/4 |
-| Phase 31: Add .cm/*.log to .gitignore | Not Started | 0/4 |
-| **Total** | | **16/24** |
+| Phase 30: Add /cm Prerequisites Check | Complete | 4/4 |
+| Phase 31: Add .cm/logs/ to .gitignore | Not Started | 0/4 |
+| Phase 32: Add Phase Selection by Number | Not Started | 0/6 |
+| Phase 33: Add PLAN Agent Before IMPLEM | Not Started | 0/7 |
+| Phase 34: Add /split Command + Extend /end | Not Started | 0/8 |
+| **Total** | | **20/45** |

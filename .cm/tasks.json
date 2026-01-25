@@ -268,13 +268,13 @@
       "id": "phase-30",
       "name": "Add /cm Prerequisites Check",
       "plan": "",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-30.feat-cm-prereq.impl-1",
           "name": "Add Step 0 prerequisites check to /cm wizard",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-29.feat-reset-flag.impl-1"
           ],
@@ -294,13 +294,13 @@
     },
     {
       "id": "phase-31",
-      "name": "Add .cm/*.log to .gitignore",
+      "name": "Add .cm/logs/ to .gitignore",
       "plan": "",
       "status": "pending",
       "tasks": [
         {
           "id": "phase-31.feat-gitignore.impl-1",
-          "name": "Add .cm/*.log to root .gitignore during cm init",
+          "name": "Add .cm/logs/ to root .gitignore during cm init",
           "type": "implement",
           "status": "pending",
           "depends_on": [
@@ -315,6 +315,114 @@
           "plan_file": ".cm/plans/plan-31.md",
           "attempts": [],
           "roadmap_item_id": "phase-31-item-1",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-32",
+      "name": "Add Phase Selection by Number",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-32.feat-phase-select.impl-1",
+          "name": "Add [p]hase <#...> option to run specific phases by number",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-31.feat-gitignore.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-32.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-32-item-1",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-33",
+      "name": "Add PLAN Agent Before IMPLEM",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-33.feat-plan-agent.impl-1",
+          "name": "Add PLAN agent step before IMPLEM with conditional detailed planning",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-32.feat-phase-select.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/agent/prompt.rs",
+              "src/agent/response.rs",
+              "src/manager/mod.rs",
+              "src/command.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-33.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-33-item-1",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-34",
+      "name": "Add /split Command + Extend /end",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-34.feat-split-command.impl-1",
+          "name": "Add /split command to refine PLAN.md into detailed phases",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-33.feat-plan-agent.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/command.rs",
+              "src/cli/init.rs",
+              "assets/cm.md"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-34.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-34-item-1",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-34.feat-end-cm-session.impl-2",
+          "name": "Extend /end to support /cm session finalization",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-34.feat-split-command.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "assets/end.md"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-34.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-34-item-2",
           "review_cycles_completed": 0
         }
       ],
@@ -371,6 +479,23 @@
       "agent_type": "review",
       "started_at": "2026-01-25T13:38:18.210196264Z",
       "completed_at": "2026-01-25T13:38:38.446360836Z",
+      "exit_status": 0
+    },
+    {
+      "id": "901f0d55-4b46-4d3b-86bc-d417c4d8e7d1",
+      "task_id": "phase-30",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T13:56:42.862587839Z",
+      "completed_at": "2026-01-25T13:57:41.971643247Z",
+      "exit_status": 0,
+      "commit_hash": "2eb6bd83dd8af1167c9087785a8af0ac5fdbef9b"
+    },
+    {
+      "id": "4a16a4d6-3c89-4a02-b948-6f75e59e9472",
+      "task_id": "phase-30",
+      "agent_type": "review",
+      "started_at": "2026-01-25T13:57:45.881248269Z",
+      "completed_at": "2026-01-25T13:58:12.425064250Z",
       "exit_status": 0
     }
   ],
@@ -496,6 +621,48 @@
       "timestamp": "2026-01-25T13:38:38.446535733Z",
       "action": "task_complete",
       "task_id": "phase-29.feat-reset-flag.impl-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "6f6caafb-59af-4259-82fc-034db0aa1960",
+      "timestamp": "2026-01-25T13:56:42.862587087Z",
+      "action": "agent_spawn",
+      "task_id": "phase-30",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you coul\n\n... [truncated, 2555 more bytes]"
+      }
+    },
+    {
+      "id": "734f7715-9d40-4cc7-84e0-b84b0180e656",
+      "timestamp": "2026-01-25T13:57:45.881247167Z",
+      "action": "agent_spawn",
+      "task_id": "phase-30",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Provide Actionable Feedback\n\nFor each issue:\n- Identify the file and line number\n- Explain what's wrong\n- Suggest a specific fix\n- Assign severity (critical/high/medium/low)\n\n### Be Specific\n\nGood feedback:\n- \"In src/main.rs:42, the function returns Result<(), Error> but Error is not imported. Add 'use crate::Error;' at the top.\"\n\nBad feedback:\n- \n\n... [truncated, 29656 more bytes]"
+      }
+    },
+    {
+      "id": "e4934033-0118-4152-9a0e-8888cdc20d86",
+      "timestamp": "2026-01-25T13:58:12.425358179Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "c46ed10c-66b8-46df-b891-3fa81ece6822",
+      "timestamp": "2026-01-25T13:58:12.425762825Z",
+      "action": "task_complete",
+      "task_id": "phase-30.feat-cm-prereq.impl-1",
       "data": {
         "type": "task_complete",
         "status": "completed"
