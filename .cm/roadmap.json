@@ -2176,23 +2176,23 @@
         {
           "id": "27.1",
           "name": "Add TRACE level to LogLevel enum",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add Trace variant before Debug",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update Display impl",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add trace() convenience method",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update level ordering tests",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

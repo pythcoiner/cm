@@ -20,6 +20,9 @@ use crate::state::{
 mod file_logger;
 pub use file_logger::{FileLogError, FileLogger, LogLevel, PruneStats};
 
+mod phase_logger;
+pub use phase_logger::{PhaseLogError, PhaseLogger};
+
 /// Maximum length for prompts and responses before truncation.
 const MAX_CONTENT_LENGTH: usize = 2000;
 

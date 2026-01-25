@@ -515,13 +515,13 @@ Status: **Complete** (7/7)
 
 ## Phase 27: Per-Phase TRACE Logging
 
-Status: **Not Started** (0/6)
+Status: **In Progress** (1/6)
 
-- [ ] Add TRACE level to LogLevel enum
-  - [ ] Add Trace variant before Debug
-  - [ ] Update Display impl
-  - [ ] Add trace() convenience method
-  - [ ] Update level ordering tests
+- [x] Add TRACE level to LogLevel enum
+  - [x] Add Trace variant before Debug
+  - [x] Update Display impl
+  - [x] Add trace() convenience method
+  - [x] Update level ordering tests
 - [ ] Create PhaseLogger struct
   - [ ] Create src/log/phase_logger.rs
   - [ ] Implement extract_phase_id() helper
@@ -581,5 +581,5 @@ Status: **Not Started** (0/6)
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| Phase 27: Per-Phase TRACE Logging | Not Started | 0/28 |
-| **Total** | | **308/336** |
+| Phase 27: Per-Phase TRACE Logging | In Progress | 5/28 |
+| **Total** | | **313/336** |

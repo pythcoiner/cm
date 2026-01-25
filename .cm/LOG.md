@@ -3376,11 +3376,10 @@ Task completed with status: **completed**
 
 ### Agent Spawn
 
-**Type:** Implem
-**Task:** phase-27.task-1
+**Type:** implem
 
 <details>
-<summary>Prompt</summary>
+<summary>Prompt Preview</summary>
 
 ```
 You are an IMPLEMENTATION agent. Your task is to implement the following:
@@ -3405,19 +3404,125 @@ Add TRACE log level to FileLogger:
 
 2. Update `Display` impl to handle `Trace => "TRACE"`
 
-3. Add `trace()` convenience method to `FileLogger`
+3. Add `trace()` convenience method
 
-4. Update test `test_log_level_ordering` to verify `Trace < Debug`
+... [truncated, 829 more bytes]
+```
 
-5. Update test `test_log_level_display` to verify `Trace` displays as "TRACE"
+</details>
 
-6. Ensure `cargo build` and `cargo clippy` pass
+[2026-01-25 07:10:17 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 07:10:17 UTC] **AGENT_SPAWN** | Task: phase-27.task-1
+
+### Agent Spawn
+
+**Type:** review
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are a REVIEW agent. Review the following code changes made by an implementation agent.
+
+## Original Task: Add TRACE level to LogLevel enum
+
+### What was requested
+
+Add TRACE log level to FileLogger:
+
+1. Add `Trace` variant to `LogLevel` enum (before Debug):
+   ```rust
+   pub enum LogLevel {
+       /// Full trace logging (prompts, responses, all details).
+       Trace,
+       Debug,
+       Info,
+       Warn,
+       Error,
+   }
+   ```
+
+2. Update `Display` impl to handle `Trace => "TRACE"`
+
+3. 
+
+... [truncated, 1534 more bytes]
+```
+
+</details>
+
+[2026-01-25 07:10:40 UTC] **REVIEW_RESULT**
+
+### Review Result: APPROVED
+
+**Issues Found:** 0
+
+
+[2026-01-25 07:10:40 UTC] **TASK_COMPLETE** | Task: phase-27.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-25 07:10:40 UTC] **AGENT_SPAWN** | Task: phase-27.task-2
+
+### Agent Spawn
+
+**Type:** Implem
+**Task:** phase-27.task-2
+
+<details>
+<summary>Prompt</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create PhaseLogger struct
+
+### Instructions
+
+Create PhaseLogger for per-phase TRACE logging in a new file:
+
+1. Create `src/log/phase_logger.rs` with:
+   ```rust
+   pub struct PhaseLogger {
+       logs_dir: PathBuf,
+       files: Mutex<HashMap<String, File>>,
+   }
+   ```
+
+2. Implement `PhaseLogger::new(cm_dir: &Path)` that:
+   - Creates `.cm/logs/` directory if it doesn't exist
+   - Returns PhaseLogger instance
+
+3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:
+   - Parse task IDs like `phase-21.task-1` to extract `phase-21`
+   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`
+   - Use `rfind(".task-")` to find split point
+
+4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:
+   - Get/create file for phase
+   - Write formatted prompt with separators and timestamp
+
+5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:
+   - Write formatted response with separators, timestamp, duration, exit code
+
+6. Add unit tests for `extract_phase_id` with various task ID formats
+
+7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`
+
+8. Ensure `cargo build` and `cargo clippy` pass
 
 ### Files to Read for Context
 
 Read the following files to understand the existing codebase:
 
 - src/log/file_logger.rs
+- src/log/mod.rs
 
 ### Output Format
 
@@ -3445,18 +3550,21 @@ If you could NOT complete the task:
 
 </details>
 
-[2026-01-25 07:10:10 UTC] **AGENT_COMPLETE**
+[2026-01-25 07:12:32 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
+**Files Created:**
+- `src/log/phase_logger.rs`
+
 **Files Modified:**
-- `src/log/file_logger.rs`
+- `src/log/mod.rs`
 
 <details>
 <summary>Raw Response</summary>
 
 ```
-Added TRACE log level to FileLogger enum, Display impl, trace() convenience method, and updated tests
+Created PhaseLogger struct for per-phase TRACE logging with full prompt/response capture
 ```
 
 </details>
