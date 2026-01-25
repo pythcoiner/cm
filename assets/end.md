@@ -315,7 +315,7 @@ If the wizard encounters issues:
 
 ### Missing .cm/ Directory
 
-> I couldn't find the `.cm/` directory. This skill requires an initialized cm project.
+> I couldn't find the `.cm/` directory. This command requires an initialized cm project.
 >
 > Please run `/cm` first to initialize the project, then return to your `/feat` or `/fix` session.
 

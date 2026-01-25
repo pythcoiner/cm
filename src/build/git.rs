@@ -149,7 +149,7 @@ impl GitRunner {
     /// - There are no staged changes to commit
     pub fn commit(&self, message: &str) -> Result<CommitId, BuildError> {
         let output = Command::new("git")
-            .args(["commit", "-m", message])
+            .args(["commit", "--no-gpg-sign", "-m", message])
             .current_dir(&self.working_dir)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -174,6 +174,43 @@ impl GitRunner {
         // Get the commit hash
         let commit_hash = self.run_git_command(&["rev-parse", "HEAD"])?;
         Ok(CommitId(commit_hash.trim().to_string()))
+    }
+
+    /// Get the current HEAD commit hash.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the git command fails.
+    pub fn head_commit(&self) -> Result<CommitId, BuildError> {
+        let hash = self.run_git_command(&["rev-parse", "HEAD"])?;
+        Ok(CommitId(hash.trim().to_string()))
+    }
+
+    /// Get the diff between two commits.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - The base commit hash
+    /// * `to` - The target commit hash
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the git command fails.
+    pub fn diff_range(&self, from: &str, to: &str) -> Result<String, BuildError> {
+        let range = format!("{}..{}", from, to);
+        self.run_git_command(&["diff", &range])
+    }
+
+    /// Check if the working tree is clean (no uncommitted changes).
+    ///
+    /// Returns `true` if there are no modified, staged, or untracked files.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the git command fails.
+    pub fn is_clean(&self) -> Result<bool, BuildError> {
+        let output = self.run_git_command(&["status", "--porcelain"])?;
+        Ok(output.trim().is_empty())
     }
 
     /// Run a git command and return its stdout.

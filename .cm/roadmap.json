@@ -1436,19 +1436,19 @@
         {
           "id": "21.1",
           "name": "Add agent templates generation to /cm skill",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "Generate .cm/agents/MANAGER.md",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Generate .cm/agents/IMPLEMENTER.md",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Generate .cm/agents/REVIEWER.md",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
@@ -1458,23 +1458,23 @@
         {
           "id": "21.2",
           "name": "Add STRUCTURE.md and ACTIONS.md generation",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "Add questions for structure info",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Add questions for actions info",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Generate .cm/STRUCTURE.md",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Generate .cm/ACTIONS.md",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
@@ -1484,23 +1484,23 @@
         {
           "id": "21.3",
           "name": "Reinstall and verify new /cm outputs",
-          "completed": true,
+          "completed": false,
           "sub_items": [
             {
               "name": "cargo build",
-              "completed": true
+              "completed": false
             },
             {
               "name": "cm init --force",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Verify agent templates generated",
-              "completed": true
+              "completed": false
             },
             {
               "name": "Verify STRUCTURE.md and ACTIONS.md generated",
-              "completed": true
+              "completed": false
             }
           ],
           "linked_task_ids": [
@@ -2014,27 +2014,27 @@
         {
           "id": "26.1",
           "name": "Remove YAML front matter and update skill->command text in assets",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Strip YAML front matter from assets/cm.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Strip YAML front matter from assets/feat.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Strip YAML front matter from assets/fix.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Strip YAML front matter from assets/end.md",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Replace 'This skill' with 'This command' in all assets",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2044,19 +2044,19 @@
         {
           "id": "26.2",
           "name": "Rename src/skill.rs to src/command.rs",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Delete src/skill.rs",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Create src/command.rs with *_COMMAND constants",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update src/lib.rs module declaration",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2066,7 +2066,7 @@
         {
           "id": "26.3",
           "name": "Update CLI help text",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-26.task-3"
@@ -2075,23 +2075,23 @@
         {
           "id": "26.4",
           "name": "Rewrite src/cli/init.rs for commands",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Rename SkillFile to CommandFile, SKILLS to COMMANDS",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Install to .claude/commands/{name}.md (flat files)",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add cleanup_legacy_skills() function",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Rewrite all tests for new path structure",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2101,19 +2101,19 @@
         {
           "id": "26.5",
           "name": "Update README.md",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Rename Skills section to Commands",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update directory tree",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add /end to commands table",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2123,15 +2123,15 @@
         {
           "id": "26.6",
           "name": "Delete legacy .claude/skills/ directory",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Remove .claude/skills/ tree",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Run cm init to create .claude/commands/",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2141,19 +2141,19 @@
         {
           "id": "26.7",
           "name": "Build and verify commands migration",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify src/skill.rs deleted, src/command.rs exists",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify .claude/commands/ exists, .claude/skills/ gone",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

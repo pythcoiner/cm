@@ -4,7 +4,7 @@ This command guides users through adding a bug fix task to an existing cm (Claud
 
 ## Prerequisites
 
-Before using this wizard, ensure:
+Before using this command, ensure:
 - A `.cm/` directory exists with valid project files
 - `tasks.json` is present
 - The project has been initialized with `/cm` or `cm init`

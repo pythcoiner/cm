@@ -310,6 +310,9 @@ pub struct AgentInvocation {
     /// Exit status of the agent process.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exit_status: Option<i32>,
+    /// Git commit hash recording the agent's changes (for audit trail).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit_hash: Option<String>,
 }
 
 /// Type of agent.

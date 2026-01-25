@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::tui::{ManagerEvent, TuiCommand};
 
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
-use crate::build::{BuildError, BuildVerifier};
+use crate::build::{BuildError, BuildVerifier, GitRunner};
 use crate::generate::{generate_log_md, write_md_file, GenerateError};
 use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager};
 use crate::state::{
@@ -310,6 +310,10 @@ impl Manager {
         info!("Starting manager run loop");
         emit_cm("Starting run loop");
         self.flog(LogLevel::Info, "manager", "Execution loop started");
+
+        // Ensure clean working tree for commit-per-agent audit trail
+        self.preflight_git_check()?;
+
         self.manager_state = ManagerState::Executing;
 
         loop {
@@ -407,6 +411,10 @@ impl Manager {
     ) -> Result<(), ManagerError> {
         info!("Starting manager run loop with TUI channels");
         emit_cm("Starting run loop (TUI)");
+
+        // Ensure clean working tree for commit-per-agent audit trail
+        self.preflight_git_check()?;
+
         self.manager_state = ManagerState::Executing;
 
         // Send initial state to TUI
@@ -647,6 +655,9 @@ impl Manager {
     /// This method prompts the user before running tasks and loops until
     /// the user quits or no more tasks are available.
     pub fn run_interactive(&mut self) -> Result<(), ManagerError> {
+        // Ensure clean working tree for commit-per-agent audit trail
+        self.preflight_git_check()?;
+
         loop {
             match self.prompt_task_selection()? {
                 TaskSelection::Single => {
@@ -729,17 +740,22 @@ impl Manager {
 
     /// Execute an implementation task.
     ///
+    /// Full lifecycle: IMPLEM → commit → build verify → REVIEW → (FIX → re-verify → re-REVIEW)*
+    ///
     /// Flow:
-    /// 1. Build prompt with task context
-    /// 2. Spawn agent
-    /// 3. Wait for response
-    /// 4. Parse response
-    /// 5. Run build verification
-    /// 6. Mark task complete or retry
+    /// 1. Record baseline commit (HEAD before agent runs)
+    /// 2. Spawn IMPLEM agent, parse response
+    /// 3. Commit agent changes (for audit trail)
+    /// 4. Run build verification
+    /// 5. Run review cycle (REVIEW → FIX → re-REVIEW, max_cycles)
+    /// 6. Mark task complete if approved, or defer if review exhausted
     fn execute_implem(&mut self, task: &Task) -> Result<(), ManagerError> {
         debug!("Executing IMPLEM task: {}", task.id);
         self.flog(LogLevel::Info, "task", &format!("Executing IMPLEM task: {}", task.id));
         self.manager_state = ManagerState::WaitingForAgent;
+
+        // Record baseline commit for later diff
+        let baseline_commit = self.get_head_commit().unwrap_or_default();
 
         // Build the prompt
         debug!("Building prompt for task {}", task.id);
@@ -765,6 +781,7 @@ impl Manager {
             started_at,
             completed_at: None,
             exit_status: None,
+            commit_hash: None,
         });
 
         // Spawn and wait for the agent
@@ -852,17 +869,102 @@ impl Manager {
             return Ok(());
         }
 
-        // Record successful attempt (build verification deferred to phase completion)
+        // Commit IMPLEM agent changes for audit trail
+        match self.commit_agent_changes(&task.id, "IMPLEM", &agent_id) {
+            Ok(_) => {}
+            Err(e) => {
+                warn!("Failed to commit IMPLEM changes for {}: {}", task.id, e);
+                self.flog(LogLevel::Warn, "git", &format!("IMPLEM commit failed: {}", e));
+                // Continue anyway — changes exist but aren't committed
+            }
+        }
+
+        // Record successful IMPLEM attempt
         self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
 
-        // Mark task as completed
-        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-        self.sync_roadmap_item(&task.id);
-        self.log_manager.log_task_complete(&task.id)?;
+        // Run build verification
+        self.manager_state = ManagerState::Verifying;
+        let build_result = self.build_verifier.verify_all();
+        let build_output = match &build_result {
+            Ok(()) => crate::build::BuildOutput {
+                success: true,
+                errors: vec![],
+                warnings: vec![],
+                stdout: String::new(),
+                stderr: String::new(),
+            },
+            Err(e) => {
+                let err_msg = match e {
+                    BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                    _ => e.to_string(),
+                };
+                crate::build::BuildOutput {
+                    success: false,
+                    errors: vec![],
+                    warnings: vec![],
+                    stdout: String::new(),
+                    stderr: err_msg,
+                }
+            }
+        };
+        self.log_manager.log_build_result(&build_output)?;
         self.state
             .log_records
-            .push(LogManager::create_task_complete_record(&task.id));
-        self.flog(LogLevel::Info, "task", &format!("Task {} marked completed", task.id));
+            .push(LogManager::create_build_result_record(&build_output));
+
+        if let Err(e) = build_result {
+            let err_msg = match &e {
+                BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                _ => e.to_string(),
+            };
+            warn!("Build failed after IMPLEM for task {}: {}", task.id, err_msg);
+            emit_cm(&format!("Build FAILED after IMPLEM for {}", task.id));
+            self.flog(LogLevel::Warn, "build", &format!("Build failed after IMPLEM: {}", err_msg));
+            // Mark pending for retry — the next IMPLEM attempt may fix it
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        emit_cm(&format!("Build PASSED for {}, starting review", task.id));
+        self.flog(LogLevel::Info, "build", &format!("Build PASSED for task {}", task.id));
+
+        // Run review cycle: REVIEW → FIX → re-REVIEW (max_cycles)
+        if !baseline_commit.is_empty() {
+            let verdict = self.run_review_cycle(task, &baseline_commit)?;
+
+            match verdict {
+                Verdict::Approved => {
+                    self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                    self.sync_roadmap_item(&task.id);
+                    self.log_manager.log_task_complete(&task.id)?;
+                    self.state
+                        .log_records
+                        .push(LogManager::create_task_complete_record(&task.id));
+                    self.flog(LogLevel::Info, "task", &format!("Task {} completed (review approved)", task.id));
+                }
+                Verdict::NeedsFixes => {
+                    // Review cycle exhausted — defer the task
+                    let reason = format!("Review cycle exhausted after {} cycles", self.config.max_cycles);
+                    self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                    self.log_manager.log_task_deferred(&task.id, &reason)?;
+                    self.state
+                        .log_records
+                        .push(LogManager::create_task_deferred_record(&task.id, &reason));
+                    self.flog(LogLevel::Warn, "task", &format!("Task {} deferred: {}", task.id, reason));
+                }
+            }
+        } else {
+            // No baseline commit (git not available?) — skip review, mark complete
+            warn!("No baseline commit for task {}, skipping review", task.id);
+            self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+            self.sync_roadmap_item(&task.id);
+            self.log_manager.log_task_complete(&task.id)?;
+            self.state
+                .log_records
+                .push(LogManager::create_task_complete_record(&task.id));
+            self.flog(LogLevel::Info, "task", &format!("Task {} completed (no review — git unavailable)", task.id));
+        }
 
         self.manager_state = ManagerState::Executing;
         Ok(())
@@ -909,6 +1011,7 @@ impl Manager {
             started_at,
             completed_at: None,
             exit_status: None,
+            commit_hash: None,
         });
 
         // Spawn and wait for the agent
@@ -1055,6 +1158,7 @@ impl Manager {
             started_at,
             completed_at: None,
             exit_status: None,
+            commit_hash: None,
         });
 
         // Spawn and wait for the agent
@@ -1163,6 +1267,233 @@ impl Manager {
         self.execute_implem(task)
     }
 
+    /// Run the REVIEW → FIX → re-REVIEW cycle after an IMPLEM task.
+    ///
+    /// Spawns a REVIEW agent to check the IMPLEM agent's changes (identified
+    /// via git diff from the baseline commit). If the review finds issues,
+    /// spawns a FIX agent, commits its changes, re-verifies the build, and
+    /// re-reviews. Repeats up to `max_cycles` times.
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The original IMPLEM task (for context)
+    /// * `baseline_commit` - The HEAD commit hash before the IMPLEM agent ran
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Verdict::Approved)` if the review passes, or
+    /// `Ok(Verdict::NeedsFixes)` if max cycles exhausted without approval.
+    fn run_review_cycle(
+        &mut self,
+        task: &Task,
+        baseline_commit: &str,
+    ) -> Result<Verdict, ManagerError> {
+        for cycle in 0..self.config.max_cycles {
+            self.flog(
+                LogLevel::Info,
+                "review",
+                &format!("Review cycle {}/{} for task {}", cycle + 1, self.config.max_cycles, task.id),
+            );
+            emit_cm(&format!("Review cycle {}/{} for {}", cycle + 1, self.config.max_cycles, task.id));
+
+            // Get diff from baseline to current HEAD
+            let diff = self.get_diff_between(baseline_commit, "HEAD")?;
+
+            if diff.trim().is_empty() {
+                warn!("No diff found between baseline and HEAD for task {}", task.id);
+                self.flog(LogLevel::Warn, "review", "No diff to review, skipping review");
+                return Ok(Verdict::Approved);
+            }
+
+            // Build auto-review prompt and spawn REVIEW agent
+            let review_prompt = PromptBuilder::build_auto_review_prompt(task, &diff);
+
+            self.log_manager
+                .log_agent_spawn(&AgentType::Review, &task.id, &review_prompt)?;
+            self.state.log_records.push(
+                LogManager::create_agent_spawn_record(&AgentType::Review, &task.id, &review_prompt),
+            );
+
+            let review_agent_id = Uuid::new_v4().to_string();
+            let review_started = Utc::now();
+
+            self.state.agent_history.push(AgentInvocation {
+                id: review_agent_id.clone(),
+                task_id: task.id.clone(),
+                agent_type: AgentType::Review,
+                started_at: review_started,
+                completed_at: None,
+                exit_status: None,
+                commit_hash: None,
+            });
+
+            self.flog(LogLevel::Info, "agent", &format!("Spawning auto-REVIEW for task {}", task.id));
+            let review_handle = self.agent_spawner.spawn(&review_prompt, &task.id, "REVIEW")?;
+            let review_output = review_handle.wait()?;
+            self.flog(LogLevel::Info, "agent", &format!("Auto-REVIEW completed for task {}", task.id));
+
+            // Parse review response
+            let review_response = match ResponseParser::parse(&review_output.stdout) {
+                Ok(resp) => resp,
+                Err(AgentError::ParseError(msg)) => {
+                    let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+                    eprintln!("[{} REVIEW] {} parse failed: {}", now, task.id, msg);
+
+                    if let Some(session_id) = &review_output.session_id {
+                        eprintln!("[{} REVIEW] {} retrying with --continue...", now, task.id);
+                        let retry_handle = self.agent_spawner.spawn_with_continue(
+                            session_id,
+                            "Your previous response could not be parsed. Please provide your review verdict and any issues found.",
+                            &task.id,
+                            "REVIEW",
+                        )?;
+                        let retry_output = retry_handle.wait()?;
+                        match ResponseParser::parse(&retry_output.stdout) {
+                            Ok(resp) => resp,
+                            Err(_) => {
+                                // Can't parse review — treat as approved to not block progress
+                                warn!("Review parse failed twice for {}, treating as approved", task.id);
+                                self.flog(LogLevel::Warn, "review", "Review parse failed, treating as approved");
+                                return Ok(Verdict::Approved);
+                            }
+                        }
+                    } else {
+                        warn!("Review parse failed for {} (no session_id), treating as approved", task.id);
+                        return Ok(Verdict::Approved);
+                    }
+                }
+                Err(e) => return Err(e.into()),
+            };
+
+            // Update invocation
+            if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == review_agent_id) {
+                inv.completed_at = Some(Utc::now());
+                inv.exit_status = review_output.exit_code;
+            }
+
+            self.log_manager.log_agent_response(&review_response)?;
+
+            // Check for agent failure
+            if review_response.status == AgentStatus::Failed {
+                warn!("Review agent failed for {}: {}", task.id, review_response.message);
+                self.flog(LogLevel::Warn, "review", &format!("Review agent failed: {}", review_response.message));
+                // Treat failure as approved to not block
+                return Ok(Verdict::Approved);
+            }
+
+            // Extract verdict
+            let verdict = self.extract_review_verdict(&review_response.message);
+
+            self.log_manager.log_review_result(&verdict, &[])?;
+            self.state
+                .log_records
+                .push(LogManager::create_review_result_record(&verdict, &[]));
+
+            match verdict {
+                Verdict::Approved => {
+                    info!("Auto-review approved for task {}", task.id);
+                    emit_cm(&format!("Review APPROVED for {}", task.id));
+                    self.flog(LogLevel::Info, "review", &format!("Review APPROVED for task {}", task.id));
+                    return Ok(Verdict::Approved);
+                }
+                Verdict::NeedsFixes => {
+                    warn!("Auto-review found issues for task {} (cycle {})", task.id, cycle + 1);
+                    emit_cm(&format!("Review NEEDS_FIXES for {} (cycle {})", task.id, cycle + 1));
+                    self.flog(
+                        LogLevel::Warn,
+                        "review",
+                        &format!("Review NEEDS_FIXES for task {} (cycle {})", task.id, cycle + 1),
+                    );
+
+                    // If this is the last cycle, don't bother spawning a FIX agent
+                    if cycle + 1 >= self.config.max_cycles {
+                        break;
+                    }
+
+                    // Spawn FIX agent with the review feedback
+                    let fix_prompt = PromptBuilder::build_auto_fix_prompt(task, &review_response.message);
+
+                    self.log_manager
+                        .log_agent_spawn(&AgentType::Fix, &task.id, &fix_prompt)?;
+                    self.state.log_records.push(
+                        LogManager::create_agent_spawn_record(&AgentType::Fix, &task.id, &fix_prompt),
+                    );
+
+                    let fix_agent_id = Uuid::new_v4().to_string();
+                    let fix_started = Utc::now();
+
+                    self.state.agent_history.push(AgentInvocation {
+                        id: fix_agent_id.clone(),
+                        task_id: task.id.clone(),
+                        agent_type: AgentType::Fix,
+                        started_at: fix_started,
+                        completed_at: None,
+                        exit_status: None,
+                        commit_hash: None,
+                    });
+
+                    self.flog(LogLevel::Info, "agent", &format!("Spawning auto-FIX for task {}", task.id));
+                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, &task.id, "FIX")?;
+                    let fix_output = fix_handle.wait()?;
+                    self.flog(LogLevel::Info, "agent", &format!("Auto-FIX completed for task {}", task.id));
+
+                    // Update invocation
+                    if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
+                        inv.completed_at = Some(Utc::now());
+                        inv.exit_status = fix_output.exit_code;
+                    }
+
+                    // Parse FIX response (best-effort, don't block on parse failure)
+                    if let Ok(fix_response) = ResponseParser::parse(&fix_output.stdout) {
+                        self.log_manager.log_agent_response(&fix_response)?;
+                    }
+
+                    // Check if FIX agent made changes
+                    if !self.check_git_changes()? {
+                        warn!("FIX agent made no changes for task {}", task.id);
+                        self.flog(LogLevel::Warn, "review", "FIX agent made no file changes");
+                        continue; // Re-review anyway (might still pass)
+                    }
+
+                    // Commit FIX changes
+                    match self.commit_agent_changes(&task.id, "FIX", &fix_agent_id) {
+                        Ok(_hash) => {}
+                        Err(e) => {
+                            warn!("Failed to commit FIX changes for {}: {}", task.id, e);
+                            self.flog(LogLevel::Warn, "git", &format!("FIX commit failed: {}", e));
+                            continue;
+                        }
+                    }
+
+                    // Re-verify build after FIX
+                    self.manager_state = ManagerState::Verifying;
+                    if let Err(e) = self.build_verifier.verify_all() {
+                        let err_msg = match &e {
+                            BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                            _ => e.to_string(),
+                        };
+                        warn!("Build failed after FIX for task {}: {}", task.id, err_msg);
+                        self.flog(LogLevel::Warn, "build", &format!("Build failed after FIX: {}", err_msg));
+                        // Continue to next cycle — the next FIX attempt might resolve it
+                    }
+                    self.manager_state = ManagerState::WaitingForAgent;
+
+                    // Save state between cycles
+                    self.update_state()?;
+                }
+            }
+        }
+
+        // Max cycles exhausted
+        warn!("Review cycle exhausted for task {} after {} cycles", task.id, self.config.max_cycles);
+        self.flog(
+            LogLevel::Warn,
+            "review",
+            &format!("Review cycle exhausted for task {} after {} cycles", task.id, self.config.max_cycles),
+        );
+        Ok(Verdict::NeedsFixes)
+    }
+
     /// Save the current state to disk and regenerate LOG.md.
     fn update_state(&mut self) -> Result<(), ManagerError> {
         save_state(&self.state, &self.config.state_path)?;
@@ -1251,6 +1582,42 @@ impl Manager {
         debug!("Roadmap item {} not found for task {}", item_id, task_id);
     }
 
+    /// Sync a completed phase's status to the roadmap.
+    ///
+    /// Marks all items and sub-items in the corresponding roadmap phase as completed.
+    fn sync_roadmap_phase(&mut self, phase_id: &str) {
+        let roadmap = match &mut self.roadmap_state {
+            Some(r) => r,
+            None => return,
+        };
+
+        for phase in &mut roadmap.phases {
+            if phase.id == phase_id {
+                for item in &mut phase.items {
+                    if !item.completed {
+                        item.completed = true;
+                        info!(
+                            "Roadmap item '{}' marked completed (phase {})",
+                            item.name, phase_id
+                        );
+                    }
+                    for sub_item in &mut item.sub_items {
+                        if !sub_item.completed {
+                            sub_item.completed = true;
+                            info!(
+                                "Roadmap sub-item '{}' marked completed (phase {})",
+                                sub_item.name, phase_id
+                            );
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
+        debug!("Roadmap phase {} not found", phase_id);
+    }
+
     /// Check if a phase just completed and run build verification.
     ///
     /// Returns `Ok(true)` if build passed (or no check needed),
@@ -1294,6 +1661,10 @@ impl Manager {
                 // Mark phase as completed
                 self.state
                     .mark_phase_status(phase_id, PhaseStatus::Completed)?;
+
+                // Sync roadmap phase - mark all items/sub-items as complete
+                self.sync_roadmap_phase(phase_id);
+
                 self.manager_state = ManagerState::Executing;
                 Ok(true)
             }
@@ -1403,6 +1774,96 @@ impl Manager {
                 Ok(true)
             }
         }
+    }
+
+    /// Verify the git working tree is clean before starting execution.
+    ///
+    /// This enforces that there are no uncommitted changes so that
+    /// each agent's changes can be isolated in their own commit.
+    ///
+    /// # Errors
+    ///
+    /// Returns `ManagerError::TaskNotRunnable` if the working tree is dirty.
+    fn preflight_git_check(&self) -> Result<(), ManagerError> {
+        let git = GitRunner::new(self.config.working_dir.clone());
+        match git.is_clean() {
+            Ok(true) => {
+                self.flog(LogLevel::Info, "git", "Preflight check: working tree is clean");
+                Ok(())
+            }
+            Ok(false) => {
+                let msg = "Working tree has uncommitted changes. Commit or stash them before running cm.";
+                self.flog(LogLevel::Error, "git", msg);
+                Err(ManagerError::TaskNotRunnable(msg.to_string()))
+            }
+            Err(e) => {
+                warn!("Preflight git check failed (git not available?): {}", e);
+                self.flog(LogLevel::Warn, "git", &format!("Preflight git check failed: {}", e));
+                // Don't block execution if git isn't available
+                Ok(())
+            }
+        }
+    }
+
+    /// Commit all agent changes with a descriptive message.
+    ///
+    /// Stages all changes (`git add -A`), commits with `--no-gpg-sign`,
+    /// and returns the commit hash. Also records the commit hash in the
+    /// agent's invocation history for audit.
+    ///
+    /// # Arguments
+    ///
+    /// * `task_id` - The task ID for the commit message
+    /// * `agent_label` - The agent type label (e.g., "IMPLEM", "FIX")
+    /// * `agent_id` - The agent invocation ID to record the commit hash against
+    fn commit_agent_changes(
+        &mut self,
+        task_id: &str,
+        agent_label: &str,
+        agent_id: &str,
+    ) -> Result<String, ManagerError> {
+        let git = GitRunner::new(self.config.working_dir.clone());
+
+        // Stage all changes
+        git.add(&["-A"])?;
+
+        // Commit with descriptive message
+        let message = format!("cm: {} {} changes", task_id, agent_label);
+        let commit_id = git.commit(&message)?;
+        let hash = commit_id.0.clone();
+
+        self.flog(
+            LogLevel::Info,
+            "git",
+            &format!("Committed {} changes for {}: {}", agent_label, task_id, hash),
+        );
+        emit_cm(&format!("Committed {} changes: {}", agent_label, &hash[..8.min(hash.len())]));
+
+        // Record commit hash in agent history
+        if let Some(inv) = self
+            .state
+            .agent_history
+            .iter_mut()
+            .find(|i| i.id == agent_id)
+        {
+            inv.commit_hash = Some(hash.clone());
+        }
+
+        Ok(hash)
+    }
+
+    /// Get the current HEAD commit hash.
+    fn get_head_commit(&self) -> Result<String, ManagerError> {
+        let git = GitRunner::new(self.config.working_dir.clone());
+        let commit = git.head_commit()?;
+        Ok(commit.0)
+    }
+
+    /// Get the git diff between two commits.
+    fn get_diff_between(&self, from: &str, to: &str) -> Result<String, ManagerError> {
+        let git = GitRunner::new(self.config.working_dir.clone());
+        let diff = git.diff_range(from, to)?;
+        Ok(diff)
     }
 
     /// Record a task attempt in the state.

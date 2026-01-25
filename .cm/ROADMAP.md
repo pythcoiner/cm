@@ -346,22 +346,22 @@ Status: **Complete** (3/3)
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **Complete** (3/3)
+Status: **Not Started** (0/3)
 
-- [x] Add agent templates generation to /cm skill
-  - [x] Generate .cm/agents/MANAGER.md
-  - [x] Generate .cm/agents/IMPLEMENTER.md
-  - [x] Generate .cm/agents/REVIEWER.md
-- [x] Add STRUCTURE.md and ACTIONS.md generation
-  - [x] Add questions for structure info
-  - [x] Add questions for actions info
-  - [x] Generate .cm/STRUCTURE.md
-  - [x] Generate .cm/ACTIONS.md
-- [x] Reinstall and verify new /cm outputs
-  - [x] cargo build
-  - [x] cm init --force
-  - [x] Verify agent templates generated
-  - [x] Verify STRUCTURE.md and ACTIONS.md generated
+- [ ] Add agent templates generation to /cm skill
+  - [ ] Generate .cm/agents/MANAGER.md
+  - [ ] Generate .cm/agents/IMPLEMENTER.md
+  - [ ] Generate .cm/agents/REVIEWER.md
+- [ ] Add STRUCTURE.md and ACTIONS.md generation
+  - [ ] Add questions for structure info
+  - [ ] Add questions for actions info
+  - [ ] Generate .cm/STRUCTURE.md
+  - [ ] Generate .cm/ACTIONS.md
+- [ ] Reinstall and verify new /cm outputs
+  - [ ] cargo build
+  - [ ] cm init --force
+  - [ ] Verify agent templates generated
+  - [ ] Verify STRUCTURE.md and ACTIONS.md generated
 
 ---
 
@@ -481,35 +481,35 @@ Status: **Complete** (3/3)
 
 ## Phase 26: Skills to Commands Migration
 
-Status: **Not Started** (0/7)
+Status: **Complete** (7/7)
 
-- [ ] Remove YAML front matter and update skill->command text in assets
-  - [ ] Strip YAML front matter from assets/cm.md
-  - [ ] Strip YAML front matter from assets/feat.md
-  - [ ] Strip YAML front matter from assets/fix.md
-  - [ ] Strip YAML front matter from assets/end.md
-  - [ ] Replace 'This skill' with 'This command' in all assets
-- [ ] Rename src/skill.rs to src/command.rs
-  - [ ] Delete src/skill.rs
-  - [ ] Create src/command.rs with *_COMMAND constants
-  - [ ] Update src/lib.rs module declaration
-- [ ] Update CLI help text
-- [ ] Rewrite src/cli/init.rs for commands
-  - [ ] Rename SkillFile to CommandFile, SKILLS to COMMANDS
-  - [ ] Install to .claude/commands/{name}.md (flat files)
-  - [ ] Add cleanup_legacy_skills() function
-  - [ ] Rewrite all tests for new path structure
-- [ ] Update README.md
-  - [ ] Rename Skills section to Commands
-  - [ ] Update directory tree
-  - [ ] Add /end to commands table
-- [ ] Delete legacy .claude/skills/ directory
-  - [ ] Remove .claude/skills/ tree
-  - [ ] Run cm init to create .claude/commands/
-- [ ] Build and verify commands migration
-  - [ ] cargo build + clippy + test pass
-  - [ ] Verify src/skill.rs deleted, src/command.rs exists
-  - [ ] Verify .claude/commands/ exists, .claude/skills/ gone
+- [x] Remove YAML front matter and update skill->command text in assets
+  - [x] Strip YAML front matter from assets/cm.md
+  - [x] Strip YAML front matter from assets/feat.md
+  - [x] Strip YAML front matter from assets/fix.md
+  - [x] Strip YAML front matter from assets/end.md
+  - [x] Replace 'This skill' with 'This command' in all assets
+- [x] Rename src/skill.rs to src/command.rs
+  - [x] Delete src/skill.rs
+  - [x] Create src/command.rs with *_COMMAND constants
+  - [x] Update src/lib.rs module declaration
+- [x] Update CLI help text
+- [x] Rewrite src/cli/init.rs for commands
+  - [x] Rename SkillFile to CommandFile, SKILLS to COMMANDS
+  - [x] Install to .claude/commands/{name}.md (flat files)
+  - [x] Add cleanup_legacy_skills() function
+  - [x] Rewrite all tests for new path structure
+- [x] Update README.md
+  - [x] Rename Skills section to Commands
+  - [x] Update directory tree
+  - [x] Add /end to commands table
+- [x] Delete legacy .claude/skills/ directory
+  - [x] Remove .claude/skills/ tree
+  - [x] Run cm init to create .claude/commands/
+- [x] Build and verify commands migration
+  - [x] cargo build + clippy + test pass
+  - [x] Verify src/skill.rs deleted, src/command.rs exists
+  - [x] Verify .claude/commands/ exists, .claude/skills/ gone
 
 ---
 
@@ -540,10 +540,10 @@ Status: **Not Started** (0/7)
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Complete | 12/12 |
-| Phase 21: Agent Templates & Project Documentation | Complete | 14/14 |
+| Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Complete | 20/20 |
 | Phase 23: Detailed File Logging | Complete | 35/35 |
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
-| Phase 26: Skills to Commands Migration | Not Started | 0/27 |
-| **Total** | | **281/308** |
+| Phase 26: Skills to Commands Migration | Complete | 27/27 |
+| **Total** | | **294/308** |

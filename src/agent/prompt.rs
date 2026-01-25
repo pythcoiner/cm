@@ -232,6 +232,163 @@ impl PromptBuilder {
 
         prompt
     }
+
+    /// Build a prompt for automatic review after an IMPLEM task.
+    ///
+    /// Unlike `build_review_prompt()` which is for explicit review tasks,
+    /// this builds a review prompt using the git diff of the agent's committed
+    /// changes, with the original task context for understanding intent.
+    ///
+    /// The diff is reliable because cm enforces a clean working tree before
+    /// execution and commits after each agent, so the diff is scoped to
+    /// exactly one agent's changes.
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The original IMPLEM task (for context about what was implemented)
+    /// * `diff` - The git diff of the agent's committed changes
+    pub fn build_auto_review_prompt(task: &Task, diff: &str) -> String {
+        let mut prompt = String::new();
+
+        // Header
+        prompt.push_str("You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n");
+
+        // Original task context
+        prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
+        prompt.push_str("### What was requested\n\n");
+        prompt.push_str(&task.instructions);
+        prompt.push_str("\n\n");
+
+        // Code changes to review
+        prompt.push_str("### Code Changes (git diff)\n\n");
+        prompt.push_str("```diff\n");
+        prompt.push_str(diff);
+        prompt.push_str("\n```\n\n");
+
+        // Review criteria
+        prompt.push_str("### Review Criteria\n\n");
+        prompt.push_str("1. **Correctness**: Do the changes correctly implement the requested task?\n");
+        prompt.push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
+        prompt.push_str("3. **Error handling**: Are errors handled appropriately?\n");
+        prompt.push_str("4. **Style**: Does the code follow the project's style conventions?\n");
+        prompt.push_str("5. **Completeness**: Are all requirements addressed?\n\n");
+
+        // Files to read for context
+        if !task.context.files_to_read.is_empty() {
+            prompt.push_str("### Reference Files\n\n");
+            prompt.push_str("These files provide context for the review:\n\n");
+            for file in &task.context.files_to_read {
+                prompt.push_str(&format!("- {}\n", file));
+            }
+            prompt.push('\n');
+        }
+
+        // Code style excerpt
+        if let Some(ref style) = task.context.code_style_excerpt {
+            prompt.push_str("### Code Style Guidelines\n\n");
+            prompt.push_str("Check the code against these style guidelines:\n\n");
+            prompt.push_str(style);
+            prompt.push_str("\n\n");
+        }
+
+        // Output format instructions
+        prompt.push_str("### Output Format\n\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully completed the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"verdict\": \"approved\" or \"needs_fixes\",\n");
+        prompt.push_str("  \"summary\": \"Brief review summary\",\n");
+        prompt.push_str("  \"issues\": [\n");
+        prompt.push_str("    {\n");
+        prompt.push_str("      \"id\": \"unique-issue-id\",\n");
+        prompt.push_str("      \"severity\": \"critical\" or \"high\" or \"medium\" or \"low\",\n");
+        prompt.push_str("      \"location\": \"file:line\",\n");
+        prompt.push_str("      \"problem\": \"description of the problem\",\n");
+        prompt.push_str("      \"suggested_fix\": \"how to fix the issue\"\n");
+        prompt.push_str("    }\n");
+        prompt.push_str("  ]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT complete the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
+
+        prompt
+    }
+
+    /// Build a prompt for automatic fix after a review found issues.
+    ///
+    /// Unlike `build_fix_prompt()` which takes structured `ReviewIssue` objects,
+    /// this takes the raw review response text, since auto-review responses
+    /// may not be fully parsed into structured issues.
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The original IMPLEM task (for context)
+    /// * `review_feedback` - The raw review agent response containing issues
+    pub fn build_auto_fix_prompt(task: &Task, review_feedback: &str) -> String {
+        let mut prompt = String::new();
+
+        // Header
+        prompt.push_str("You are a FIX agent. Fix the issues found during code review.\n\n");
+
+        // Original task context
+        prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
+        prompt.push_str("### Original Instructions\n\n");
+        prompt.push_str(&task.instructions);
+        prompt.push_str("\n\n");
+
+        // Review feedback
+        prompt.push_str("### Review Feedback\n\n");
+        prompt.push_str("The following issues were found during review. Fix all of them:\n\n");
+        prompt.push_str(review_feedback);
+        prompt.push_str("\n\n");
+
+        // Files to read for context
+        if !task.context.files_to_read.is_empty() {
+            prompt.push_str("### Files to Read for Context\n\n");
+            prompt.push_str("Read the following files to understand the existing codebase:\n\n");
+            for file in &task.context.files_to_read {
+                prompt.push_str(&format!("- {}\n", file));
+            }
+            prompt.push('\n');
+        }
+
+        // Code style excerpt
+        if let Some(ref style) = task.context.code_style_excerpt {
+            prompt.push_str("### Code Style Guidelines\n\n");
+            prompt.push_str("Ensure fixes follow these style guidelines:\n\n");
+            prompt.push_str(style);
+            prompt.push_str("\n\n");
+        }
+
+        // Output format instructions
+        prompt.push_str("### Output Format\n\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully fixed the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"summary\": \"Brief description of the fixes applied\",\n");
+        prompt.push_str("  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT fix the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
+
+        prompt
+    }
 }
 
 /// Extension trait to get severity as a string.

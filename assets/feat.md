@@ -1,12 +1,10 @@
 # Feature Wizard
 
-This command guides users through adding a new feature to an existing cm (Claude Code
-Manager) project. The wizard collects feature requirements through a conversational
-flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
+This command guides users through adding a new feature to an existing cm (Claude Code Manager) project. The wizard collects feature requirements through a conversational flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
 
 ## Prerequisites
 
-Before using this wizard, ensure:
+Before using this command, ensure:
 - A `.cm/` directory exists with valid project files
 - `tasks.json`, `PLAN.md`, and `ROADMAP.md` are present
 - The project has been initialized with `/cm` or `cm init`
