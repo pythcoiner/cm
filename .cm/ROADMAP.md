@@ -513,6 +513,41 @@ Status: **Complete** (7/7)
 
 ---
 
+## Phase 27: Per-Phase TRACE Logging
+
+Status: **Not Started** (0/6)
+
+- [ ] Add TRACE level to LogLevel enum
+  - [ ] Add Trace variant before Debug
+  - [ ] Update Display impl
+  - [ ] Add trace() convenience method
+  - [ ] Update level ordering tests
+- [ ] Create PhaseLogger struct
+  - [ ] Create src/log/phase_logger.rs
+  - [ ] Implement extract_phase_id() helper
+  - [ ] Implement log_prompt() method
+  - [ ] Implement log_response() method
+  - [ ] Export from log module
+- [ ] Integrate PhaseLogger into Manager
+  - [ ] Add phase_logger field to Manager
+  - [ ] Log prompts in execute_implem/review/fix
+  - [ ] Log responses in execute_implem/review/fix
+  - [ ] Log in run_review_cycle
+- [ ] Update --prune for per-phase logs
+  - [ ] Add prune_all() function
+  - [ ] Update execute_prune() in CLI
+- [ ] Add unit tests for PhaseLogger
+  - [ ] Test extract_phase_id
+  - [ ] Test directory creation
+  - [ ] Test log file creation and format
+  - [ ] Test multiple phases create separate files
+- [ ] Build and verify per-phase logging
+  - [ ] cargo build + clippy + test pass
+  - [ ] Verify PhaseLogger integration
+  - [ ] Verify TRACE level added
+
+---
+
 ## Summary
 
 | Phase | Status | Progress |
@@ -546,4 +581,5 @@ Status: **Complete** (7/7)
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| **Total** | | **308/308** |
+| Phase 27: Per-Phase TRACE Logging | Not Started | 0/28 |
+| **Total** | | **308/336** |

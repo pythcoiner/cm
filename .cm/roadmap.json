@@ -2167,6 +2167,161 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-27",
+      "number": "27",
+      "name": "Per-Phase TRACE Logging",
+      "items": [
+        {
+          "id": "27.1",
+          "name": "Add TRACE level to LogLevel enum",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add Trace variant before Debug",
+              "completed": false
+            },
+            {
+              "name": "Update Display impl",
+              "completed": false
+            },
+            {
+              "name": "Add trace() convenience method",
+              "completed": false
+            },
+            {
+              "name": "Update level ordering tests",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-1"
+          ]
+        },
+        {
+          "id": "27.2",
+          "name": "Create PhaseLogger struct",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Create src/log/phase_logger.rs",
+              "completed": false
+            },
+            {
+              "name": "Implement extract_phase_id() helper",
+              "completed": false
+            },
+            {
+              "name": "Implement log_prompt() method",
+              "completed": false
+            },
+            {
+              "name": "Implement log_response() method",
+              "completed": false
+            },
+            {
+              "name": "Export from log module",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-2"
+          ]
+        },
+        {
+          "id": "27.3",
+          "name": "Integrate PhaseLogger into Manager",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add phase_logger field to Manager",
+              "completed": false
+            },
+            {
+              "name": "Log prompts in execute_implem/review/fix",
+              "completed": false
+            },
+            {
+              "name": "Log responses in execute_implem/review/fix",
+              "completed": false
+            },
+            {
+              "name": "Log in run_review_cycle",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-3"
+          ]
+        },
+        {
+          "id": "27.4",
+          "name": "Update --prune for per-phase logs",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add prune_all() function",
+              "completed": false
+            },
+            {
+              "name": "Update execute_prune() in CLI",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-4"
+          ]
+        },
+        {
+          "id": "27.5",
+          "name": "Add unit tests for PhaseLogger",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Test extract_phase_id",
+              "completed": false
+            },
+            {
+              "name": "Test directory creation",
+              "completed": false
+            },
+            {
+              "name": "Test log file creation and format",
+              "completed": false
+            },
+            {
+              "name": "Test multiple phases create separate files",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-5"
+          ]
+        },
+        {
+          "id": "27.6",
+          "name": "Build and verify per-phase logging",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "cargo build + clippy + test pass",
+              "completed": false
+            },
+            {
+              "name": "Verify PhaseLogger integration",
+              "completed": false
+            },
+            {
+              "name": "Verify TRACE level added",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-27.task-6"
+          ]
+        }
+      ]
     }
   ]
 }
