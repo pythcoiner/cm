@@ -173,10 +173,12 @@ mod tests {
                             completed: true,
                             sub_items: vec![
                                 RoadmapSubItem {
+                                    id: Some("item-1.sub-0".to_string()),
                                     name: "Create Cargo.toml".to_string(),
                                     completed: true,
                                 },
                                 RoadmapSubItem {
+                                    id: Some("item-1.sub-1".to_string()),
                                     name: "Add dependencies".to_string(),
                                     completed: true,
                                 },
@@ -271,10 +273,12 @@ mod tests {
             completed: false,
             sub_items: vec![
                 RoadmapSubItem {
+                    id: Some("item-1.sub-0".to_string()),
                     name: "Sub A".to_string(),
                     completed: true,
                 },
                 RoadmapSubItem {
+                    id: Some("item-1.sub-1".to_string()),
                     name: "Sub B".to_string(),
                     completed: false,
                 },
@@ -300,10 +304,12 @@ mod tests {
                 completed: true,
                 sub_items: vec![
                     RoadmapSubItem {
+                        id: Some("item-1.sub-0".to_string()),
                         name: "A".to_string(),
                         completed: true,
                     },
                     RoadmapSubItem {
+                        id: Some("item-1.sub-1".to_string()),
                         name: "B".to_string(),
                         completed: false,
                     },
@@ -328,10 +334,12 @@ mod tests {
                 completed: true,
                 sub_items: vec![
                     RoadmapSubItem {
+                        id: Some("item-1.sub-0".to_string()),
                         name: "A".to_string(),
                         completed: true,
                     },
                     RoadmapSubItem {
+                        id: Some("item-1.sub-1".to_string()),
                         name: "B".to_string(),
                         completed: false,
                     },

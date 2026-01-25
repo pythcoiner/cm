@@ -16,7 +16,7 @@ use log::{debug, info, warn};
 use thiserror::Error;
 
 use crate::config::{ConfigError, ConfigFile};
-use crate::generate::{generate_log_md, generate_roadmap_md, write_md_file, GenerateError};
+use crate::generate::{generate_log_md, generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_roadmap, load_state, save_state, validate_all, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
@@ -779,6 +779,26 @@ fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
         println!("Skipped ROADMAP.md: {:?} not found", roadmap_json_path);
     }
 
+    // Regenerate TASKS.md from tasks.json
+    let tasks_md_path = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .join("TASKS.md");
+
+    let tasks_content = generate_tasks_md(&state);
+    write_md_file(&tasks_content, &tasks_md_path)?;
+    let completed_tasks: usize = state.phases.iter().map(|p| p.tasks.iter().filter(|t| t.status == crate::state::TaskStatus::Completed).count()).sum();
+    let total_tasks: usize = state.phases.iter().map(|p| p.tasks.len()).sum();
+    println!(
+        "Regenerated: {:?} ({} phases, {}/{} tasks)",
+        tasks_md_path,
+        state.phases.len(),
+        completed_tasks,
+        total_tasks
+    );
+    files_regenerated += 1;
+
     println!("\n{} file(s) regenerated.", files_regenerated);
     Ok(())
 }
@@ -940,6 +960,7 @@ mod tests {
                 Phase {
                     id: "phase-1".to_string(),
                     name: "Phase 1".to_string(),
+                    plan: String::new(),
                     status: PhaseStatus::Completed,
                     review_cycles_completed: 0,
                     baseline_commit: None,
@@ -966,6 +987,7 @@ mod tests {
                 Phase {
                     id: "phase-2".to_string(),
                     name: "Phase 2".to_string(),
+                    plan: String::new(),
                     status: PhaseStatus::InProgress,
                     review_cycles_completed: 0,
                     baseline_commit: None,

@@ -807,6 +807,7 @@ mod tests {
         let phase = Phase {
             id: "phase-1".to_string(),
             name: "Setup Phase".to_string(),
+            plan: String::new(),
             status: PhaseStatus::InProgress,
             review_cycles_completed: 0,
             baseline_commit: None,

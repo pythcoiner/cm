@@ -509,6 +509,7 @@ mod tests {
             phases: vec![Phase {
                 id: "phase-1".to_string(),
                 name: "Phase 1".to_string(),
+                plan: String::new(),
                 status: PhaseStatus::InProgress,
                 review_cycles_completed: 0,
                 baseline_commit: None,

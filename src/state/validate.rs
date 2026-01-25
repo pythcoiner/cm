@@ -346,8 +346,10 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
 /// - Required fields exist: version, title, phases
 /// - Each phase has: id, number, name, items
 /// - Each item has: id, name, completed
+/// - Each sub_item has: name, completed
 /// - No duplicate phase IDs
 /// - No duplicate item IDs
+/// - No duplicate sub_item IDs within an item
 ///
 /// # Arguments
 ///
@@ -474,8 +476,30 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
                 .get("completed")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
-            if is_completed {
-                if let Some(Value::Array(sub_items)) = item.get("sub_items") {
+            if let Some(Value::Array(sub_items)) = item.get("sub_items") {
+                // Check for duplicate sub-item IDs within this item
+                let mut subitem_ids = HashSet::new();
+                for (sub_idx, sub_item) in sub_items.iter().enumerate() {
+                    if let Some(sub_id) = sub_item.get("id").and_then(|v| v.as_str()) {
+                        if !subitem_ids.insert(sub_id.to_string()) {
+                            result.add_error(SanityError::DuplicateId {
+                                file: file_name.clone(),
+                                id: sub_id.to_string(),
+                            });
+                        }
+                    }
+
+                    // Check sub_item required fields (name and completed)
+                    let sub_context = format!(
+                        "{} (phases[{}].items[{}].sub_items[{}])",
+                        file_name, phase_idx, item_idx, sub_idx
+                    );
+                    check_required_field(sub_item, "name", &sub_context, &mut result);
+                    check_required_field(sub_item, "completed", &sub_context, &mut result);
+                }
+
+                // Warn about completed items with uncompleted sub_items
+                if is_completed {
                     let uncompleted_count = sub_items
                         .iter()
                         .filter(|s| {
@@ -1589,5 +1613,125 @@ mod tests {
 
         assert!(result.is_valid());
         assert!(result.warnings.is_empty(), "Completed items should not warn, got: {:?}", result.warnings);
+    }
+
+    #[test]
+    fn test_duplicate_subitem_id_within_item() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Item",
+                    "completed": false,
+                    "sub_items": [
+                        {{ "id": "dup-sub", "name": "Sub A", "completed": false }},
+                        {{ "id": "dup-sub", "name": "Sub B", "completed": false }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_roadmap_json(file.path());
+
+        assert!(!result.is_valid());
+        let has_dup_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::DuplicateId { id, .. } if id == "dup-sub")
+        });
+        assert!(has_dup_error, "Expected duplicate sub-item ID error, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_subitem_missing_required_fields() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Item",
+                    "completed": false,
+                    "sub_items": [
+                        {{ "id": "sub-1" }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_roadmap_json(file.path());
+
+        assert!(!result.is_valid());
+        let has_name_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "name")
+        });
+        let has_completed_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "completed")
+        });
+        assert!(has_name_error, "Expected error for missing 'name' field, got: {:?}", result.errors);
+        assert!(has_completed_error, "Expected error for missing 'completed' field, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_valid_roadmap_with_subitem_ids() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Item",
+                    "completed": false,
+                    "sub_items": [
+                        {{ "id": "item-1.sub-0", "name": "Sub A", "completed": false }},
+                        {{ "id": "item-1.sub-1", "name": "Sub B", "completed": true }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_roadmap_json(file.path());
+
+        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_valid_roadmap_with_subitem_without_id() {
+        // Sub-items without IDs are valid (for backward compatibility)
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Item",
+                    "completed": false,
+                    "sub_items": [
+                        {{ "name": "Sub A", "completed": false }},
+                        {{ "name": "Sub B", "completed": true }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_roadmap_json(file.path());
+
+        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
     }
 }

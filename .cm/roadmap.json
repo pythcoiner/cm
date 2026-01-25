@@ -2331,31 +2331,31 @@
         {
           "id": "28.1",
           "name": "Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add implem_completed_at, baseline_commit, review_cycles_completed to Task",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add RetryPrompt/RetryResponse to TUI events/commands",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Implement prompt_retry_cycles() for TUI and daemon modes",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Modify run_review_cycle() to prompt on max cycles",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Save IMPLEM completion state before review cycle",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Resume at REVIEW on --continue when IMPLEM completed",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2372,27 +2372,27 @@
         {
           "id": "30.1",
           "name": "Fix roadmap subitem ID lookup",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add optional id field to RoadmapSubItem",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add ensure_subitem_ids() method",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update load_roadmap() for backward compatibility",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update sync_roadmap_item() to use ID-based lookup",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Update validation to recognize subitem IDs",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

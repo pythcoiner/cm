@@ -59,6 +59,7 @@ fn create_state_with_task() -> TasksState {
         phases: vec![Phase {
             id: "phase-1".to_string(),
             name: "Test Phase".to_string(),
+            plan: String::new(),
             status: PhaseStatus::Pending,
             review_cycles_completed: 0,
             baseline_commit: None,
@@ -103,6 +104,7 @@ fn create_state_with_dependencies() -> TasksState {
         phases: vec![Phase {
             id: "phase-1".to_string(),
             name: "Test Phase".to_string(),
+            plan: String::new(),
             status: PhaseStatus::InProgress,
             review_cycles_completed: 0,
             baseline_commit: None,
@@ -194,6 +196,7 @@ fn test_basic_state_flow() {
     state.phases.push(Phase {
         id: "phase-1".to_string(),
         name: "Test Phase".to_string(),
+        plan: String::new(),
         status: PhaseStatus::Pending,
         review_cycles_completed: 0,
         baseline_commit: None,
@@ -665,6 +668,7 @@ fn test_task_types() {
     state.phases.push(Phase {
         id: "phase-1".to_string(),
         name: "Mixed Phase".to_string(),
+        plan: String::new(),
         status: PhaseStatus::Pending,
         review_cycles_completed: 0,
         baseline_commit: None,
@@ -868,6 +872,7 @@ fn test_multi_phase_workflow() {
         Phase {
             id: "phase-1".to_string(),
             name: "Phase 1".to_string(),
+            plan: String::new(),
             status: PhaseStatus::Completed,
             review_cycles_completed: 0,
             baseline_commit: None,
@@ -894,6 +899,7 @@ fn test_multi_phase_workflow() {
         Phase {
             id: "phase-2".to_string(),
             name: "Phase 2".to_string(),
+            plan: String::new(),
             status: PhaseStatus::Pending,
             review_cycles_completed: 0,
             baseline_commit: None,

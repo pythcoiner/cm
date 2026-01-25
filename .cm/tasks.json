@@ -2879,6 +2879,38 @@
       "review_cycles_completed": 0,
       "baseline_commit": null,
       "implem_completed_at": null
+    },
+    {
+      "id": "phase-30",
+      "name": "Fix Roadmap Subitem Updates",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "phase-30.fix-roadmap-subitem-id",
+          "name": "Fix: Roadmap subitems not updated (missing ID field)",
+          "type": "implement",
+          "status": "completed",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/state/roadmap.rs",
+              "src/manager/mod.rs",
+              "src/state/validate.rs"
+            ],
+            "prior_review_issues": [
+              "Bug: Roadmap subitems not updated when tasks complete",
+              "Root cause: RoadmapSubItem has no id field, sync_roadmap_item uses fragile name matching"
+            ]
+          },
+          "instructions": "Fix roadmap subitem update bug by adding ID field to RoadmapSubItem:\n\n## Bug Details\n- Observed: When cm updates roadmap, only higher-level items update, not subitems\n- Root cause: RoadmapSubItem has no `id` field; sync_roadmap_item() matches by name (fragile)\n- Location: src/state/roadmap.rs:54-61, src/manager/mod.rs:2311-2318\n\n## Fix Steps\n\n### 1. Add optional `id` field to RoadmapSubItem (src/state/roadmap.rs)\n```rust\npub struct RoadmapSubItem {\n    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub id: Option<String>,\n    pub name: String,\n    pub completed: bool,\n}\n```\n\n### 2. Add ensure_subitem_ids() method to RoadmapState\nAuto-generate IDs in format `\"{item.id}.sub-{index}\"` for subitems missing IDs.\n\n### 3. Update load_roadmap() to call ensure_subitem_ids()\nCall after deserializing for backward compatibility with existing roadmap.json files.\n\n### 4. Update sync_roadmap_item() to use ID-based lookup (src/manager/mod.rs:2311-2318)\nReplace:\n```rust\nif sub_item.name == item_id {\n```\nWith:\n```rust\nif sub_item.id.as_deref() == Some(&item_id) {\n```\n\n### 5. Update collect_roadmap_item_ids() in validate.rs\nAlso collect subitem IDs so tasks can reference them.\n\n### 6. Add tests\n- Test ensure_subitem_ids() generates correct IDs\n- Test backward compatibility (subitems without IDs still load)\n- Test subitem ID lookup in sync_roadmap_item()\n\n## Testing\n1. cargo build && cargo clippy - must pass\n2. cargo test - must pass\n3. Verify existing roadmap.json loads correctly\n\n## Verification\n- [ ] RoadmapSubItem has optional id field\n- [ ] IDs auto-generated on load\n- [ ] sync_roadmap_item uses ID-based lookup\n- [ ] Validation recognizes subitem IDs\n- [ ] All tests pass",
+          "attempts": [],
+          "roadmap_item_id": "30.1",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0,
+      "baseline_commit": null,
+      "implem_completed_at": null
     }
   ],
   "agent_history": [

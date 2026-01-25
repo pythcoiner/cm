@@ -550,28 +550,28 @@ Status: **Complete** (6/6)
 
 ## Phase 28: FIX Cycle Retry & Resume
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue
-  - [ ] Add implem_completed_at, baseline_commit, review_cycles_completed to Task
-  - [ ] Add RetryPrompt/RetryResponse to TUI events/commands
-  - [ ] Implement prompt_retry_cycles() for TUI and daemon modes
-  - [ ] Modify run_review_cycle() to prompt on max cycles
-  - [ ] Save IMPLEM completion state before review cycle
-  - [ ] Resume at REVIEW on --continue when IMPLEM completed
+- [x] Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue
+  - [x] Add implem_completed_at, baseline_commit, review_cycles_completed to Task
+  - [x] Add RetryPrompt/RetryResponse to TUI events/commands
+  - [x] Implement prompt_retry_cycles() for TUI and daemon modes
+  - [x] Modify run_review_cycle() to prompt on max cycles
+  - [x] Save IMPLEM completion state before review cycle
+  - [x] Resume at REVIEW on --continue when IMPLEM completed
 
 ---
 
 ## Phase 30: Fix Roadmap Subitem Updates
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Fix roadmap subitem ID lookup
-  - [ ] Add optional id field to RoadmapSubItem
-  - [ ] Add ensure_subitem_ids() method
-  - [ ] Update load_roadmap() for backward compatibility
-  - [ ] Update sync_roadmap_item() to use ID-based lookup
-  - [ ] Update validation to recognize subitem IDs
+- [x] Fix roadmap subitem ID lookup
+  - [x] Add optional id field to RoadmapSubItem
+  - [x] Add ensure_subitem_ids() method
+  - [x] Update load_roadmap() for backward compatibility
+  - [x] Update sync_roadmap_item() to use ID-based lookup
+  - [x] Update validation to recognize subitem IDs
 
 ---
 
@@ -609,6 +609,6 @@ Status: **Not Started** (0/1)
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
 | Phase 27: Per-Phase TRACE Logging | Complete | 28/28 |
-| Phase 28: FIX Cycle Retry & Resume | Not Started | 0/7 |
-| Phase 30: Fix Roadmap Subitem Updates | Not Started | 0/6 |
-| **Total** | | **336/349** |
+| Phase 28: FIX Cycle Retry & Resume | Complete | 7/7 |
+| Phase 30: Fix Roadmap Subitem Updates | Complete | 6/6 |
+| **Total** | | **349/349** |

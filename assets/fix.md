@@ -139,7 +139,35 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 5: Task Placement
+## Step 5: Generate Phase Plan
+
+**If creating a new phase for the fix, generate a detailed phase plan following the PLAN.md template.**
+
+Read the `.cm/agents/PLAN.md` template for the required format. For bug fixes, the plan should include:
+
+1. **Objective** - What the fix accomplishes
+2. **Background** - Bug description, impact, current state
+3. **Root Cause Analysis** - Why the bug occurs
+4. **Fix Strategy** - How the fix works
+5. **Implementation Steps** - Numbered list with file paths
+6. **Files to Modify** - Each file with specific changes
+7. **Success Criteria** - Bug no longer reproduces, tests pass
+8. **Regression Prevention** - Tests or guards to prevent recurrence
+9. **Verification** - Commands to verify the fix
+
+**Present the generated plan to the user:**
+
+> Here's the detailed fix plan for this phase:
+>
+> [Generated plan content following PLAN.md template]
+>
+> Does this plan look correct? Would you like any modifications?
+
+Wait for the user's response before proceeding. (Skip this step if adding to an existing phase.)
+
+---
+
+## Step 6: Task Placement
 
 **Analyze existing tasks and ask:**
 
@@ -159,7 +187,7 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 6: Confirmation
+## Step 7: Confirmation
 
 **Present the complete fix task:**
 
@@ -193,7 +221,7 @@ Wait for explicit user confirmation before modifying files.
 
 ---
 
-## Step 7: Handoff to /end
+## Step 8: Handoff to /end
 
 After the user confirms the fix task summary, inform them:
 
@@ -206,6 +234,24 @@ After the user confirms the fix task summary, inform them:
 > After saving, run `cm run` when ready to start the fix.
 
 Do NOT modify any files. Wait for the user to run `/end`.
+
+---
+
+## Phase Template (for new fix phases)
+
+When creating a new phase for a fix, use this JSON template. The `plan` field contains the detailed fix plan generated in Step 5.
+
+```json
+{
+  "id": "phase-X",
+  "name": "Fix: [Bug Summary]",
+  "plan": "[Detailed fix plan following PLAN.md template - includes Objective, Root Cause Analysis, Fix Strategy, Implementation Steps, Files to Modify, Regression Prevention, and Verification]",
+  "status": "pending",
+  "tasks": [
+    // Tasks go here (see template below)
+  ]
+}
+```
 
 ---
 

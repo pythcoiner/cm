@@ -6,9 +6,11 @@
 
 mod log_md;
 mod roadmap_md;
+mod tasks_md;
 
 pub use log_md::generate_log_md;
 pub use roadmap_md::generate_roadmap_md;
+pub use tasks_md::generate_tasks_md;
 
 use std::fs;
 use std::path::Path;

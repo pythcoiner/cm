@@ -10,7 +10,7 @@ use log::info;
 use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
-    IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, REVIEWER_TEMPLATE, STRUCTURE_TEMPLATE,
+    IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, STRUCTURE_TEMPLATE,
 };
 
 /// Command file definition.
@@ -74,6 +74,10 @@ const TEMPLATES: &[TemplateFile] = &[
     TemplateFile {
         path: "agents/ACTIONS.md",
         content: ACTIONS_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/PLAN.md",
+        content: PLAN_TEMPLATE,
     },
 ];
 

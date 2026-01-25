@@ -54,6 +54,9 @@ pub struct RoadmapItem {
 /// A sub-item within a roadmap item.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoadmapSubItem {
+    /// Unique identifier for the sub-item.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     /// Human-readable name for the sub-item.
     pub name: String,
     /// Whether this sub-item is completed.
@@ -61,6 +64,10 @@ pub struct RoadmapSubItem {
 }
 
 /// Load the roadmap state from a JSON file.
+///
+/// After loading, this function automatically calls `ensure_subitem_ids()` to
+/// generate IDs for any sub-items that don't have them. This ensures backward
+/// compatibility with older roadmap.json files.
 ///
 /// # Arguments
 ///
@@ -81,7 +88,13 @@ pub fn load_roadmap(path: &Path) -> Result<RoadmapState, StateError> {
         }
     })?;
 
-    serde_json::from_str(&content).map_err(|e| StateError::ParseError(e.to_string()))
+    let mut roadmap: RoadmapState =
+        serde_json::from_str(&content).map_err(|e| StateError::ParseError(e.to_string()))?;
+
+    // Auto-generate IDs for any sub-items that don't have them
+    roadmap.ensure_subitem_ids();
+
+    Ok(roadmap)
 }
 
 /// Save the roadmap state to a JSON file.
@@ -142,6 +155,81 @@ impl RoadmapState {
             })
             .sum()
     }
+
+    /// Ensure all sub-items have unique IDs.
+    ///
+    /// For any sub-item with `id: None`, generates an ID using the format
+    /// `"{item_id}.sub-{index}"` (e.g., "27.4.sub-0").
+    ///
+    /// This method is called automatically by `load_roadmap()` to ensure
+    /// backward compatibility with older roadmap.json files that don't have
+    /// sub-item IDs.
+    ///
+    /// # Returns
+    ///
+    /// Mutable reference to self for chaining.
+    pub fn ensure_subitem_ids(&mut self) -> &mut Self {
+        for phase in &mut self.phases {
+            for item in &mut phase.items {
+                for (index, sub_item) in item.sub_items.iter_mut().enumerate() {
+                    if sub_item.id.is_none() {
+                        sub_item.id = Some(format!("{}.sub-{}", item.id, index));
+                    }
+                }
+            }
+        }
+        self
+    }
+
+    /// Find a sub-item by its ID and return a mutable reference.
+    ///
+    /// Searches through all phases, items, and sub-items to find a sub-item
+    /// with the given ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `subitem_id` - The ID of the sub-item to find
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the sub-item if found, or `None` if not found.
+    pub fn find_subitem_by_id_mut(&mut self, subitem_id: &str) -> Option<&mut RoadmapSubItem> {
+        for phase in &mut self.phases {
+            for item in &mut phase.items {
+                for sub_item in &mut item.sub_items {
+                    if sub_item.id.as_deref() == Some(subitem_id) {
+                        return Some(sub_item);
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Find a sub-item by its ID and return an immutable reference.
+    ///
+    /// Searches through all phases, items, and sub-items to find a sub-item
+    /// with the given ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `subitem_id` - The ID of the sub-item to find
+    ///
+    /// # Returns
+    ///
+    /// An immutable reference to the sub-item if found, or `None` if not found.
+    pub fn find_subitem_by_id(&self, subitem_id: &str) -> Option<&RoadmapSubItem> {
+        for phase in &self.phases {
+            for item in &phase.items {
+                for sub_item in &item.sub_items {
+                    if sub_item.id.as_deref() == Some(subitem_id) {
+                        return Some(sub_item);
+                    }
+                }
+            }
+        }
+        None
+    }
 }
 
 #[cfg(test)]
@@ -166,10 +254,12 @@ mod tests {
                             completed: true,
                             sub_items: vec![
                                 RoadmapSubItem {
+                                    id: Some("item-1.sub-0".to_string()),
                                     name: "Sub-item A".to_string(),
                                     completed: true,
                                 },
                                 RoadmapSubItem {
+                                    id: Some("item-1.sub-1".to_string()),
                                     name: "Sub-item B".to_string(),
                                     completed: false,
                                 },
@@ -264,5 +354,188 @@ mod tests {
         assert!(json.contains("\"number\": \"1\""));
         assert!(json.contains("\"completed\": true"));
         assert!(json.contains("\"linked_task_ids\""));
+    }
+
+    #[test]
+    fn test_ensure_subitem_ids_generates_missing_ids() {
+        let mut roadmap = RoadmapState {
+            version: "1.0.0".to_string(),
+            title: "Test".to_string(),
+            phases: vec![RoadmapPhase {
+                id: "phase-1".to_string(),
+                number: "1".to_string(),
+                name: "Phase One".to_string(),
+                items: vec![RoadmapItem {
+                    id: "27.4".to_string(),
+                    name: "Item".to_string(),
+                    completed: false,
+                    sub_items: vec![
+                        RoadmapSubItem {
+                            id: None,
+                            name: "First sub".to_string(),
+                            completed: false,
+                        },
+                        RoadmapSubItem {
+                            id: None,
+                            name: "Second sub".to_string(),
+                            completed: false,
+                        },
+                    ],
+                    linked_task_ids: vec![],
+                }],
+            }],
+        };
+
+        roadmap.ensure_subitem_ids();
+
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[0].id,
+            Some("27.4.sub-0".to_string())
+        );
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[1].id,
+            Some("27.4.sub-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_ensure_subitem_ids_preserves_existing_ids() {
+        let mut roadmap = RoadmapState {
+            version: "1.0.0".to_string(),
+            title: "Test".to_string(),
+            phases: vec![RoadmapPhase {
+                id: "phase-1".to_string(),
+                number: "1".to_string(),
+                name: "Phase One".to_string(),
+                items: vec![RoadmapItem {
+                    id: "item-1".to_string(),
+                    name: "Item".to_string(),
+                    completed: false,
+                    sub_items: vec![
+                        RoadmapSubItem {
+                            id: Some("custom-id".to_string()),
+                            name: "First sub".to_string(),
+                            completed: false,
+                        },
+                        RoadmapSubItem {
+                            id: None,
+                            name: "Second sub".to_string(),
+                            completed: false,
+                        },
+                    ],
+                    linked_task_ids: vec![],
+                }],
+            }],
+        };
+
+        roadmap.ensure_subitem_ids();
+
+        // Existing ID should be preserved
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[0].id,
+            Some("custom-id".to_string())
+        );
+        // Missing ID should be generated
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[1].id,
+            Some("item-1.sub-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_ensure_subitem_ids_chaining() {
+        let mut roadmap = RoadmapState::new("Test".to_string());
+        // Should return &mut Self for chaining
+        let result = roadmap.ensure_subitem_ids();
+        assert_eq!(result.title, "Test");
+    }
+
+    #[test]
+    fn test_find_subitem_by_id_found() {
+        let roadmap = create_test_roadmap();
+        let sub_item = roadmap.find_subitem_by_id("item-1.sub-0");
+        assert!(sub_item.is_some());
+        assert_eq!(sub_item.unwrap().name, "Sub-item A");
+    }
+
+    #[test]
+    fn test_find_subitem_by_id_not_found() {
+        let roadmap = create_test_roadmap();
+        let sub_item = roadmap.find_subitem_by_id("nonexistent");
+        assert!(sub_item.is_none());
+    }
+
+    #[test]
+    fn test_find_subitem_by_id_mut_update() {
+        let mut roadmap = create_test_roadmap();
+
+        // Find and update the sub-item
+        if let Some(sub_item) = roadmap.find_subitem_by_id_mut("item-1.sub-1") {
+            sub_item.completed = true;
+        }
+
+        // Verify the update persisted
+        let sub_item = roadmap.find_subitem_by_id("item-1.sub-1");
+        assert!(sub_item.is_some());
+        assert!(sub_item.unwrap().completed);
+    }
+
+    #[test]
+    fn test_load_roadmap_auto_generates_subitem_ids() {
+        let mut file = NamedTempFile::new().unwrap();
+        // JSON without sub-item IDs (old format)
+        writeln!(file, r#"{{
+            "version": "1.0.0",
+            "title": "Test",
+            "phases": [{{
+                "id": "phase-1",
+                "number": "1",
+                "name": "Phase",
+                "items": [{{
+                    "id": "item-1",
+                    "name": "Item",
+                    "completed": false,
+                    "sub_items": [
+                        {{ "name": "Sub A", "completed": false }},
+                        {{ "name": "Sub B", "completed": true }}
+                    ]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let roadmap = load_roadmap(file.path()).unwrap();
+
+        // IDs should have been auto-generated
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[0].id,
+            Some("item-1.sub-0".to_string())
+        );
+        assert_eq!(
+            roadmap.phases[0].items[0].sub_items[1].id,
+            Some("item-1.sub-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_subitem_id_not_serialized_when_none() {
+        let sub_item = RoadmapSubItem {
+            id: None,
+            name: "Test".to_string(),
+            completed: false,
+        };
+        let json = serde_json::to_string(&sub_item).unwrap();
+        // ID field should not appear in output when None
+        assert!(!json.contains("\"id\""));
+    }
+
+    #[test]
+    fn test_subitem_id_serialized_when_present() {
+        let sub_item = RoadmapSubItem {
+            id: Some("test-id".to_string()),
+            name: "Test".to_string(),
+            completed: false,
+        };
+        let json = serde_json::to_string(&sub_item).unwrap();
+        assert!(json.contains("\"id\":\"test-id\""));
     }
 }

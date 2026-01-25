@@ -144,9 +144,36 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 5: Integration Planning
+## Step 5: Generate Phase Plan
 
-### Step 5.1: Entry Points
+**Using the information gathered, generate a detailed phase plan following the PLAN.md template.**
+
+Read the `.cm/agents/PLAN.md` template for the required format. The plan must include:
+
+1. **Objective** - What the phase accomplishes
+2. **Background** - Why this change is needed, current state, consequences
+3. **Implementation Steps** - Numbered list with file paths and line numbers where known
+4. **Files to Modify** - Each file with specific changes
+5. **Files to Create** - New files with their purpose
+6. **Key Decisions** - Architectural choices and rationale
+7. **Success Criteria** - Verifiable checkboxes
+8. **Verification** - Commands to verify implementation
+
+**Present the generated plan to the user:**
+
+> Here's the detailed implementation plan for this phase:
+>
+> [Generated plan content following PLAN.md template]
+>
+> Does this plan look correct? Would you like any modifications?
+
+Wait for the user's response before proceeding.
+
+---
+
+## Step 6: Integration Planning
+
+### Step 6.1: Entry Points
 
 **Ask the user:**
 
@@ -156,7 +183,7 @@ Wait for the user's response before proceeding.
 
 Wait for the user's response before proceeding.
 
-### Step 5.2: Dependencies
+### Step 6.2: Dependencies
 
 **Ask the user:**
 
@@ -166,7 +193,7 @@ Wait for the user's response before proceeding.
 
 Wait for the user's response before proceeding.
 
-### Step 5.3: Testing
+### Step 6.3: Testing
 
 **Ask the user:**
 
@@ -176,7 +203,7 @@ Wait for the user's response before proceeding.
 
 Wait for the user's response before proceeding.
 
-### Step 5.4: Documentation
+### Step 6.4: Documentation
 
 **Ask the user:**
 
@@ -188,7 +215,7 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 6: Phase Placement
+## Step 7: Phase Placement
 
 **Analyze existing phases in tasks.json and ask:**
 
@@ -208,7 +235,7 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 7: Confirmation
+## Step 8: Confirmation
 
 **Present a complete summary:**
 
@@ -239,7 +266,7 @@ Wait for explicit user confirmation before modifying files.
 
 ---
 
-## Step 8: Handoff to /end
+## Step 9: Handoff to /end
 
 After the user confirms the feature summary, inform them:
 
@@ -253,6 +280,24 @@ After the user confirms the feature summary, inform them:
 > After saving, run `cm run` when ready to start implementation.
 
 Do NOT modify any files. Wait for the user to run `/end`.
+
+---
+
+## Phase Template
+
+When creating a new phase, use this JSON template. The `plan` field contains the detailed implementation plan generated in Step 5.
+
+```json
+{
+  "id": "phase-X",
+  "name": "[Feature Name]",
+  "plan": "[Detailed plan generated following PLAN.md template - includes Objective, Background, Implementation Steps, Files to Modify, Files to Create, Key Decisions, Success Criteria, and Verification]",
+  "status": "pending",
+  "tasks": [
+    // Tasks go here (see templates below)
+  ]
+}
+```
 
 ---
 

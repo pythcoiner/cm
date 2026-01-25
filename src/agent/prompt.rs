@@ -538,6 +538,13 @@ impl PromptBuilder {
             tasks.len()
         ));
 
+        // Include phase plan if present
+        if !phase.plan.is_empty() {
+            prompt.push_str("### Phase Plan\n\n");
+            prompt.push_str(&phase.plan);
+            prompt.push_str("\n\n");
+        }
+
         // List all tasks with their instructions
         prompt.push_str("### Tasks to Implement\n\n");
         for (i, task) in tasks.iter().enumerate() {
@@ -632,6 +639,14 @@ impl PromptBuilder {
             phase.tasks.len()
         ));
 
+        // Include phase plan if present
+        if !phase.plan.is_empty() {
+            prompt.push_str("### Phase Plan\n\n");
+            prompt.push_str("This is the implementation plan the agent was given:\n\n");
+            prompt.push_str(&phase.plan);
+            prompt.push_str("\n\n");
+        }
+
         // List all tasks with their instructions for context
         prompt.push_str("### Tasks in This Phase\n\n");
         for (i, task) in phase.tasks.iter().enumerate() {
@@ -721,6 +736,14 @@ impl PromptBuilder {
             "This phase contains **{} tasks**. Fix all issues found in the review.\n\n",
             phase.tasks.len()
         ));
+
+        // Include phase plan if present
+        if !phase.plan.is_empty() {
+            prompt.push_str("### Phase Plan\n\n");
+            prompt.push_str("This is the original implementation plan for context:\n\n");
+            prompt.push_str(&phase.plan);
+            prompt.push_str("\n\n");
+        }
 
         // List all tasks with their instructions for context
         prompt.push_str("### Tasks in This Phase\n\n");

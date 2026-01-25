@@ -368,11 +368,11 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ## phase-30: Fix Roadmap Subitem Updates
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-30.fix-roadmap-subitem-id**: Fix: Roadmap subitems not updated (missing ID field) - Fix roadmap subitem update bug by adding ID field to RoadmapSubItem:
+- [x] **phase-30.fix-roadmap-subitem-id**: Fix: Roadmap subitems not updated (missing ID field) - Fix roadmap subitem update bug by adding ID field to RoadmapSubItem:
 
 ---
 
@@ -412,5 +412,5 @@ This document shows phase plans and task status. Generated from tasks.json.
 | phase-27: Per-Phase TRACE Logging | Complete | 6 | 6 |
 | phase-28: FIX Cycle Retry & Resume | Complete | 1 | 1 |
 | phase-29: Per-Phase Agent Spawning | Complete | 1 | 1 |
-| phase-30: Fix Roadmap Subitem Updates | Pending | 1 | 0 |
-| **Total** | | **77** | **76** |
+| phase-30: Fix Roadmap Subitem Updates | Complete | 1 | 1 |
+| **Total** | | **77** | **77** |
