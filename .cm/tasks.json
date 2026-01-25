@@ -324,13 +324,13 @@
       "id": "phase-32",
       "name": "Add Phase Selection by Number",
       "plan": "",
-      "status": "in_progress",
+      "status": "pending",
       "tasks": [
         {
           "id": "phase-32.feat-phase-select.impl-1",
           "name": "Add [p]hase <#...> option to run specific phases by number",
           "type": "implement",
-          "status": "deferred",
+          "status": "pending",
           "depends_on": [
             "phase-31.feat-gitignore.impl-1"
           ],
