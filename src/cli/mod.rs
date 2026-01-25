@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use log::{debug, info, warn};
 use thiserror::Error;
 
@@ -29,6 +29,15 @@ pub enum Command {
         #[arg(long)]
         force: bool,
     },
+}
+
+/// Model choice for Claude agent spawning.
+#[derive(Debug, Clone, Copy, ValueEnum, PartialEq, Eq)]
+pub enum ModelChoice {
+    /// Claude Sonnet 4.5 (alias for latest sonnet model)
+    Sonnet,
+    /// Claude Opus 4.5 (alias for latest opus model)
+    Opus,
 }
 
 /// Errors that can occur during CLI execution.
@@ -119,9 +128,9 @@ pub struct Cli {
     #[arg(long, value_name = "FILE", default_value = ".cm/tasks.json")]
     pub state: PathBuf,
 
-    /// Claude model to use.
-    #[arg(long, value_name = "MODEL")]
-    pub model: Option<String>,
+    /// Claude model to use (sonnet or opus).
+    #[arg(long, value_enum)]
+    pub model: Option<ModelChoice>,
 
     /// Maximum cycles per task before deferring.
     #[arg(long, value_name = "N")]
@@ -270,8 +279,12 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     }
 
     // 4. Apply CLI overrides (highest precedence)
-    if let Some(ref model) = cli.model {
-        config = config.model(model.clone());
+    if let Some(model_choice) = cli.model {
+        let model_str = match model_choice {
+            ModelChoice::Sonnet => "sonnet",
+            ModelChoice::Opus => "opus",
+        };
+        config = config.model(model_str.to_string());
     }
     if let Some(max_cycles) = cli.max_cycles {
         config = config.max_cycles(max_cycles);
@@ -1143,9 +1156,15 @@ mod tests {
     }
 
     #[test]
-    fn test_cli_parse_model() {
-        let cli = Cli::parse_from(["cm", "--model", "claude-opus-4-5-20251101"]);
-        assert_eq!(cli.model, Some("claude-opus-4-5-20251101".to_string()));
+    fn test_cli_parse_model_sonnet() {
+        let cli = Cli::parse_from(["cm", "--model", "sonnet"]);
+        assert_eq!(cli.model, Some(ModelChoice::Sonnet));
+    }
+
+    #[test]
+    fn test_cli_parse_model_opus() {
+        let cli = Cli::parse_from(["cm", "--model", "opus"]);
+        assert_eq!(cli.model, Some(ModelChoice::Opus));
     }
 
     #[test]
@@ -1172,7 +1191,7 @@ mod tests {
             "cm",
             "--config", "/path/to/config.toml",
             "--state", "/path/to/tasks.json",
-            "--model", "claude-opus-4-5-20251101",
+            "--model", "opus",
             "--max-cycles", "10",
             "--log-path", "/tmp/LOG.md",
             "--working-dir", "/home/user/project",
@@ -1181,7 +1200,7 @@ mod tests {
 
         assert_eq!(cli.config, Some(PathBuf::from("/path/to/config.toml")));
         assert_eq!(cli.state, PathBuf::from("/path/to/tasks.json"));
-        assert_eq!(cli.model, Some("claude-opus-4-5-20251101".to_string()));
+        assert_eq!(cli.model, Some(ModelChoice::Opus));
         assert_eq!(cli.max_cycles, Some(10));
         assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
         assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
@@ -1194,7 +1213,7 @@ mod tests {
         let config = build_manager_config(&cli).unwrap();
 
         assert_eq!(config.state_path, PathBuf::from("/tmp/tasks.json"));
-        assert_eq!(config.model, "claude-sonnet-4-5-20250929");
+        assert_eq!(config.model, "sonnet");
         assert_eq!(config.max_cycles, 5);
     }
 
@@ -1203,14 +1222,14 @@ mod tests {
         let cli = Cli::parse_from([
             "cm",
             "--state", "/tmp/tasks.json",
-            "--model", "claude-opus-4-5-20251101",
+            "--model", "opus",
             "--max-cycles", "10",
             "--log-path", "/custom/LOG.md",
             "--working-dir", "/custom/dir",
         ]);
         let config = build_manager_config(&cli).unwrap();
 
-        assert_eq!(config.model, "claude-opus-4-5-20251101");
+        assert_eq!(config.model, "opus");
         assert_eq!(config.max_cycles, 10);
         assert_eq!(config.log_path, PathBuf::from("/custom/LOG.md"));
         assert_eq!(config.working_dir, PathBuf::from("/custom/dir"));

@@ -551,22 +551,22 @@
         {
           "id": "phase-37-item-1",
           "name": "Add range-based phase selection (e.g., p 3-6)",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-37-item-1.sub-0",
               "name": "Modify parsing in prompt_task_selection() to handle ranges",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-37-item-1.sub-1",
               "name": "Use flat_map to expand ranges like 3-6 into phase-3, phase-4, phase-5, phase-6",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-37-item-1.sub-2",
               "name": "Support mixed input like p 1 3-5 8",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

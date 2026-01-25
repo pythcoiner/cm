@@ -123,7 +123,7 @@ impl ManagerConfig {
             roadmap_path: parent.join("roadmap.json"),
             roadmap_md_path: parent.join("ROADMAP.md"),
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-            model: "claude-sonnet-4-5-20250929".to_string(),
+            model: "sonnet".to_string(),
             max_cycles: 5,
         }
     }

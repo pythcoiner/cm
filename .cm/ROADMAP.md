@@ -279,12 +279,12 @@ Status: **Complete** (1/1)
 
 ## Phase 37: Add Phase Range Selection
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add range-based phase selection (e.g., p 3-6)
-  - [ ] Modify parsing in prompt_task_selection() to handle ranges
-  - [ ] Use flat_map to expand ranges like 3-6 into phase-3, phase-4, phase-5, phase-6
-  - [ ] Support mixed input like p 1 3-5 8
+- [x] Add range-based phase selection (e.g., p 3-6)
+  - [x] Modify parsing in prompt_task_selection() to handle ranges
+  - [x] Use flat_map to expand ranges like 3-6 into phase-3, phase-4, phase-5, phase-6
+  - [x] Support mixed input like p 1 3-5 8
 
 ---
 
@@ -335,6 +335,6 @@ Status: **Not Started** (0/1)
 | Phase 34: Add /split Command + Extend /end | Complete | 8/8 |
 | Phase 35: Remove TUI Module | Complete | 7/7 |
 | Phase 36: Remove Unused MANAGER.md | Complete | 6/6 |
-| Phase 37: Add Phase Range Selection | Not Started | 0/4 |
+| Phase 37: Add Phase Range Selection | Complete | 4/4 |
 | Phase 38: Add Model Selection Flag | Not Started | 0/5 |
-| **Total** | | **58/67** |
+| **Total** | | **62/67** |
