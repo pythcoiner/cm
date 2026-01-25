@@ -8,6 +8,35 @@ You MUST follow this wizard flow step by step. Do NOT skip steps or generate fil
 
 ---
 
+## Step 0: Prerequisites Check
+
+Before starting the wizard, verify that `cm init` has been run:
+
+1. Check if `.claude/commands/cm.md` exists (you're reading this, so it does)
+2. Check if `.cm/agents/` directory exists with template files
+
+If `.cm/agents/` is missing or incomplete, inform the user:
+
+> **Prerequisites not met.**
+>
+> Please run `cm init` in your terminal first to set up the required files:
+>
+> ```bash
+> cm init
+> ```
+>
+> This will create:
+> - `.claude/commands/` - Claude Code command files
+> - `.cm/agents/` - Agent template files
+>
+> After running `cm init`, return here and run `/cm` again.
+
+Wait for user confirmation that they've run `cm init` before proceeding.
+
+If prerequisites are met, proceed to Step 1.
+
+---
+
 ## Step 1: Project Definition
 
 ### Step 1.1: Project Name
