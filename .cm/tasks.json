@@ -2521,7 +2521,8 @@
           },
           "instructions": "Add TRACE log level to FileLogger:\n\n1. Add `Trace` variant to `LogLevel` enum (before Debug):\n   ```rust\n   pub enum LogLevel {\n       /// Full trace logging (prompts, responses, all details).\n       Trace,\n       Debug,\n       Info,\n       Warn,\n       Error,\n   }\n   ```\n\n2. Update `Display` impl to handle `Trace => \"TRACE\"`\n\n3. Add `trace()` convenience method to `FileLogger`\n\n4. Update test `test_log_level_ordering` to verify `Trace < Debug`\n\n5. Update test `test_log_level_display` to verify `Trace` displays as \"TRACE\"\n\n6. Ensure `cargo build` and `cargo clippy` pass",
           "attempts": [],
-          "roadmap_item_id": "27.1"
+          "roadmap_item_id": "27.1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-27.task-2",
@@ -2540,7 +2541,8 @@
           },
           "instructions": "Create PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass",
           "attempts": [],
-          "roadmap_item_id": "27.2"
+          "roadmap_item_id": "27.2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-27.task-3",
