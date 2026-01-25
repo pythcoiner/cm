@@ -2841,3 +2841,99 @@ Update assets/cm.md to generate agent template files:
 **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
 
+[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
+
+### Agent Spawn
+
+**Type:** Implem
+**Task:** phase-21.task-1
+
+<details>
+<summary>Prompt</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create default template assets and update cm init
+
+### Instructions
+
+Create default template files and update cm init to install them:
+
+1. Create assets/templates/ directory with 5 files:
+   - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
+   - IMPLEMENTER.md - Generic implementer agent instructions
+   - REVIEWER.md - Generic reviewer agent instructions
+   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)
+   - ACTIONS.md - Generic build/test actions template (empty command sections)
+
+2. Update src/command.rs to add 5 new constants:
+   - MANAGER_TEMPLATE, IMPLEMENTER_TEMPLATE, REVIEWER_TEMPLATE
+   - STRUCTURE_TEMPLATE, ACTIONS_TEMPLATE
+
+3. Update src/cli/init.rs:
+   - Add TemplateFile struct with path and content fields
+   - Add TEMPLATES constant array
+   - Create .cm/ and .cm/agents/ directories
+   - Write template files (respect --force flag)
+   - Add tests for template creation
+
+4. Templates must work as-is with no placeholders - no default commands
+
+### Files to Read for Context
+
+Read the following files to understand the existing codebase:
+
+- src/cli/init.rs
+- src/command.rs
+
+### Output Format
+
+When you are done, you MUST end your response with a JSON code block in this exact format.
+
+If you successfully completed the task:
+```json
+{
+  "status": "success",
+  "summary": "Brief description of what you did",
+  "files_created": ["list", "of", "new", "files"],
+  "files_modified": ["list", "of", "modified", "files"]
+}
+```
+
+If you could NOT complete the task:
+```json
+{
+  "status": "failed",
+  "error": "Detailed explanation of why you could not complete the task"
+}
+```
+
+```
+
+</details>
+
+[2026-01-25 06:27:16 UTC] **AGENT_COMPLETE**
+
+### Agent Response
+
+**Files Created:**
+- `assets/templates/MANAGER.md`
+- `assets/templates/IMPLEMENTER.md`
+- `assets/templates/REVIEWER.md`
+- `assets/templates/STRUCTURE.md`
+- `assets/templates/ACTIONS.md`
+
+**Files Modified:**
+- `src/command.rs`
+- `src/cli/init.rs`
+
+<details>
+<summary>Raw Response</summary>
+
+```
+Created 5 template files in assets/templates/ and updated cm init to install them to .cm/agents/ directory with proper --force flag support and comprehensive tests
+```
+
+</details>
+

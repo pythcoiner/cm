@@ -8,13 +8,24 @@ use std::path::Path;
 use log::info;
 
 use super::CliError;
-use crate::command::{CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND};
+use crate::command::{
+    ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, IMPLEMENTER_TEMPLATE,
+    MANAGER_TEMPLATE, REVIEWER_TEMPLATE, STRUCTURE_TEMPLATE,
+};
 
 /// Command file definition.
 struct CommandFile {
     /// Filename without .md extension (e.g., "cm" for .claude/commands/cm.md)
     name: &'static str,
     /// Content of the command file
+    content: &'static str,
+}
+
+/// Template file definition.
+struct TemplateFile {
+    /// Relative path from .cm/ directory (e.g., "agents/MANAGER.md")
+    path: &'static str,
+    /// Content of the template file
     content: &'static str,
 }
 
@@ -35,6 +46,30 @@ const COMMANDS: &[CommandFile] = &[
     CommandFile {
         name: "end",
         content: END_COMMAND,
+    },
+];
+
+/// All template files to write.
+const TEMPLATES: &[TemplateFile] = &[
+    TemplateFile {
+        path: "agents/MANAGER.md",
+        content: MANAGER_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/IMPLEMENTER.md",
+        content: IMPLEMENTER_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/REVIEWER.md",
+        content: REVIEWER_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/STRUCTURE.md",
+        content: STRUCTURE_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/ACTIONS.md",
+        content: ACTIONS_TEMPLATE,
     },
 ];
 
@@ -59,11 +94,16 @@ pub fn execute_init(force: bool) -> Result<(), CliError> {
 /// used for testing.
 fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     let commands_dir = base_dir.join(".claude/commands");
+    let cm_dir = base_dir.join(".cm");
 
-    // Create the directory if it doesn't exist
+    // Create the directories if they don't exist
     if !commands_dir.exists() {
         info!("Creating directory: {:?}", commands_dir);
         fs::create_dir_all(&commands_dir)?;
+    }
+    if !cm_dir.exists() {
+        info!("Creating directory: {:?}", cm_dir);
+        fs::create_dir_all(&cm_dir)?;
     }
 
     // Write each command file
@@ -80,6 +120,31 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
 
         info!("Writing command file: {:?}", file_path);
         fs::write(&file_path, command.content)?;
+        println!("Created {}", file_path.display());
+    }
+
+    // Write each template file
+    for template in TEMPLATES {
+        let file_path = cm_dir.join(template.path);
+
+        // Create parent directory if needed
+        if let Some(parent) = file_path.parent() {
+            if !parent.exists() {
+                info!("Creating directory: {:?}", parent);
+                fs::create_dir_all(parent)?;
+            }
+        }
+
+        if file_path.exists() && !force {
+            println!(
+                "Skipping {} (already exists, use --force to overwrite)",
+                template.path
+            );
+            continue;
+        }
+
+        info!("Writing template file: {:?}", file_path);
+        fs::write(&file_path, template.content)?;
         println!("Created {}", file_path.display());
     }
 
@@ -288,5 +353,97 @@ mod tests {
 
         // Should succeed without error
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_execute_init_creates_cm_directory() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let cm_dir = tmp.path().join(".cm");
+        assert!(cm_dir.exists());
+        assert!(cm_dir.is_dir());
+    }
+
+    #[test]
+    fn test_execute_init_creates_agents_directory() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let agents_dir = tmp.path().join(".cm/agents");
+        assert!(agents_dir.exists());
+        assert!(agents_dir.is_dir());
+    }
+
+    #[test]
+    fn test_execute_init_creates_all_template_files() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let cm_dir = tmp.path().join(".cm");
+
+        for template in TEMPLATES {
+            let file_path = cm_dir.join(template.path);
+            assert!(
+                file_path.exists(),
+                "Expected {} to exist",
+                template.path
+            );
+            let content = fs::read_to_string(&file_path).unwrap();
+            assert_eq!(content, template.content);
+        }
+    }
+
+    #[test]
+    fn test_execute_init_skips_existing_templates_without_force() {
+        let tmp = TempDir::new().unwrap();
+
+        // Create directory and a template file with different content
+        let agents_dir = tmp.path().join(".cm/agents");
+        fs::create_dir_all(&agents_dir).unwrap();
+        let manager_path = agents_dir.join("MANAGER.md");
+        let original_content = "original manager content";
+        fs::write(&manager_path, original_content).unwrap();
+
+        // Run init without force
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        // Check that MANAGER.md was not overwritten
+        let content = fs::read_to_string(&manager_path).unwrap();
+        assert_eq!(content, original_content);
+    }
+
+    #[test]
+    fn test_execute_init_overwrites_templates_with_force() {
+        let tmp = TempDir::new().unwrap();
+
+        // Create directory and a template file with different content
+        let agents_dir = tmp.path().join(".cm/agents");
+        fs::create_dir_all(&agents_dir).unwrap();
+        let manager_path = agents_dir.join("MANAGER.md");
+        fs::write(&manager_path, "original content").unwrap();
+
+        // Run init with force
+        execute_init_in_dir(tmp.path(), true).unwrap();
+
+        // Check that MANAGER.md was overwritten
+        let content = fs::read_to_string(&manager_path).unwrap();
+        assert_eq!(content, MANAGER_TEMPLATE);
+    }
+
+    #[test]
+    fn test_execute_init_creates_both_commands_and_templates() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        // Verify commands exist
+        let commands_dir = tmp.path().join(".claude/commands");
+        assert!(commands_dir.join("cm.md").exists());
+        assert!(commands_dir.join("feat.md").exists());
+
+        // Verify templates exist
+        let cm_dir = tmp.path().join(".cm");
+        assert!(cm_dir.join("agents/MANAGER.md").exists());
+        assert!(cm_dir.join("agents/IMPLEMENTER.md").exists());
     }
 }
