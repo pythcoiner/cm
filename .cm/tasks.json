@@ -2477,7 +2477,7 @@
           "id": "phase-27.task-2",
           "name": "Create PhaseLogger struct",
           "type": "implement",
-          "status": "in_progress",
+          "status": "pending",
           "depends_on": [
             "phase-27.task-1"
           ],
