@@ -1,12 +1,15 @@
 ---
 name: feat
-description: Interactive wizard for adding new features to an existing cm project (project)
+description: Interactive wizard for adding new features to an existing cm project
+(project)
 user-invocable: true
 ---
 
 # Feature Wizard
 
-This skill guides users through adding a new feature to an existing cm (Claude Code Manager) project. The wizard collects feature requirements through a conversational flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
+This skill guides users through adding a new feature to an existing cm (Claude Code
+Manager) project. The wizard collects feature requirements through a conversational
+flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
 
 ## Prerequisites
 
@@ -29,11 +32,13 @@ This skill does NOT:
 - Run `cm run` or execute tasks
 - Make changes outside `.cm/` directory
 
-After the wizard completes, the user must manually run `cm run` to start implementation.
+After the wizard completes, the user must manually run `cm run` to start
+implementation.
 
 ## Important: Interactive Flow
 
-You MUST follow this wizard flow step by step. Do NOT skip steps or modify files until you have gathered all the required information and received user confirmation.
+You MUST follow this wizard flow step by step. Do NOT skip steps or modify files
+until you have gathered all the required information and received user confirmation.
 
 ---
 
@@ -249,7 +254,8 @@ Once confirmed, update all three files:
 
 ### 8.1 Update PLAN.md
 
-Add a new section for the feature under the appropriate module or create a new module section:
+Add a new section for the feature under the appropriate module or create a new
+module section:
 
 ```markdown
 ### [Feature Name]
@@ -310,7 +316,8 @@ After updating the JSON files, regenerate the markdown documentation:
 cm --regenerate
 ```
 
-This ensures ROADMAP.md and LOG.md stay in sync with the JSON source files (roadmap.json, tasks.json).
+This ensures ROADMAP.md and LOG.md stay in sync with the JSON source files
+(roadmap.json, tasks.json).
 
 ---
 
@@ -376,7 +383,10 @@ After updating all files, inform the user:
     "files_to_read": [],
     "code_style_excerpt": null
   },
-  "instructions": "Implement [component] for [feature]:\n\n1. Create [file path]\n2. Implement [function/struct] that:\n   - [Requirement 1]\n   - [Requirement 2]\n3. Add error handling for:\n   - [Error case 1]\n   - [Error case 2]\n4. Ensure `cargo build` and `cargo clippy` pass"
+  "instructions": "Implement [component] for [feature]:\n\n1. Create [file path]\n2.
+Implement [function/struct] that:\n   - [Requirement 1]\n   - [Requirement 2]\n3.
+Add error handling for:\n   - [Error case 1]\n   - [Error case 2]\n4. Ensure `cargo
+build` and `cargo clippy` pass"
 }
 ```
 
@@ -392,7 +402,9 @@ After updating all files, inform the user:
   "context": {
     "files_to_read": ["src/component.rs"]
   },
-  "instructions": "Add tests for [component]:\n\n1. Add unit tests in [file]:\n   - Test [scenario 1]\n   - Test [scenario 2]\n   - Test error handling for [case]\n2. Add integration tests if needed\n3. Ensure `cargo test` passes with all new tests"
+  "instructions": "Add tests for [component]:\n\n1. Add unit tests in [file]:\n   -
+Test [scenario 1]\n   - Test [scenario 2]\n   - Test error handling for [case]\n2.
+Add integration tests if needed\n3. Ensure `cargo test` passes with all new tests"
 }
 ```
 
@@ -408,7 +420,9 @@ After updating all files, inform the user:
   "context": {
     "files_to_read": ["src/feature/"]
   },
-  "instructions": "Review [feature] implementation:\n\n1. Check code quality and style consistency\n2. Verify all requirements are met\n3. Check error handling completeness\n4. Review test coverage\n5. Document any issues found for fixing"
+  "instructions": "Review [feature] implementation:\n\n1. Check code quality and
+style consistency\n2. Verify all requirements are met\n3. Check error handling
+completeness\n4. Review test coverage\n5. Document any issues found for fixing"
 }
 ```
 
@@ -431,13 +445,16 @@ After updating all files, inform the user:
 If the wizard encounters issues:
 
 ### Missing Prerequisites
-> I couldn't find `.cm/tasks.json`. Please run `/cm` first to initialize the project, then try `/feat` again.
+> I couldn't find `.cm/tasks.json`. Please run `/cm` first to initialize the
+project, then try `/feat` again.
 
 ### Invalid tasks.json
-> The tasks.json file appears to be invalid. Please run `cm --validate` to check for errors.
+> The tasks.json file appears to be invalid. Please run `cm --validate` to check for
+errors.
 
 ### Conflicting Task IDs
 > Task ID "[id]" already exists. I'll use "[new-id]" instead.
 
 ### Phase Not Found
-> Phase "[phase-id]" not found. Available phases: [list phases]. Which phase should I use?
+> Phase "[phase-id]" not found. Available phases: [list phases]. Which phase should
+I use?

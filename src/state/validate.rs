@@ -117,6 +117,10 @@ impl ValidationResult {
 /// - Each task has: id, name, type, status, context, instructions
 /// - No duplicate phase IDs
 /// - No duplicate task IDs within phases
+/// - Each attempt has: attempt_number, agent_id, started_at, status
+/// - Each attempt response has: message (or legacy raw_response)
+/// - Each agent_history entry has: id, task_id, agent_type, started_at
+/// - Each log_record entry has: id, timestamp, action, data
 ///
 /// # Arguments
 ///
@@ -252,6 +256,82 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
                         id: id.to_string(),
                     });
                 }
+            }
+
+            // Validate attempts array if present
+            if let Some(Value::Array(attempts)) = task.get("attempts") {
+                for (attempt_idx, attempt) in attempts.iter().enumerate() {
+                    let attempt_context = format!(
+                        "{} (phases[{}].tasks[{}].attempts[{}])",
+                        file_name, phase_idx, task_idx, attempt_idx
+                    );
+
+                    check_required_field(attempt, "attempt_number", &attempt_context, &mut result);
+                    check_required_field(attempt, "agent_id", &attempt_context, &mut result);
+                    check_required_field(attempt, "started_at", &attempt_context, &mut result);
+                    check_required_field(attempt, "status", &attempt_context, &mut result);
+
+                    // Validate response if present and non-null
+                    if let Some(response) = attempt.get("response") {
+                        if !response.is_null() {
+                            let resp_context = format!("{} (response)", attempt_context);
+                            // Accept either "message" or legacy "raw_response"
+                            if response.get("message").is_none()
+                                && response.get("raw_response").is_none()
+                            {
+                                result.add_error(SanityError::SchemaError {
+                                    file: resp_context,
+                                    field: "message".to_string(),
+                                    message: "required field is missing (also checked legacy 'raw_response')".to_string(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Validate agent_history if present
+    if let Some(agent_history) = json.get("agent_history") {
+        match agent_history {
+            Value::Array(entries) => {
+                for (idx, entry) in entries.iter().enumerate() {
+                    let ctx = format!("{} (agent_history[{}])", file_name, idx);
+                    check_required_field(entry, "id", &ctx, &mut result);
+                    check_required_field(entry, "task_id", &ctx, &mut result);
+                    check_required_field(entry, "agent_type", &ctx, &mut result);
+                    check_required_field(entry, "started_at", &ctx, &mut result);
+                }
+            }
+            _ => {
+                result.add_error(SanityError::SchemaError {
+                    file: file_name.clone(),
+                    field: "agent_history".to_string(),
+                    message: "must be an array".to_string(),
+                });
+            }
+        }
+    }
+
+    // Validate log_records if present
+    if let Some(log_records) = json.get("log_records") {
+        match log_records {
+            Value::Array(entries) => {
+                for (idx, entry) in entries.iter().enumerate() {
+                    let ctx = format!("{} (log_records[{}])", file_name, idx);
+                    check_required_field(entry, "id", &ctx, &mut result);
+                    check_required_field(entry, "timestamp", &ctx, &mut result);
+                    check_required_field(entry, "action", &ctx, &mut result);
+                    check_required_field(entry, "data", &ctx, &mut result);
+                }
+            }
+            _ => {
+                result.add_error(SanityError::SchemaError {
+                    file: file_name.clone(),
+                    field: "log_records".to_string(),
+                    message: "must be an array".to_string(),
+                });
             }
         }
     }
@@ -1050,5 +1130,244 @@ mod tests {
 
         assert!(!result.is_valid());
         assert!(matches!(&result.errors[0], SanityError::JsonSyntaxError { message, .. } if message.contains("Failed to read")));
+    }
+
+    #[test]
+    fn test_valid_task_with_attempts() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [{{
+                "id": "phase-1",
+                "name": "Phase",
+                "status": "pending",
+                "tasks": [{{
+                    "id": "task-1",
+                    "name": "Task",
+                    "type": "implement",
+                    "status": "completed",
+                    "context": {{}},
+                    "instructions": "Do it",
+                    "attempts": [{{
+                        "attempt_number": 1,
+                        "agent_id": "agent-1",
+                        "started_at": "2026-01-24T14:07:20Z",
+                        "status": "success",
+                        "response": {{
+                            "message": "Done"
+                        }}
+                    }}]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_attempt_missing_required_field() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [{{
+                "id": "phase-1",
+                "name": "Phase",
+                "status": "pending",
+                "tasks": [{{
+                    "id": "task-1",
+                    "name": "Task",
+                    "type": "implement",
+                    "status": "completed",
+                    "context": {{}},
+                    "instructions": "Do it",
+                    "attempts": [{{
+                        "attempt_number": 1,
+                        "started_at": "2026-01-24T14:07:20Z",
+                        "status": "success"
+                    }}]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(!result.is_valid());
+        let has_agent_id_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "agent_id")
+        });
+        assert!(has_agent_id_error, "Expected error for missing 'agent_id', got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_response_missing_message() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [{{
+                "id": "phase-1",
+                "name": "Phase",
+                "status": "pending",
+                "tasks": [{{
+                    "id": "task-1",
+                    "name": "Task",
+                    "type": "implement",
+                    "status": "completed",
+                    "context": {{}},
+                    "instructions": "Do it",
+                    "attempts": [{{
+                        "attempt_number": 1,
+                        "agent_id": "agent-1",
+                        "started_at": "2026-01-24T14:07:20Z",
+                        "status": "success",
+                        "response": {{
+                            "files_created": []
+                        }}
+                    }}]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(!result.is_valid());
+        let has_message_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "message")
+        });
+        assert!(has_message_error, "Expected error for missing 'message', got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_response_with_legacy_raw_response() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [{{
+                "id": "phase-1",
+                "name": "Phase",
+                "status": "pending",
+                "tasks": [{{
+                    "id": "task-1",
+                    "name": "Task",
+                    "type": "implement",
+                    "status": "completed",
+                    "context": {{}},
+                    "instructions": "Do it",
+                    "attempts": [{{
+                        "attempt_number": 1,
+                        "agent_id": "agent-1",
+                        "started_at": "2026-01-24T14:07:20Z",
+                        "status": "success",
+                        "response": {{
+                            "raw_response": "Done via legacy field"
+                        }}
+                    }}]
+                }}]
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(result.is_valid(), "Legacy raw_response should be accepted, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_agent_history_validation() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [],
+            "agent_history": [{{
+                "id": "inv-1",
+                "task_id": "task-1",
+                "agent_type": "implem",
+                "started_at": "2026-01-24T14:07:20Z"
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_agent_history_missing_field() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [],
+            "agent_history": [{{
+                "id": "inv-1",
+                "started_at": "2026-01-24T14:07:20Z"
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(!result.is_valid());
+        let has_task_id_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "task_id")
+        });
+        assert!(has_task_id_error, "Expected error for missing 'task_id', got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_log_records_validation() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [],
+            "log_records": [{{
+                "id": "rec-1",
+                "timestamp": "2026-01-24T14:07:20Z",
+                "action": "phase_start",
+                "data": {{ "type": "phase_start", "name": "Phase 1" }}
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_log_records_missing_field() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [],
+            "log_records": [{{
+                "id": "rec-1",
+                "action": "phase_start"
+            }}]
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(!result.is_valid());
+        let has_timestamp_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, .. } if field == "timestamp")
+        });
+        assert!(has_timestamp_error, "Expected error for missing 'timestamp', got: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_agent_history_not_array() {
+        let mut file = NamedTempFile::new().unwrap();
+        write!(file, r#"{{
+            "version": "1.0.0",
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [],
+            "agent_history": "not an array"
+        }}"#).unwrap();
+
+        let result = validate_tasks_json(file.path());
+        assert!(!result.is_valid());
+        let has_type_error = result.errors.iter().any(|e| {
+            matches!(e, SanityError::SchemaError { field, message, .. }
+                if field == "agent_history" && message == "must be an array")
+        });
+        assert!(has_type_error, "Expected 'must be an array' error, got: {:?}", result.errors);
     }
 }

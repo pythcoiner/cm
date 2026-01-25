@@ -115,6 +115,7 @@ impl AgentSpawner {
                 "json",
                 "--model",
                 &model_owned,
+                "--dangerously-skip-permissions",
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -174,6 +175,7 @@ impl AgentSpawner {
                 &prompt_owned,
                 "--output-format",
                 "json",
+                "--dangerously-skip-permissions",
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

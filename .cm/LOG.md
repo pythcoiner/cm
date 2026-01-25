@@ -37,130 +37,1808 @@ Create src/state/validate.rs with comprehensive validation:
 
 **Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
+
+[2026-01-24 13:13:47 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 13:17:57 UTC] **ERROR**
+
+**Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: invalid type: map, expected a string at line 1 column 1
+
+
+[2026-01-24 13:43:30 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 13:43:39 UTC] **ERROR**
+
+**Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
+
+
+[2026-01-24 13:43:53 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 13:47:06 UTC] **ERROR**
+
+**Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: invalid type: map, expected a string at line 1 column 1
+
+
+[2026-01-24 13:53:44 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:00:23 UTC] **ERROR**
+
+**Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: invalid type: map, expected a string at line 1 column 1
+
+
+[2026-01-24 14:01:03 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:05:37 UTC] **ERROR**
+
+**Error:** Task phase-16.task-1 failed: agent error: failed to parse response: failed to parse streaming output: invalid type: sequence, expected a string at line 1 column 1317
+
+
+[2026-01-24 14:07:20 UTC] **AGENT_SPAWN** | Task: phase-16.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create src/state/validate.rs
+
+### Instructions
+
+Create src/state/validate.rs with comprehensive validation:
+
+1. Create SanityError enum with thiserror:
+   - JsonSyntaxError(String) - invalid JSON
+   - SchemaError { file: String, field: String, message: String } - missing/invalid fields
+   - DuplicateId { file: String, id: String } - duplicate IDs
+   - InvalidReference { source_file: String, source_id: String, tar
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:11:38 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:11:38 UTC] **TASK_COMPLETE** | Task: phase-16.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:11:38 UTC] **AGENT_SPAWN** | Task: phase-16.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add --sanity-check flag to CLI
+
+### Instructions
+
+Add --sanity-check CLI flag:
+
+1. Add to Cli struct:
+   ```rust
+   /// Validate tasks.json and roadmap.json for errors
+   #[arg(long)]
+   pub sanity_check: bool,
+   ```
+
+2. Implement execute_sanity_check(state_path: &Path) -> Result<(), CliError>:
+   - Derive cm_dir from state_path parent
+   - Call sanity_check(cm_dir)
+   - Display results with colors:
+     - Green
+
+... [truncated, 758 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:13:21 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:13:21 UTC] **TASK_COMPLETE** | Task: phase-16.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:13:21 UTC] **AGENT_SPAWN** | Task: phase-16.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/cm.md skill workflow
+
+### Instructions
+
+Update assets/cm.md to add post-generation workflow:
+
+1. After Step 6 (Generate Artifacts), add:
+
+## Step 7: Validate Generated Files
+
+After generating files, run sanity check:
+
+```bash
+cm --sanity-check --state .cm/tasks.json
+```
+
+If validation fails:
+- Review the errors reported
+- Fix the issues in the generated JSON files
+- Re-run sanity check
+- Repeat unti
+
+... [truncated, 1156 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:14:43 UTC] **ERROR**
+
+**Error:** Task phase-16.task-3 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
+
+
+[2026-01-24 14:15:07 UTC] **AGENT_SPAWN** | Task: phase-16.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/cm.md skill workflow
+
+### Instructions
+
+Update assets/cm.md to add post-generation workflow:
+
+1. After Step 6 (Generate Artifacts), add:
+
+## Step 7: Validate Generated Files
+
+After generating files, run sanity check:
+
+```bash
+cm --sanity-check --state .cm/tasks.json
+```
+
+If validation fails:
+- Review the errors reported
+- Fix the issues in the generated JSON files
+- Re-run sanity check
+- Repeat unti
+
+... [truncated, 1156 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:16:25 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:16:25 UTC] **TASK_COMPLETE** | Task: phase-16.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:16:25 UTC] **AGENT_SPAWN** | Task: phase-16.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add unit tests for validation
+
+### Instructions
+
+Add unit tests for validation module:
+
+1. In src/state/validate.rs, add #[cfg(test)] mod tests { ... }
+
+2. Test valid files pass:
+   - Create valid tasks.json and roadmap.json in temp dir
+   - Call sanity_check()
+   - Assert no errors
+
+3. Test invalid JSON syntax:
+   - Write malformed JSON to file
+   - Call validate_tasks_json()
+   - Assert JsonSyntaxError
+
+4. Test
+
+... [truncated, 1097 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:17:12 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:17:12 UTC] **TASK_COMPLETE** | Task: phase-16.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:17:12 UTC] **AGENT_SPAWN** | Task: phase-16.task-5
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add sanity check to assets/feat.md
+
+### Instructions
+
+Add sanity check validation step to assets/feat.md after file updates:
+
+1. After Step 8 (Update Project Files), add new Step 9: Validate Changes
+
+2. Step 9 content:
+   - Run `cm --sanity-check --state .cm/tasks.json`
+   - If validation fails:
+     - Review the reported errors
+     - Fix the JSON formatting issues in the affected files
+     - Re-run sanity chec
+
+... [truncated, 549 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:18:04 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:18:04 UTC] **TASK_COMPLETE** | Task: phase-16.task-5
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:18:04 UTC] **AGENT_SPAWN** | Task: phase-16.task-6
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add sanity check to assets/fix.md
+
+### Instructions
+
+Add sanity check validation step to assets/fix.md after file updates:
+
+1. After Step 7 (Update Project Files), add new Step 8: Validate Changes
+
+2. Step 8 content:
+   - Run `cm --sanity-check --state .cm/tasks.json`
+   - If validation fails:
+     - Review the reported errors
+     - Fix the JSON formatting issues in the affected files
+     - Re-run sanity check
+
+
+... [truncated, 545 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:21:29 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:21:29 UTC] **TASK_COMPLETE** | Task: phase-16.task-6
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:21:29 UTC] **AGENT_SPAWN** | Task: phase-17.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Refactor assets/cm.md questions
+
+### Instructions
+
+Refactor cm.md to ask questions one at a time with concise context:
+
+1. Split Step 1 (Project Definition) into 3 separate questions:
+   - Q1: Project name? (e.g., `my-app`)
+   - Q2: One-sentence description?
+   - Q3: What problem does this solve?
+
+2. Split Step 2 (Scope and Goals) into 4 separate questions:
+   - Q4: Success criteria - how will we know when comple
+
+... [truncated, 875 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:23:52 UTC] **ERROR**
+
+**Error:** Task phase-17.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
+
+
+[2026-01-24 14:26:31 UTC] **AGENT_SPAWN** | Task: phase-17.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Refactor assets/cm.md questions
+
+### Instructions
+
+Refactor cm.md to ask questions one at a time with concise context:
+
+1. Split Step 1 (Project Definition) into 3 separate questions:
+   - Q1: Project name? (e.g., `my-app`)
+   - Q2: One-sentence description?
+   - Q3: What problem does this solve?
+
+2. Split Step 2 (Scope and Goals) into 4 separate questions:
+   - Q4: Success criteria - how will we know when comple
+
+... [truncated, 875 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:29:30 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:29:30 UTC] **TASK_COMPLETE** | Task: phase-17.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:29:30 UTC] **AGENT_SPAWN** | Task: phase-17.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Refactor assets/feat.md questions
+
+### Instructions
+
+Refactor feat.md to ask questions one at a time:
+
+1. Split Step 1 (Feature Overview) into 3 questions:
+   - Q1: Feature name? (e.g., `user-auth`)
+   - Q2: One-sentence description?
+   - Q3: User story? (As a..., I want..., so that...)
+
+2. Split Step 2 (Requirements) into 4 questions:
+   - Q4: What should this feature do? (functional)
+   - Q5: Performance/securi
+
+... [truncated, 968 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:31:22 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:31:22 UTC] **TASK_COMPLETE** | Task: phase-17.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:31:22 UTC] **AGENT_SPAWN** | Task: phase-17.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Refactor assets/fix.md questions
+
+### Instructions
+
+Refactor fix.md to ask questions one at a time:
+
+1. Split Step 1 (Bug Description) into 4 questions:
+   - Q1: Bug summary? (one sentence)
+   - Q2: What's the observed behavior?
+   - Q3: What's the expected behavior?
+   - Q4: How to reproduce? (or "unknown")
+
+2. Split Step 2 (Classification) into 2 questions:
+   - Q5: Severity? (critical/high/medium/low)
+   - Q6:
+
+... [truncated, 673 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:33:09 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:33:09 UTC] **TASK_COMPLETE** | Task: phase-17.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:33:09 UTC] **AGENT_SPAWN** | Task: phase-17.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Rebuild and verify skills
+
+### Instructions
+
+Rebuild cm and verify all skills work:
+
+1. Build release binary:
+   cargo build --release
+
+2. Reinstall skills:
+   cm init --force
+
+3. Manual verification:
+   - Test /cm skill: run through full wizard
+   - Test /feat skill: add a test feature
+   - Test /fix skill: add a test bug fix
+
+4. Verify each skill asks questions one at a time
+
+5. Verify confirmation summaries st
+
+... [truncated, 276 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:33:45 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:33:45 UTC] **TASK_COMPLETE** | Task: phase-17.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:33:45 UTC] **AGENT_SPAWN** | Task: phase-18.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/feat.md with regeneration step
+
+### Instructions
+
+Update assets/feat.md to run cm --regenerate after modifying project files:
+
+1. Locate the step that updates project files (Step 8: Update Project Files)
+
+2. After updating all files (PLAN.md, ROADMAP.md/roadmap.json, tasks.json), add a new substep:
+
+### 8.4 Regenerate Markdown Files
+
+After updating all project files, regenerate the markdown document
+
+... [truncated, 588 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:34:50 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:34:50 UTC] **TASK_COMPLETE** | Task: phase-18.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:34:50 UTC] **AGENT_SPAWN** | Task: phase-18.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/fix.md with regeneration step
+
+### Instructions
+
+Update assets/fix.md to run cm --regenerate after modifying project files:
+
+1. Locate the step that updates project files (Step 7: Update Project Files)
+
+2. After updating tasks.json and optionally ROADMAP.md, add a new substep:
+
+### 7.4 Regenerate Markdown Files
+
+After updating project files, regenerate the markdown documentation:
+
+```bash
+cm --regen
+
+... [truncated, 561 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:34:55 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:34:55 UTC] **TASK_COMPLETE** | Task: phase-18.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:34:55 UTC] **AGENT_SPAWN** | Task: phase-19.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/feat.md scope limitations
+
+### Instructions
+
+Update assets/feat.md to enforce scope limitations:
+
+1. Add after 'Important: Interactive Flow' section:
+
+## CRITICAL: Scope Limitations
+
+This skill ONLY:
+- Modifies `.cm/tasks.json` and `.cm/roadmap.json`
+- Runs `cm --regenerate` to update MD files from JSON
+
+**You MUST NOT:**
+- Execute any tasks you create
+- Run `cm run` or `cm --step`
+- Start implement
+
+... [truncated, 871 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:34:59 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:34:59 UTC] **TASK_COMPLETE** | Task: phase-19.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:34:59 UTC] **AGENT_SPAWN** | Task: phase-19.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update assets/fix.md scope limitations
+
+### Instructions
+
+Update assets/fix.md to enforce scope limitations:
+
+1. Add after 'Important: Interactive Flow' section:
+
+## CRITICAL: Scope Limitations
+
+This skill ONLY:
+- Modifies `.cm/tasks.json` and optionally `.cm/roadmap.json`
+- Runs `cm --regenerate` to update MD files from JSON
+
+**You MUST NOT:**
+- Execute any tasks you create
+- Run `cm run` or `cm --step`
+- Start 
+
+... [truncated, 930 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:04 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:04 UTC] **TASK_COMPLETE** | Task: phase-19.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:04 UTC] **AGENT_SPAWN** | Task: phase-19.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Reinstall skills and verify
+
+### Instructions
+
+Reinstall skills and verify changes:
+
+1. Build the binary:
+   cargo build
+
+2. Reinstall skills:
+   cargo run -- init --force
+
+3. Verify .claude/skills/feat/SKILL.md contains:
+   - CRITICAL: Scope Limitations section
+   - No 'cm run' in completion step
+   - Only JSON editing instructions
+
+4. Verify .claude/skills/fix/SKILL.md contains:
+   - CRITICAL: Scope Limitations
+
+... [truncated, 383 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:09 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:09 UTC] **TASK_COMPLETE** | Task: phase-19.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:09 UTC] **AGENT_SPAWN** | Task: phase-20.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Simplify assets/feat.md input
+
+### Instructions
+
+Simplify assets/feat.md Step 1 to only ask for a description:
+
+1. Replace Step 1 (Feature Overview) with:
+
+## Step 1: Feature Description
+
+**Ask the user:**
+
+> What feature do you want to add? Describe it briefly.
+
+Wait for the user's response before proceeding.
+
+The skill will derive a feature name/ID from the description for task IDs.
+
+2. Remove user story refere
+
+... [truncated, 519 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:14 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:14 UTC] **TASK_COMPLETE** | Task: phase-20.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:14 UTC] **AGENT_SPAWN** | Task: phase-20.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Simplify assets/fix.md input
+
+### Instructions
+
+Simplify assets/fix.md Step 1 to only ask for a description:
+
+1. Replace Step 1 (Bug Description) with:
+
+## Step 1: Bug Description
+
+**Ask the user:**
+
+> What bug needs to be fixed? Describe it briefly.
+
+Wait for the user's response before proceeding.
+
+The skill will derive details from the description or ask follow-up questions only if needed for investigation.
+
+2.
+
+... [truncated, 512 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:18 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:18 UTC] **TASK_COMPLETE** | Task: phase-20.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:18 UTC] **AGENT_SPAWN** | Task: phase-20.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Reinstall and verify simplified skills
+
+### Instructions
+
+Reinstall skills and verify simplified input:
+
+1. Build: cargo build
+
+2. Reinstall: cargo run -- init --force
+
+3. Verify .claude/skills/feat/SKILL.md Step 1:
+   - Only asks for description
+   - No feature name prompt
+   - No user story prompt
+
+4. Verify .claude/skills/fix/SKILL.md Step 1:
+   - Only asks for description
+   - No summary/observed/expected/rep
+
+... [truncated, 298 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:23 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:23 UTC] **TASK_COMPLETE** | Task: phase-20.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:23 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add agent templates generation to /cm skill
+
+### Instructions
+
+Update assets/cm.md to generate agent template files:
+
+1. Add new step to generate .cm/agents/ directory with:
+   - MANAGER.md - Instructions for manager/orchestrator agent
+   - IMPLEMENTER.md - Instructions for implementation agents
+   - REVIEWER.md - Instructions for review agents
+
+2. MANAGER.md template should include:
+   - Role: Orchestrate task e
+
+... [truncated, 986 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:28 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:28 UTC] **TASK_COMPLETE** | Task: phase-21.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:28 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add STRUCTURE.md and ACTIONS.md generation
+
+### Instructions
+
+Update assets/cm.md to generate project documentation:
+
+1. Add questions to gather structure info:
+   - What are the main modules/components?
+   - What is the architecture? (layers, services, etc.)
+
+2. Add questions to gather actions info:
+   - What are the main user actions/features?
+   - What is the navigation/flow? (CLI commands, API endpoints, UI f
+
+... [truncated, 795 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:32 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:32 UTC] **TASK_COMPLETE** | Task: phase-21.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:32 UTC] **AGENT_SPAWN** | Task: phase-21.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Reinstall and verify new /cm outputs
+
+### Instructions
+
+Reinstall skills and verify new file generation:
+
+1. Build: cargo build
+
+2. Reinstall: cargo run -- init --force
+
+3. Verify .claude/skills/cm/SKILL.md includes:
+   - Agent templates generation step
+   - STRUCTURE.md generation step
+   - ACTIONS.md generation step
+
+4. Test /cm skill generates:
+   - .cm/agents/MANAGER.md
+   - .cm/agents/IMPLEMENTER.md
+   - .cm
+
+... [truncated, 385 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:37 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:37 UTC] **TASK_COMPLETE** | Task: phase-21.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:37 UTC] **AGENT_SPAWN** | Task: phase-22.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update CLI: TUI default, add --daemon flag
+
+### Instructions
+
+Update CLI to make TUI the default mode:
+
+1. Remove --tui flag from Cli struct
+
+2. Add --daemon flag:
+   /// Run in daemon mode (stdin/stdout instead of TUI)
+   #[arg(long)]
+   pub daemon: bool,
+
+3. Invert execution logic:
+   - Before: if cli.tui { run_with_tui() } else { run_without_tui() }
+   - After: if cli.daemon { run_without_tui() } else { run_wi
+
+... [truncated, 455 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:41 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:41 UTC] **TASK_COMPLETE** | Task: phase-22.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:41 UTC] **AGENT_SPAWN** | Task: phase-22.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add task selection prompt to manager
+
+### Instructions
+
+Add interactive task selection before running tasks:
+
+1. Before auto-running tasks, show pending tasks:
+   Pending tasks:
+     1. [phase-X.task-1] Task name
+     2. [phase-X.task-2] Another task
+
+2. Prompt user for action:
+   How would you like to proceed?
+     [s] Run single task (next pending)
+     [a] Run all pending tasks
+     [q] Quit
+
+3. Handle user in
+
+... [truncated, 595 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:45 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:45 UTC] **TASK_COMPLETE** | Task: phase-22.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:45 UTC] **AGENT_SPAWN** | Task: phase-22.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Implement TUI task selection widget
+
+### Instructions
+
+Implement task selection in TUI mode:
+
+1. On startup, show task list with pending tasks highlighted
+
+2. Add keyboard controls:
+   - 's' or Enter: run single task (selected/next pending)
+   - 'a': run all pending tasks
+   - 'q' or Esc: quit
+   - Arrow keys: navigate task list
+
+3. Show prompt bar at bottom:
+   [s] Single  [a] All  [q] Quit
+
+4. After task comple
+
+... [truncated, 467 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:50 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:50 UTC] **TASK_COMPLETE** | Task: phase-22.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:50 UTC] **AGENT_SPAWN** | Task: phase-22.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Implement daemon mode stdin prompt
+
+### Instructions
+
+Implement task selection in daemon mode (stdin/stdout):
+
+1. Print pending tasks to stdout
+
+2. Print prompt:
+   How would you like to proceed? [s]ingle / [a]ll / [q]uit:
+
+3. Read single character from stdin
+
+4. Handle input same as TUI mode:
+   - 's': run single task
+   - 'a': run all tasks
+   - 'q': quit
+
+5. After task completes, prompt again (don't auto-conti
+
+... [truncated, 425 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:54 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:54 UTC] **TASK_COMPLETE** | Task: phase-22.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:54 UTC] **AGENT_SPAWN** | Task: phase-22.task-5
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Update tests for new default mode
+
+### Instructions
+
+Update tests for new behavior:
+
+1. Update CLI tests:
+   - Remove --tui flag tests
+   - Add --daemon flag tests
+   - Verify TUI is default
+
+2. Update integration tests:
+   - Tests should use --daemon flag for non-interactive testing
+   - Or mock stdin for task selection
+
+3. Ensure all tests pass with cargo test
+
+### Files to Read for Context
+
+Read the following 
+
+... [truncated, 295 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:35:59 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:35:59 UTC] **TASK_COMPLETE** | Task: phase-22.task-5
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:35:59 UTC] **AGENT_SPAWN** | Task: phase-23.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create FileLogger module
+
+### Instructions
+
+Create src/log/file_logger.rs with thread-safe file logging:
+
+1. Create LogLevel enum:
+   - Debug, Info, Warn, Error
+   - Implement Display trait
+   - Implement PartialOrd for level filtering
+
+2. Create FileLogError enum with thiserror:
+   - IoError(#[from] std::io::Error)
+   - ParseError(String)
+
+3. Create FileLogger struct:
+   - path: PathBuf
+   - file: Mutex<File> (f
+
+... [truncated, 895 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:03 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:03 UTC] **TASK_COMPLETE** | Task: phase-23.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:03 UTC] **AGENT_SPAWN** | Task: phase-23.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add prune functionality to FileLogger
+
+### Instructions
+
+Add log pruning to FileLogger:
+
+1. Create PruneStats struct:
+   - removed_count: usize
+   - kept_count: usize
+
+2. Add parse_log_timestamp(line: &str) -> Option<DateTime<Utc>> helper:
+   - Parse timestamp from format [2026-01-24 10:30:45.123]
+   - Return None for malformed lines
+
+3. Add prune(&self) -> Result<PruneStats, FileLogError>:
+   - Calls prune_older
+
+... [truncated, 740 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:08 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:08 UTC] **TASK_COMPLETE** | Task: phase-23.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:08 UTC] **AGENT_SPAWN** | Task: phase-23.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Export FileLogger from log module
+
+### Instructions
+
+Export FileLogger from src/log/mod.rs:
+
+1. Add module declaration:
+   mod file_logger;
+
+2. Add public re-exports:
+   pub use file_logger::{FileLogger, FileLogError, LogLevel, PruneStats};
+
+3. Ensure cargo build and cargo clippy pass
+
+### Files to Read for Context
+
+Read the following files to understand the existing codebase:
+
+- src/log/mod.rs
+- src/log/file_log
+
+... [truncated, 249 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:12 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:12 UTC] **TASK_COMPLETE** | Task: phase-23.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:12 UTC] **AGENT_SPAWN** | Task: phase-23.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add --prune CLI flag
+
+### Instructions
+
+Add --prune CLI flag to src/cli/mod.rs:
+
+1. Add flag to Cli struct:
+   /// Prune cm.log to last 24 hours
+   #[arg(long)]
+   pub prune: bool,
+
+2. Add execute_prune(cli: &Cli) -> Result<(), CliError> function:
+   - Derive log path from cli.state parent directory: .cm/cm.log
+   - If file doesn't exist, print message and return Ok
+   - Create FileLogger for the path
+   - Call p
+
+... [truncated, 610 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:17 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:17 UTC] **TASK_COMPLETE** | Task: phase-23.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:17 UTC] **AGENT_SPAWN** | Task: phase-23.task-5
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add FileLogger to Manager
+
+### Instructions
+
+Integrate FileLogger into Manager:
+
+1. Add to ManagerConfig:
+   - file_log_path: PathBuf (default: derive from state_path parent + cm.log)
+   - verbose: bool (default: false)
+
+2. Add to Manager struct:
+   - file_logger: FileLogger
+
+3. Initialize in Manager::new():
+   - Derive log path from config or default to .cm/cm.log
+   - Create FileLogger with appropriate level:
+ 
+
+... [truncated, 649 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:21 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:21 UTC] **TASK_COMPLETE** | Task: phase-23.task-5
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:21 UTC] **AGENT_SPAWN** | Task: phase-23.task-6
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add logging calls throughout Manager
+
+### Instructions
+
+Add logging calls to Manager execution flow:
+
+1. Manager::new() - already done in previous task
+
+2. Manager::run() / run_interactive():
+   - INFO [state] State loaded: {phases} phases, {tasks} tasks
+   - INFO [manager] Starting execution loop
+   - INFO [manager] Execution complete / Shutdown requested
+
+3. Task selection:
+   - INFO [task] Task selected: {task
+
+... [truncated, 1216 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:27 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:27 UTC] **TASK_COMPLETE** | Task: phase-23.task-6
+
+Task completed with status: **completed**
+
+
+[2026-01-24 14:36:27 UTC] **AGENT_SPAWN** | Task: phase-23.task-7
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Add unit tests for FileLogger
+
+### Instructions
+
+Add unit tests for FileLogger in src/log/file_logger.rs:
+
+1. test_file_logger_new:
+   - Create logger with temp file
+   - Verify file is created
+
+2. test_log_levels:
+   - Create logger with LogLevel::Info
+   - Log debug message (should be skipped)
+   - Log info message (should be written)
+   - Verify only info message in file
+
+3. test_log_format:
+   - Log a message
+
+... [truncated, 911 more bytes]
+```
+
+</details>
+
+[2026-01-24 14:36:32 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-24 14:36:32 UTC] **TASK_COMPLETE** | Task: phase-23.task-7
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:22:25 UTC] **AGENT_SPAWN** | Task: phase-24.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create assets/end.md skill
+
+### Instructions
+
+Create assets/end.md with the /end skill content.
+
+This skill finalizes a /feat or /fix session by saving all gathered information to planning files without starting implementation.
+
+The file must have YAML frontmatter:
+```yaml
 ---
-
-[2026-01-24 12:30:00 UTC] **PHASE_COMPLETE** | Phase 16: Sanity Check Workflow
-
-### Phase Summary
-
-**Status:** Complete (6/6 tasks)
-
-### Implemented Features
-
-1. **src/state/validate.rs** - Comprehensive validation module
-   - `SanityError` enum with thiserror (JsonSyntaxError, SchemaError, DuplicateId, InvalidReference, OrphanedReference)
-   - `ValidationResult` struct with errors/warnings
-   - `validate_tasks_json()` - validates tasks.json schema and duplicates
-   - `validate_roadmap_json()` - validates roadmap.json schema and duplicates
-   - `validate_cross_references()` - validates Task.roadmap_item_id and RoadmapItem.linked_task_ids
-   - `validate_all()` - runs all validations on .cm directory
-
-2. **CLI --sanity-check flag** - New CLI command
-   - Added to src/cli/mod.rs
-   - Runs comprehensive validation
-   - Displays errors and warnings with counts
-   - Returns appropriate exit codes
-
-3. **Updated assets/cm.md skill workflow**
-   - Step 7: Validate Generated Files (cm --sanity-check)
-   - Step 8: Git Configuration (.gitignore option)
-   - Step 9: Generate Commit Message
-   - Step 10: Commit Changes
-
-4. **Updated assets/feat.md skill workflow**
-   - Step 9: Validate Changes (cm --sanity-check)
-   - Step 10: Completion (renumbered)
-
-5. **Updated assets/fix.md skill workflow**
-   - Step 8: Validate Changes (cm --sanity-check)
-   - Step 9: Completion (renumbered)
-
-### Tests Added
-
-14 new unit tests in src/state/validate.rs:
-- test_valid_tasks_json_passes
-- test_valid_roadmap_json_passes
-- test_invalid_json_syntax
-- test_missing_required_field
-- test_duplicate_task_id
-- test_duplicate_phase_id
-- test_invalid_cross_reference_task_to_roadmap
-- test_invalid_cross_reference_roadmap_to_task
-- test_validate_all_integration
-- test_validate_all_with_errors
-- test_validation_result_merge
-- test_validation_result_is_valid
-- test_roadmap_duplicate_item_id
-- test_missing_tasks_file
-
-1 new CLI test:
-- test_cli_parse_sanity_check
-
-### Verification
-
-- cargo build: PASS
-- cargo clippy: PASS (no warnings)
-- cargo test: PASS (188 unit tests + 27 integration tests)
-
+name: end
+description: Finalize a /feat or /fix session by saving changes to planning files
+user-invocable: true
 ---
+```
 
-[2026-01-24 13:00:00 UTC] **PHASE_COMPLETE** | Phase 17: Concise One-at-a-Time Questions in Skills
+The skill body s
 
-### Phase Summary
+... [truncated, 1533 more bytes]
+```
 
-**Status:** Complete (4/4 tasks)
+</details>
 
-### Changes Made
+[2026-01-25 01:22:31 UTC] **ERROR**
 
-1. **assets/cm.md** - Refactored questions
-   - Step 1: Split into 3 sub-steps (1.1 Project Name, 1.2 Description, 1.3 Goal)
-   - Step 2: Split into 4 sub-steps (2.1 Success Criteria, 2.2 Key Features, 2.3 Constraints, 2.4 Out of Scope)
-   - Steps 3-10: Preserved unchanged
+**Error:** Task phase-24.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
-2. **assets/feat.md** - Refactored questions
-   - Step 1: Split into 3 sub-steps (1.1 Feature Name, 1.2 Description, 1.3 User Story)
-   - Step 2: Split into 4 sub-steps (2.1-2.4 Requirements)
-   - Step 5: Split into 4 sub-steps (5.1-5.4 Integration Planning)
-
-3. **assets/fix.md** - Refactored questions
-   - Step 1: Split into 4 sub-steps (1.1 Summary, 1.2 Observed, 1.3 Expected, 1.4 Repro)
-   - Step 2: Split into 2 sub-steps (2.1 Severity, 2.2 Category)
-
-### Verification
-- cargo build: PASS
-- cargo test: PASS (all tests)
-
----
-
-[2026-01-24 14:00:00 UTC] **PHASE_COMPLETE** | Phase 22: TUI Default Mode + Interactive Task Selection
-
-### Phase Summary
-
-**Status:** Complete (5/5 tasks)
-
-### Changes Made
-
-1. **CLI Changes (src/cli/mod.rs)**
-   - Replaced `--tui` flag with `--daemon` flag
-   - TUI is now the default mode
-   - `--daemon` enables headless/interactive prompt mode
-   - Updated tests for new flag
-
-2. **Manager Changes (src/manager/mod.rs)**
-   - Added `TaskSelection` enum (Single, All, Quit)
-   - Added `prompt_task_selection()` method
-   - Added `run_interactive()` method for daemon mode
-   - Shows pending tasks before execution
-   - Prompts: [s]ingle / [a]ll / [q]uit
-   - Loops after single task completion
-
-### Verification
-- cargo build: PASS
-- cargo test: PASS (all tests)
-
----
-
-[2026-01-24 14:00:00 UTC] **PROJECT_COMPLETE**
-
-All 22 phases completed successfully. Total progress: 209/209 items.
 

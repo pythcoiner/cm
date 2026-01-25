@@ -12,36 +12,62 @@
           "name": "Create Cargo.toml with workspace configuration",
           "completed": true,
           "sub_items": [
-            { "name": "Package metadata (name, version, edition, description)", "completed": true },
-            { "name": "Dependencies: clap, serde, serde_json, thiserror, chrono, uuid, log, env_logger", "completed": true },
-            { "name": "TUI dependencies: ratatui, crossterm", "completed": true },
-            { "name": "Dev dependencies: tempfile, assert_cmd", "completed": true }
+            {
+              "name": "Package metadata (name, version, edition, description)",
+              "completed": true
+            },
+            {
+              "name": "Dependencies: clap, serde, serde_json, thiserror, chrono, uuid, log, env_logger",
+              "completed": true
+            },
+            {
+              "name": "TUI dependencies: ratatui, crossterm",
+              "completed": true
+            },
+            {
+              "name": "Dev dependencies: tempfile, assert_cmd",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-0.task-1"]
+          "linked_task_ids": [
+            "phase-0.task-1"
+          ]
         },
         {
           "id": "0.2",
           "name": "Create src/lib.rs with module declarations",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.task-2"]
+          "linked_task_ids": [
+            "phase-0.task-1"
+          ]
         },
         {
           "id": "0.3",
           "name": "Create src/main.rs with CLI skeleton",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.task-3"]
+          "linked_task_ids": [
+            "phase-0.task-1"
+          ]
         },
         {
           "id": "0.4",
           "name": "Verify initial build",
           "completed": true,
           "sub_items": [
-            { "name": "cargo build passes", "completed": true },
-            { "name": "cargo clippy passes", "completed": true }
+            {
+              "name": "cargo build passes",
+              "completed": true
+            },
+            {
+              "name": "cargo clippy passes",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-0.task-4"]
+          "linked_task_ids": [
+            "phase-0.task-1"
+          ]
         }
       ]
     },
@@ -55,35 +81,45 @@
           "name": "Create assets/ directory with all skills",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.5.task-1"]
+          "linked_task_ids": [
+            "phase-0.5.task-1"
+          ]
         },
         {
           "id": "0.5.2",
           "name": "Embed all skills in binary",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.5.task-2"]
+          "linked_task_ids": [
+            "phase-0.5.task-1"
+          ]
         },
         {
           "id": "0.5.3",
           "name": "Add init subcommand",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.5.task-3"]
+          "linked_task_ids": [
+            "phase-0.5.task-1"
+          ]
         },
         {
           "id": "0.5.4",
           "name": "Create /feat skill content",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.5.task-4"]
+          "linked_task_ids": [
+            "phase-0.5.task-1"
+          ]
         },
         {
           "id": "0.5.5",
           "name": "Create /fix skill content",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-0.5.task-5"]
+          "linked_task_ids": [
+            "phase-0.5.task-1"
+          ]
         }
       ]
     },
@@ -97,49 +133,63 @@
           "name": "Create src/state/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-1"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.2",
           "name": "Create src/state/tasks.rs with core types",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-2"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.3",
           "name": "Create Task type",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-3"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.4",
           "name": "Create TaskAttempt and related types",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-4"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.5",
           "name": "Create AgentInvocation type",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-5"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.6",
           "name": "Implement Serialize/Deserialize",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-6"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "1.7",
           "name": "Add helper methods to TasksState",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-1.task-7"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         }
       ]
     },
@@ -153,35 +203,45 @@
           "name": "Create src/agent/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-2.task-1"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         },
         {
           "id": "2.2",
           "name": "Implement AgentSpawner",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-2.task-2"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         },
         {
           "id": "2.3",
           "name": "Create AgentHandle type",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-2.task-3"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         },
         {
           "id": "2.4",
           "name": "Create src/agent/prompt.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-2.task-4"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         },
         {
           "id": "2.5",
           "name": "Create src/agent/response.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-2.task-5"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         }
       ]
     },
@@ -195,28 +255,36 @@
           "name": "Create src/build/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-3.task-1"]
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
         },
         {
           "id": "3.2",
           "name": "Create src/build/cargo.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-3.task-2"]
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
         },
         {
           "id": "3.3",
           "name": "Create src/build/git.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-3.task-3"]
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
         },
         {
           "id": "3.4",
           "name": "Implement BuildVerifier",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-3.task-4"]
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
         }
       ]
     },
@@ -230,28 +298,36 @@
           "name": "Create src/log/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-4.task-1"]
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
         },
         {
           "id": "4.2",
           "name": "Implement LogManager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-4.task-2"]
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
         },
         {
           "id": "4.3",
           "name": "Implement log formatting",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-4.task-3"]
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
         },
         {
           "id": "4.4",
           "name": "Manager calls LogManager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-4.task-4"]
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
         }
       ]
     },
@@ -265,56 +341,72 @@
           "name": "Create src/manager/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-1"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.2",
           "name": "Implement Manager struct",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-2"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.3",
           "name": "Implement main orchestration loop",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-3"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.4",
           "name": "Implement IMPLEM flow",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-4"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.5",
           "name": "Implement REVIEW flow",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-5"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.6",
           "name": "Implement FIX flow",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-6"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.7",
           "name": "Implement cycle limiting",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-7"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "5.8",
           "name": "Create src/manager/state.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-5.task-8"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         }
       ]
     },
@@ -328,35 +420,45 @@
           "name": "Create src/manager/recovery.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-6.task-1"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         },
         {
           "id": "6.2",
           "name": "Implement checkpointing",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-6.task-2"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         },
         {
           "id": "6.3",
           "name": "Implement restore",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-6.task-3"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         },
         {
           "id": "6.4",
           "name": "Implement crash recovery",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-6.task-4"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         },
         {
           "id": "6.5",
           "name": "Implement graceful shutdown",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-6.task-5"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         }
       ]
     },
@@ -370,49 +472,63 @@
           "name": "Create src/cli/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-1"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.2",
           "name": "Implement main execution",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-2"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.3",
           "name": "Implement --continue flag",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-3"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.4",
           "name": "Implement --step flag",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-4"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.5",
           "name": "Implement --status flag",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-5"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.6",
           "name": "Implement --validate flag",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-6"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "7.7",
           "name": "Wire up main.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-7.task-7"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         }
       ]
     },
@@ -426,28 +542,36 @@
           "name": "Create .claude/skills/cm.md",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-8.task-1"]
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
         },
         {
           "id": "8.2",
           "name": "Define interactive wizard flow",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-8.task-2"]
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
         },
         {
           "id": "8.3",
           "name": "Implement artifact generation",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-8.task-3"]
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
         },
         {
           "id": "8.4",
           "name": "Create generation templates",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-8.task-4"]
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
         }
       ]
     },
@@ -461,28 +585,36 @@
           "name": "Create tests/integration.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-9.task-1"]
+          "linked_task_ids": [
+            "phase-9.task-1"
+          ]
         },
         {
           "id": "9.2",
           "name": "Test basic flow",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-9.task-2"]
+          "linked_task_ids": [
+            "phase-9.task-1"
+          ]
         },
         {
           "id": "9.3",
           "name": "Test recovery",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-9.task-3"]
+          "linked_task_ids": [
+            "phase-9.task-1"
+          ]
         },
         {
           "id": "9.4",
           "name": "Test deferred tasks",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-9.task-4"]
+          "linked_task_ids": [
+            "phase-9.task-1"
+          ]
         }
       ]
     },
@@ -496,56 +628,72 @@
           "name": "Add ratatui dependency",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-1"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.2",
           "name": "Create src/tui/mod.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-2"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.3",
           "name": "Create src/tui/layout.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-3"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.4",
           "name": "Create src/tui/widgets.rs",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-4"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.5",
           "name": "Implement task list view",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-5"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.6",
           "name": "Implement agent stream view",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-6"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.7",
           "name": "Implement keyboard controls",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-7"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         },
         {
           "id": "10.8",
           "name": "Wire TUI into Manager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-10.task-8"]
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
         }
       ]
     },
@@ -559,21 +707,27 @@
           "name": "Add --dry-run mode",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-11.task-1"]
+          "linked_task_ids": [
+            "phase-11.task-1"
+          ]
         },
         {
           "id": "11.2",
           "name": "Add --verbose mode",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-11.task-2"]
+          "linked_task_ids": [
+            "phase-11.task-1"
+          ]
         },
         {
           "id": "11.3",
           "name": "Final verification",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-11.task-3"]
+          "linked_task_ids": [
+            "phase-11.task-1"
+          ]
         }
       ]
     },
@@ -587,28 +741,36 @@
           "name": "Define configuration file format",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-12.task-1"]
+          "linked_task_ids": [
+            "phase-12.task-1"
+          ]
         },
         {
           "id": "12.2",
           "name": "Implement config file loading",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-12.task-2"]
+          "linked_task_ids": [
+            "phase-12.task-1"
+          ]
         },
         {
           "id": "12.3",
           "name": "Wire --config flag in CLI",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-12.task-3"]
+          "linked_task_ids": [
+            "phase-12.task-1"
+          ]
         },
         {
           "id": "12.4",
           "name": "Create CONFIG.md documentation",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-12.task-4"]
+          "linked_task_ids": [
+            "phase-12.task-1"
+          ]
         }
       ]
     },
@@ -622,21 +784,27 @@
           "name": "Add --tui flag to CLI",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-13.task-1"]
+          "linked_task_ids": [
+            "phase-13.task-1"
+          ]
         },
         {
           "id": "13.2",
           "name": "Connect TUI to Manager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-13.task-2"]
+          "linked_task_ids": [
+            "phase-13.task-1"
+          ]
         },
         {
           "id": "13.3",
           "name": "Run Manager in background thread",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-13.task-3"]
+          "linked_task_ids": [
+            "phase-13.task-1"
+          ]
         }
       ]
     },
@@ -650,14 +818,18 @@
           "name": "Enable ctrlc by default",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-14.task-1"]
+          "linked_task_ids": [
+            "phase-14.task-1"
+          ]
         },
         {
           "id": "14.2",
           "name": "Wire signal handler in CLI",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-14.task-2"]
+          "linked_task_ids": [
+            "phase-14.task-1"
+          ]
         }
       ]
     },
@@ -671,56 +843,72 @@
           "name": "Create LogRecord struct",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-1"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.2",
           "name": "Extend TasksState with log_records",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-2"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.3",
           "name": "Create roadmap.json schema",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-3"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.4",
           "name": "Add roadmap link to Task",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-4"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.5",
           "name": "Create markdown generators",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-5"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.6",
           "name": "Refactor LogManager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-6"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.7",
           "name": "Integrate regeneration into Manager",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-7"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         },
         {
           "id": "15.8",
           "name": "Add --regenerate CLI flag",
           "completed": true,
           "sub_items": [],
-          "linked_task_ids": ["phase-15.task-8"]
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
         }
       ]
     },
@@ -734,74 +922,164 @@
           "name": "Create src/state/validate.rs",
           "completed": false,
           "sub_items": [
-            { "name": "SanityError enum with thiserror", "completed": false },
-            { "name": "JSON syntax validation", "completed": false },
-            { "name": "Schema compliance validation", "completed": false },
-            { "name": "Cross-reference validation (roadmap_item_id, linked_task_ids)", "completed": false },
-            { "name": "Duplicate ID detection", "completed": false },
-            { "name": "Orphaned reference detection", "completed": false }
+            {
+              "name": "SanityError enum with thiserror",
+              "completed": false
+            },
+            {
+              "name": "JSON syntax validation",
+              "completed": false
+            },
+            {
+              "name": "Schema compliance validation",
+              "completed": false
+            },
+            {
+              "name": "Cross-reference validation (roadmap_item_id, linked_task_ids)",
+              "completed": false
+            },
+            {
+              "name": "Duplicate ID detection",
+              "completed": false
+            },
+            {
+              "name": "Orphaned reference detection",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-1"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         },
         {
           "id": "16.2",
           "name": "Add --sanity-check flag to CLI",
           "completed": false,
           "sub_items": [
-            { "name": "Add flag to Cli struct", "completed": false },
-            { "name": "Implement execute_sanity_check()", "completed": false },
-            { "name": "Display validation results with colors", "completed": false }
+            {
+              "name": "Add flag to Cli struct",
+              "completed": false
+            },
+            {
+              "name": "Implement execute_sanity_check()",
+              "completed": false
+            },
+            {
+              "name": "Display validation results with colors",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-2"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         },
         {
           "id": "16.3",
           "name": "Update assets/cm.md skill workflow",
           "completed": false,
           "sub_items": [
-            { "name": "Add Step 7: Run cm --sanity-check after generation", "completed": false },
-            { "name": "Add iteration loop if validation fails", "completed": false },
-            { "name": "Add Step 8: Ask about .gitignore (default no)", "completed": false },
-            { "name": "Add Step 9: Auto-generate commit message", "completed": false },
-            { "name": "Add Step 10: Ask user confirmation and commit", "completed": false }
+            {
+              "name": "Add Step 7: Run cm --sanity-check after generation",
+              "completed": false
+            },
+            {
+              "name": "Add iteration loop if validation fails",
+              "completed": false
+            },
+            {
+              "name": "Add Step 8: Ask about .gitignore (default no)",
+              "completed": false
+            },
+            {
+              "name": "Add Step 9: Auto-generate commit message",
+              "completed": false
+            },
+            {
+              "name": "Add Step 10: Ask user confirmation and commit",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-3"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         },
         {
           "id": "16.4",
           "name": "Add unit tests for validation",
           "completed": false,
           "sub_items": [
-            { "name": "Test valid JSON files pass", "completed": false },
-            { "name": "Test invalid JSON syntax detected", "completed": false },
-            { "name": "Test missing required fields detected", "completed": false },
-            { "name": "Test invalid cross-references detected", "completed": false },
-            { "name": "Test duplicate IDs detected", "completed": false },
-            { "name": "Test orphaned references detected", "completed": false }
+            {
+              "name": "Test valid JSON files pass",
+              "completed": false
+            },
+            {
+              "name": "Test invalid JSON syntax detected",
+              "completed": false
+            },
+            {
+              "name": "Test missing required fields detected",
+              "completed": false
+            },
+            {
+              "name": "Test invalid cross-references detected",
+              "completed": false
+            },
+            {
+              "name": "Test duplicate IDs detected",
+              "completed": false
+            },
+            {
+              "name": "Test orphaned references detected",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-4"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         },
         {
           "id": "16.5",
           "name": "Add sanity check to assets/feat.md",
           "completed": false,
           "sub_items": [
-            { "name": "Add Step 9: Validate Changes after file updates", "completed": false },
-            { "name": "Run cm --sanity-check, fix errors, repeat until pass", "completed": false },
-            { "name": "Renumber Step 9 (Completion) to Step 10", "completed": false }
+            {
+              "name": "Add Step 9: Validate Changes after file updates",
+              "completed": false
+            },
+            {
+              "name": "Run cm --sanity-check, fix errors, repeat until pass",
+              "completed": false
+            },
+            {
+              "name": "Renumber Step 9 (Completion) to Step 10",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-5"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         },
         {
           "id": "16.6",
           "name": "Add sanity check to assets/fix.md",
           "completed": false,
           "sub_items": [
-            { "name": "Add Step 8: Validate Changes after file updates", "completed": false },
-            { "name": "Run cm --sanity-check, fix errors, repeat until pass", "completed": false },
-            { "name": "Renumber Step 8 (Completion) to Step 9", "completed": false }
+            {
+              "name": "Add Step 8: Validate Changes after file updates",
+              "completed": false
+            },
+            {
+              "name": "Run cm --sanity-check, fix errors, repeat until pass",
+              "completed": false
+            },
+            {
+              "name": "Renumber Step 8 (Completion) to Step 9",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-16.task-6"]
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
         }
       ]
     },
@@ -815,49 +1093,108 @@
           "name": "Refactor assets/cm.md questions",
           "completed": false,
           "sub_items": [
-            { "name": "Split Step 1 into 3 single questions", "completed": false },
-            { "name": "Split Step 2 into 4 single questions", "completed": false },
-            { "name": "Keep Step 3 as single optional question", "completed": false },
-            { "name": "Keep Step 4 as single question", "completed": false },
-            { "name": "Keep Step 5 confirmation as single block", "completed": false }
+            {
+              "name": "Split Step 1 into 3 single questions",
+              "completed": false
+            },
+            {
+              "name": "Split Step 2 into 4 single questions",
+              "completed": false
+            },
+            {
+              "name": "Keep Step 3 as single optional question",
+              "completed": false
+            },
+            {
+              "name": "Keep Step 4 as single question",
+              "completed": false
+            },
+            {
+              "name": "Keep Step 5 confirmation as single block",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-17.task-1"]
+          "linked_task_ids": [
+            "phase-17.task-1"
+          ]
         },
         {
           "id": "17.2",
           "name": "Refactor assets/feat.md questions",
           "completed": false,
           "sub_items": [
-            { "name": "Split Step 1 into 3 single questions", "completed": false },
-            { "name": "Split Step 2 into 4 single questions", "completed": false },
-            { "name": "Split Step 5 into 4 single questions", "completed": false },
-            { "name": "Keep confirmation as single block", "completed": false }
+            {
+              "name": "Split Step 1 into 3 single questions",
+              "completed": false
+            },
+            {
+              "name": "Split Step 2 into 4 single questions",
+              "completed": false
+            },
+            {
+              "name": "Split Step 5 into 4 single questions",
+              "completed": false
+            },
+            {
+              "name": "Keep confirmation as single block",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-17.task-2"]
+          "linked_task_ids": [
+            "phase-17.task-1"
+          ]
         },
         {
           "id": "17.3",
           "name": "Refactor assets/fix.md questions",
           "completed": false,
           "sub_items": [
-            { "name": "Split Step 1 into 4 single questions", "completed": false },
-            { "name": "Split Step 2 into 2 single questions", "completed": false },
-            { "name": "Keep confirmation as single block", "completed": false }
+            {
+              "name": "Split Step 1 into 4 single questions",
+              "completed": false
+            },
+            {
+              "name": "Split Step 2 into 2 single questions",
+              "completed": false
+            },
+            {
+              "name": "Keep confirmation as single block",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-17.task-3"]
+          "linked_task_ids": [
+            "phase-17.task-1"
+          ]
         },
         {
           "id": "17.4",
           "name": "Rebuild and verify skills",
           "completed": false,
           "sub_items": [
-            { "name": "cargo build --release", "completed": false },
-            { "name": "cm init --force", "completed": false },
-            { "name": "Test /cm skill manually", "completed": false },
-            { "name": "Test /feat skill manually", "completed": false },
-            { "name": "Test /fix skill manually", "completed": false }
+            {
+              "name": "cargo build --release",
+              "completed": false
+            },
+            {
+              "name": "cm init --force",
+              "completed": false
+            },
+            {
+              "name": "Test /cm skill manually",
+              "completed": false
+            },
+            {
+              "name": "Test /feat skill manually",
+              "completed": false
+            },
+            {
+              "name": "Test /fix skill manually",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-17.task-4"]
+          "linked_task_ids": [
+            "phase-17.task-1"
+          ]
         }
       ]
     },
@@ -871,20 +1208,36 @@
           "name": "Update assets/feat.md with regeneration step",
           "completed": false,
           "sub_items": [
-            { "name": "Add step to run cm --regenerate after file updates", "completed": false },
-            { "name": "Place before sanity check step", "completed": false }
+            {
+              "name": "Add step to run cm --regenerate after file updates",
+              "completed": false
+            },
+            {
+              "name": "Place before sanity check step",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-18.task-1"]
+          "linked_task_ids": [
+            "phase-18.task-1"
+          ]
         },
         {
           "id": "18.2",
           "name": "Update assets/fix.md with regeneration step",
           "completed": false,
           "sub_items": [
-            { "name": "Add step to run cm --regenerate after file updates", "completed": false },
-            { "name": "Place before sanity check step", "completed": false }
+            {
+              "name": "Add step to run cm --regenerate after file updates",
+              "completed": false
+            },
+            {
+              "name": "Place before sanity check step",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-18.task-2"]
+          "linked_task_ids": [
+            "phase-18.task-1"
+          ]
         }
       ]
     },
@@ -898,34 +1251,70 @@
           "name": "Update assets/feat.md scope limitations",
           "completed": false,
           "sub_items": [
-            { "name": "Add CRITICAL: Scope Limitations section", "completed": false },
-            { "name": "Update file update step to only edit JSON", "completed": false },
-            { "name": "Remove cm run from next steps", "completed": false }
+            {
+              "name": "Add CRITICAL: Scope Limitations section",
+              "completed": false
+            },
+            {
+              "name": "Update file update step to only edit JSON",
+              "completed": false
+            },
+            {
+              "name": "Remove cm run from next steps",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-19.task-1"]
+          "linked_task_ids": [
+            "phase-19.task-1"
+          ]
         },
         {
           "id": "19.2",
           "name": "Update assets/fix.md scope limitations",
           "completed": false,
           "sub_items": [
-            { "name": "Add CRITICAL: Scope Limitations section", "completed": false },
-            { "name": "Update file update step to only edit JSON", "completed": false },
-            { "name": "Remove cm run from next steps", "completed": false }
+            {
+              "name": "Add CRITICAL: Scope Limitations section",
+              "completed": false
+            },
+            {
+              "name": "Update file update step to only edit JSON",
+              "completed": false
+            },
+            {
+              "name": "Remove cm run from next steps",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-19.task-2"]
+          "linked_task_ids": [
+            "phase-19.task-1"
+          ]
         },
         {
           "id": "19.3",
           "name": "Reinstall skills and verify",
           "completed": false,
           "sub_items": [
-            { "name": "cargo build", "completed": false },
-            { "name": "cm init --force", "completed": false },
-            { "name": "Verify feat skill has scope limitations", "completed": false },
-            { "name": "Verify fix skill has scope limitations", "completed": false }
+            {
+              "name": "cargo build",
+              "completed": false
+            },
+            {
+              "name": "cm init --force",
+              "completed": false
+            },
+            {
+              "name": "Verify feat skill has scope limitations",
+              "completed": false
+            },
+            {
+              "name": "Verify fix skill has scope limitations",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-19.task-3"]
+          "linked_task_ids": [
+            "phase-19.task-1"
+          ]
         }
       ]
     },
@@ -939,33 +1328,66 @@
           "name": "Simplify assets/feat.md input",
           "completed": false,
           "sub_items": [
-            { "name": "Replace Step 1 to only ask for description", "completed": false },
-            { "name": "Remove user story references", "completed": false },
-            { "name": "Update templates", "completed": false }
+            {
+              "name": "Replace Step 1 to only ask for description",
+              "completed": false
+            },
+            {
+              "name": "Remove user story references",
+              "completed": false
+            },
+            {
+              "name": "Update templates",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-20.task-1"]
+          "linked_task_ids": [
+            "phase-20.task-1"
+          ]
         },
         {
           "id": "20.2",
           "name": "Simplify assets/fix.md input",
           "completed": false,
           "sub_items": [
-            { "name": "Replace Step 1 to only ask for description", "completed": false },
-            { "name": "Remove summary/observed/expected/repro prompts", "completed": false }
+            {
+              "name": "Replace Step 1 to only ask for description",
+              "completed": false
+            },
+            {
+              "name": "Remove summary/observed/expected/repro prompts",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-20.task-2"]
+          "linked_task_ids": [
+            "phase-20.task-1"
+          ]
         },
         {
           "id": "20.3",
           "name": "Reinstall and verify simplified skills",
           "completed": false,
           "sub_items": [
-            { "name": "cargo build", "completed": false },
-            { "name": "cm init --force", "completed": false },
-            { "name": "Verify feat skill simplified input", "completed": false },
-            { "name": "Verify fix skill simplified input", "completed": false }
+            {
+              "name": "cargo build",
+              "completed": false
+            },
+            {
+              "name": "cm init --force",
+              "completed": false
+            },
+            {
+              "name": "Verify feat skill simplified input",
+              "completed": false
+            },
+            {
+              "name": "Verify fix skill simplified input",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-20.task-3"]
+          "linked_task_ids": [
+            "phase-20.task-1"
+          ]
         }
       ]
     },
@@ -979,35 +1401,74 @@
           "name": "Add agent templates generation to /cm skill",
           "completed": false,
           "sub_items": [
-            { "name": "Generate .cm/agents/MANAGER.md", "completed": false },
-            { "name": "Generate .cm/agents/IMPLEMENTER.md", "completed": false },
-            { "name": "Generate .cm/agents/REVIEWER.md", "completed": false }
+            {
+              "name": "Generate .cm/agents/MANAGER.md",
+              "completed": false
+            },
+            {
+              "name": "Generate .cm/agents/IMPLEMENTER.md",
+              "completed": false
+            },
+            {
+              "name": "Generate .cm/agents/REVIEWER.md",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-21.task-1"]
+          "linked_task_ids": [
+            "phase-21.task-1"
+          ]
         },
         {
           "id": "21.2",
           "name": "Add STRUCTURE.md and ACTIONS.md generation",
           "completed": false,
           "sub_items": [
-            { "name": "Add questions for structure info", "completed": false },
-            { "name": "Add questions for actions info", "completed": false },
-            { "name": "Generate .cm/STRUCTURE.md", "completed": false },
-            { "name": "Generate .cm/ACTIONS.md", "completed": false }
+            {
+              "name": "Add questions for structure info",
+              "completed": false
+            },
+            {
+              "name": "Add questions for actions info",
+              "completed": false
+            },
+            {
+              "name": "Generate .cm/STRUCTURE.md",
+              "completed": false
+            },
+            {
+              "name": "Generate .cm/ACTIONS.md",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-21.task-2"]
+          "linked_task_ids": [
+            "phase-21.task-1"
+          ]
         },
         {
           "id": "21.3",
           "name": "Reinstall and verify new /cm outputs",
           "completed": false,
           "sub_items": [
-            { "name": "cargo build", "completed": false },
-            { "name": "cm init --force", "completed": false },
-            { "name": "Verify agent templates generated", "completed": false },
-            { "name": "Verify STRUCTURE.md and ACTIONS.md generated", "completed": false }
+            {
+              "name": "cargo build",
+              "completed": false
+            },
+            {
+              "name": "cm init --force",
+              "completed": false
+            },
+            {
+              "name": "Verify agent templates generated",
+              "completed": false
+            },
+            {
+              "name": "Verify STRUCTURE.md and ACTIONS.md generated",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-21.task-3"]
+          "linked_task_ids": [
+            "phase-21.task-1"
+          ]
         }
       ]
     },
@@ -1021,55 +1482,421 @@
           "name": "Update CLI: TUI default, add --daemon flag",
           "completed": false,
           "sub_items": [
-            { "name": "Remove --tui flag", "completed": false },
-            { "name": "Add --daemon flag", "completed": false },
-            { "name": "Invert execution logic", "completed": false }
+            {
+              "name": "Remove --tui flag",
+              "completed": false
+            },
+            {
+              "name": "Add --daemon flag",
+              "completed": false
+            },
+            {
+              "name": "Invert execution logic",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-22.task-1"]
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
         },
         {
           "id": "22.2",
           "name": "Add task selection prompt to manager",
           "completed": false,
           "sub_items": [
-            { "name": "Show pending tasks before running", "completed": false },
-            { "name": "Prompt: [s]ingle / [a]ll / [q]uit", "completed": false },
-            { "name": "Never auto-implement without confirmation", "completed": false }
+            {
+              "name": "Show pending tasks before running",
+              "completed": false
+            },
+            {
+              "name": "Prompt: [s]ingle / [a]ll / [q]uit",
+              "completed": false
+            },
+            {
+              "name": "Never auto-implement without confirmation",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-22.task-2"]
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
         },
         {
           "id": "22.3",
           "name": "Implement TUI task selection widget",
           "completed": false,
           "sub_items": [
-            { "name": "Task list with pending highlighted", "completed": false },
-            { "name": "Keyboard controls: s/a/q/arrows", "completed": false },
-            { "name": "Prompt bar at bottom", "completed": false }
+            {
+              "name": "Task list with pending highlighted",
+              "completed": false
+            },
+            {
+              "name": "Keyboard controls: s/a/q/arrows",
+              "completed": false
+            },
+            {
+              "name": "Prompt bar at bottom",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-22.task-3"]
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
         },
         {
           "id": "22.4",
           "name": "Implement daemon mode stdin prompt",
           "completed": false,
           "sub_items": [
-            { "name": "Print pending tasks to stdout", "completed": false },
-            { "name": "Read selection from stdin", "completed": false },
-            { "name": "Prompt again after task completes", "completed": false }
+            {
+              "name": "Print pending tasks to stdout",
+              "completed": false
+            },
+            {
+              "name": "Read selection from stdin",
+              "completed": false
+            },
+            {
+              "name": "Prompt again after task completes",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-22.task-4"]
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
         },
         {
           "id": "22.5",
           "name": "Update tests for new default mode",
           "completed": false,
           "sub_items": [
-            { "name": "Update CLI tests for --daemon", "completed": false },
-            { "name": "Update integration tests", "completed": false },
-            { "name": "Verify all tests pass", "completed": false }
+            {
+              "name": "Update CLI tests for --daemon",
+              "completed": false
+            },
+            {
+              "name": "Update integration tests",
+              "completed": false
+            },
+            {
+              "name": "Verify all tests pass",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-22.task-5"]
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-23",
+      "number": "23",
+      "name": "Detailed File Logging",
+      "items": [
+        {
+          "id": "23.1",
+          "name": "Create FileLogger module",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "LogLevel enum with Display and PartialOrd",
+              "completed": false
+            },
+            {
+              "name": "FileLogError enum with thiserror",
+              "completed": false
+            },
+            {
+              "name": "FileLogger struct with Mutex<File>",
+              "completed": false
+            },
+            {
+              "name": "Core methods: new(), with_level(), log()",
+              "completed": false
+            },
+            {
+              "name": "Convenience methods: debug(), info(), warn(), error()",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-1"
+          ]
+        },
+        {
+          "id": "23.2",
+          "name": "Add prune functionality",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "PruneStats struct",
+              "completed": false
+            },
+            {
+              "name": "parse_log_timestamp() helper",
+              "completed": false
+            },
+            {
+              "name": "prune() method (24h default)",
+              "completed": false
+            },
+            {
+              "name": "prune_older_than() method",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-2"
+          ]
+        },
+        {
+          "id": "23.3",
+          "name": "Export FileLogger from log module",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add mod file_logger declaration",
+              "completed": false
+            },
+            {
+              "name": "Add pub use re-exports",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-3"
+          ]
+        },
+        {
+          "id": "23.4",
+          "name": "Add --prune CLI flag",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add prune flag to Cli struct",
+              "completed": false
+            },
+            {
+              "name": "Implement execute_prune() function",
+              "completed": false
+            },
+            {
+              "name": "Wire up in CLI dispatch",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-4"
+          ]
+        },
+        {
+          "id": "23.5",
+          "name": "Add FileLogger to Manager",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add file_log_path to ManagerConfig",
+              "completed": false
+            },
+            {
+              "name": "Add verbose flag to ManagerConfig",
+              "completed": false
+            },
+            {
+              "name": "Add file_logger field to Manager",
+              "completed": false
+            },
+            {
+              "name": "Initialize FileLogger in Manager::new()",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-5"
+          ]
+        },
+        {
+          "id": "23.6",
+          "name": "Add logging calls throughout Manager",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Log state load/save operations",
+              "completed": false
+            },
+            {
+              "name": "Log task selection and completion",
+              "completed": false
+            },
+            {
+              "name": "Log agent spawn and completion with duration",
+              "completed": false
+            },
+            {
+              "name": "Log build verification results",
+              "completed": false
+            },
+            {
+              "name": "Log shutdown and signal handling",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-6"
+          ]
+        },
+        {
+          "id": "23.7",
+          "name": "Add unit tests for FileLogger",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Test file creation and log levels",
+              "completed": false
+            },
+            {
+              "name": "Test log format",
+              "completed": false
+            },
+            {
+              "name": "Test timestamp parsing",
+              "completed": false
+            },
+            {
+              "name": "Test pruning functionality",
+              "completed": false
+            },
+            {
+              "name": "Test concurrent logging",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-23.task-7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-24",
+      "number": "24",
+      "name": "/end Skill",
+      "items": [
+        {
+          "id": "24.1",
+          "name": "Create assets/end.md skill",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "YAML frontmatter (name, description, user-invocable)",
+              "completed": false
+            },
+            {
+              "name": "Skill body with save pipeline instructions",
+              "completed": false
+            },
+            {
+              "name": "Scope limitations (no implementation)",
+              "completed": false
+            },
+            {
+              "name": "Error handling sections",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-24.task-1"
+          ]
+        },
+        {
+          "id": "24.2",
+          "name": "Register END_SKILL in src/skill.rs",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-24.task-2"
+          ]
+        },
+        {
+          "id": "24.3",
+          "name": "Register end skill in src/cli/init.rs",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add END_SKILL import",
+              "completed": false
+            },
+            {
+              "name": "Add SkillFile entry to SKILLS array",
+              "completed": false
+            },
+            {
+              "name": "Add /end to available skills output",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-24.task-3"
+          ]
+        },
+        {
+          "id": "24.4",
+          "name": "Modify assets/feat.md to delegate saves to /end",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Remove Steps 8-11 (file updates, regenerate, validate, completion)",
+              "completed": false
+            },
+            {
+              "name": "Add Step 8: Handoff to /end",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-24.task-4"
+          ]
+        },
+        {
+          "id": "24.5",
+          "name": "Modify assets/fix.md to delegate saves to /end",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Remove Steps 7-10 (file updates, regenerate, validate, completion)",
+              "completed": false
+            },
+            {
+              "name": "Add Step 7: Handoff to /end",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-24.task-5"
+          ]
+        },
+        {
+          "id": "24.6",
+          "name": "Build, reinstall skills, and verify",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "cargo build + clippy + test pass",
+              "completed": false
+            },
+            {
+              "name": "cm init --force installs /end skill",
+              "completed": false
+            },
+            {
+              "name": "Verify feat/fix skills have /end handoff",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-24.task-6"
+          ]
         }
       ]
     }

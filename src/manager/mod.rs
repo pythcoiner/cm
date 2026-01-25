@@ -20,11 +20,13 @@ use crate::tui::{ManagerEvent, TuiCommand};
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier};
 use crate::generate::{generate_log_md, write_md_file, GenerateError};
-use crate::log::{LogError, LogManager};
+use crate::log::{FileLogError, FileLogger, LogError, LogLevel, LogManager};
 use crate::state::{
-    load_state, save_state, AgentInvocation, AgentType, AttemptStatus, StateError, Task,
-    TaskAttempt, TaskStatus, TaskType, TasksState, Verdict,
+    load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
+    AttemptStatus, RoadmapState, StateError, Task, TaskAttempt, TaskStatus, TaskType, TasksState,
+    Verdict,
 };
+use crate::generate::generate_roadmap_md;
 
 mod recovery;
 mod state;
@@ -66,6 +68,10 @@ pub enum ManagerError {
     #[error("generate error: {0}")]
     GenerateError(#[from] GenerateError),
 
+    /// An error occurred while writing to the file log.
+    #[error("file log error: {0}")]
+    FileLogError(#[from] FileLogError),
+
     /// A task is not runnable due to dependencies or status.
     #[error("task not runnable: {0}")]
     TaskNotRunnable(String),
@@ -90,6 +96,10 @@ pub struct ManagerConfig {
     pub state_path: PathBuf,
     /// Path to the LOG.md file.
     pub log_path: PathBuf,
+    /// Path to the roadmap.json file.
+    pub roadmap_path: PathBuf,
+    /// Path to the ROADMAP.md file.
+    pub roadmap_md_path: PathBuf,
     /// Working directory for build verification.
     pub working_dir: PathBuf,
     /// Model to use for agent spawning.
@@ -98,6 +108,10 @@ pub struct ManagerConfig {
     pub timeout: Duration,
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: u32,
+    /// Path to the cm.log file for persistent operational logging.
+    pub file_log_path: PathBuf,
+    /// Whether verbose (DEBUG-level) file logging is enabled.
+    pub verbose: bool,
 }
 
 impl ManagerConfig {
@@ -107,16 +121,20 @@ impl ManagerConfig {
     ///
     /// * `state_path` - Path to the tasks.json file
     pub fn new(state_path: PathBuf) -> Self {
+        let parent = state_path
+            .parent()
+            .unwrap_or(std::path::Path::new("."));
         Self {
             state_path: state_path.clone(),
-            log_path: state_path
-                .parent()
-                .unwrap_or(std::path::Path::new("."))
-                .join("LOG.md"),
+            log_path: parent.join("LOG.md"),
+            roadmap_path: parent.join("roadmap.json"),
+            roadmap_md_path: parent.join("ROADMAP.md"),
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
             model: "claude-sonnet-4-5-20250929".to_string(),
             timeout: Duration::from_secs(300),
             max_cycles: 5,
+            file_log_path: parent.join("cm.log"),
+            verbose: false,
         }
     }
 
@@ -149,6 +167,18 @@ impl ManagerConfig {
         self.max_cycles = max_cycles;
         self
     }
+
+    /// Set the file log path.
+    pub fn file_log_path(mut self, path: PathBuf) -> Self {
+        self.file_log_path = path;
+        self
+    }
+
+    /// Set verbose mode.
+    pub fn verbose(mut self, verbose: bool) -> Self {
+        self.verbose = verbose;
+        self
+    }
 }
 
 /// The main manager that orchestrates task execution.
@@ -160,12 +190,16 @@ pub struct Manager {
     config: ManagerConfig,
     /// The current tasks state.
     state: TasksState,
+    /// The roadmap state (loaded if available).
+    roadmap_state: Option<RoadmapState>,
     /// Spawner for creating agent processes.
     agent_spawner: AgentSpawner,
     /// Verifier for build and clippy checks.
     build_verifier: BuildVerifier,
     /// Manager for LOG.md entries.
     log_manager: LogManager,
+    /// Persistent file logger for .cm/cm.log.
+    file_logger: FileLogger,
     /// Current execution state.
     manager_state: ManagerState,
     /// Shutdown flag for graceful termination.
@@ -194,14 +228,41 @@ impl Manager {
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
         let log_manager = LogManager::new(config.log_path.clone());
 
+        let log_level = if config.verbose {
+            LogLevel::Debug
+        } else {
+            LogLevel::Info
+        };
+        let file_logger = FileLogger::new(config.file_log_path.clone())?.with_level(log_level);
+
+        // Load roadmap if available
+        let roadmap_state = match load_roadmap(&config.roadmap_path) {
+            Ok(roadmap) => {
+                info!("Roadmap loaded from {:?}", config.roadmap_path);
+                Some(roadmap)
+            }
+            Err(e) => {
+                warn!("No roadmap loaded: {}", e);
+                None
+            }
+        };
+
         info!("Manager initialized with state from {:?}", config.state_path);
+
+        // Log startup to file
+        let _ = file_logger.info(
+            "manager",
+            &format!("Manager starting with model: {}", config.model),
+        );
 
         Ok(Self {
             config,
             state,
+            roadmap_state,
             agent_spawner,
             build_verifier,
             log_manager,
+            file_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
         })
@@ -210,6 +271,13 @@ impl Manager {
     /// Get the current manager state.
     pub fn manager_state(&self) -> ManagerState {
         self.manager_state
+    }
+
+    /// Log to file logger, ignoring errors (file log failures should not halt execution).
+    fn flog(&self, level: LogLevel, component: &str, message: &str) {
+        if let Err(e) = self.file_logger.log(level, component, message) {
+            warn!("File log write failed: {}", e);
+        }
     }
 
     /// Get a reference to the tasks state.
@@ -234,12 +302,14 @@ impl Manager {
     /// - Shutdown was requested
     pub fn run(&mut self) -> Result<(), ManagerError> {
         info!("Starting manager run loop");
+        self.flog(LogLevel::Info, "manager", "Execution loop started");
         self.manager_state = ManagerState::Executing;
 
         loop {
             // Check for shutdown signal before selecting next task
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received, saving state and exiting gracefully");
+                self.flog(LogLevel::Warn, "manager", "Shutdown signal received, saving state");
                 self.update_state()?;
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
@@ -250,20 +320,24 @@ impl Manager {
                 Some(task) => task.id.clone(),
                 None => {
                     info!("No more runnable tasks, exiting loop");
+                    self.flog(LogLevel::Info, "manager", "No more runnable tasks");
                     break;
                 }
             };
 
             info!("Selected task for execution: {}", task_id);
+            self.flog(LogLevel::Info, "task", &format!("Task selected: {}", task_id));
 
             // Execute the task
             match self.execute_task(&task_id) {
                 Ok(()) => {
                     info!("Task {} completed successfully", task_id);
+                    self.flog(LogLevel::Info, "task", &format!("Task {} completed", task_id));
                 }
                 Err(e) => {
                     let error_msg = format!("Task {} failed: {}", task_id, e);
                     error!("{}", error_msg);
+                    self.flog(LogLevel::Error, "task", &error_msg);
                     self.log_manager.log_error(&error_msg)?;
                     self.state
                         .log_records
@@ -280,6 +354,7 @@ impl Manager {
             // Check for shutdown signal after task completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received after task completion, exiting gracefully");
+                self.flog(LogLevel::Warn, "manager", "Shutdown signal received after task completion");
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
             }
@@ -287,6 +362,7 @@ impl Manager {
 
         self.manager_state = ManagerState::Idle;
         info!("Manager run loop completed");
+        self.flog(LogLevel::Info, "manager", "Execution loop completed");
         Ok(())
     }
 
@@ -588,6 +664,11 @@ impl Manager {
                 "Task {} has exceeded max cycles ({}), deferring",
                 task_id, self.config.max_cycles
             );
+            self.flog(
+                LogLevel::Warn,
+                "task",
+                &format!("Task {} deferred: max cycles exceeded ({})", task_id, self.config.max_cycles),
+            );
             let reason = format!("Exceeded maximum cycles ({})", self.config.max_cycles);
             self.state.mark_task_status(task_id, TaskStatus::Deferred)?;
             self.log_manager.log_task_deferred(task_id, &reason)?;
@@ -617,6 +698,7 @@ impl Manager {
     /// 6. Mark task complete or retry
     fn execute_implem(&mut self, task: &Task) -> Result<(), ManagerError> {
         debug!("Executing IMPLEM task: {}", task.id);
+        self.flog(LogLevel::Info, "task", &format!("Executing IMPLEM task: {}", task.id));
         self.manager_state = ManagerState::WaitingForAgent;
 
         // Build the prompt
@@ -646,8 +728,10 @@ impl Manager {
         });
 
         // Spawn and wait for the agent
+        self.flog(LogLevel::Info, "agent", &format!("Agent spawned for IMPLEM task {}", task.id));
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
+        self.flog(LogLevel::Info, "agent", &format!("Agent completed for IMPLEM task {}", task.id));
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -687,7 +771,7 @@ impl Manager {
         };
         debug!(
             "Agent response: {}",
-            &response.raw_response[..response.raw_response.len().min(500)]
+            &response.message[..response.message.len().min(500)]
         );
 
         // Log agent response
@@ -704,6 +788,30 @@ impl Manager {
             inv.exit_status = output.exit_code;
         }
 
+        // Check if agent reported failure
+        if response.status == AgentStatus::Failed {
+            warn!(
+                "Agent reported failure for task {}: {}",
+                task.id, response.message
+            );
+            self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        // Verify agent actually made file changes
+        if !self.check_git_changes()? {
+            warn!(
+                "Agent reported success but no file changes detected for task {}",
+                task.id
+            );
+            self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
         // Run build verification
         self.manager_state = ManagerState::Verifying;
         let build_result = self.build_verifier.verify_all();
@@ -711,6 +819,7 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for task {}", task.id);
+                self.flog(LogLevel::Info, "build", &format!("Build PASSED for task {}", task.id));
                 let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
@@ -724,17 +833,20 @@ impl Manager {
                     .push(LogManager::create_build_result_record(&build_output));
 
                 // Record successful attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
 
                 // Mark task as completed
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                self.sync_roadmap_item(&task.id);
                 self.log_manager.log_task_complete(&task.id)?;
                 self.state
                     .log_records
                     .push(LogManager::create_task_complete_record(&task.id));
+                self.flog(LogLevel::Info, "task", &format!("Task {} marked completed", task.id));
             }
             Err(e) => {
                 warn!("Build verification failed for task {}: {}", task.id, e);
+                self.flog(LogLevel::Warn, "build", &format!("Build FAILED for task {}: {}", task.id, e));
 
                 // Log the build failure
                 let build_output = match &e {
@@ -759,7 +871,7 @@ impl Manager {
                     .push(LogManager::create_build_result_record(&build_output));
 
                 // Record failed attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, Some(response))?;
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
 
                 // Keep task in progress for retry
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
@@ -780,6 +892,7 @@ impl Manager {
     /// 5. If NEEDS_FIXES, increment attempt count
     fn execute_review(&mut self, task: &Task) -> Result<(), ManagerError> {
         debug!("Executing REVIEW task: {}", task.id);
+        self.flog(LogLevel::Info, "task", &format!("Executing REVIEW task: {}", task.id));
         self.manager_state = ManagerState::WaitingForAgent;
 
         // For review, we need to get the code to review
@@ -813,8 +926,10 @@ impl Manager {
         });
 
         // Spawn and wait for the agent
+        self.flog(LogLevel::Info, "agent", &format!("Agent spawned for REVIEW task {}", task.id));
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
+        self.flog(LogLevel::Info, "agent", &format!("Agent completed for REVIEW task {}", task.id));
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -850,7 +965,7 @@ impl Manager {
         };
         debug!(
             "Agent response: {}",
-            &response.raw_response[..response.raw_response.len().min(500)]
+            &response.message[..response.message.len().min(500)]
         );
 
         // Log agent response
@@ -867,8 +982,20 @@ impl Manager {
             inv.exit_status = output.exit_code;
         }
 
+        // Check if agent reported failure
+        if response.status == AgentStatus::Failed {
+            warn!(
+                "Agent reported failure for review task {}: {}",
+                task.id, response.message
+            );
+            self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
         // Try to extract review verdict from the response
-        let verdict = self.extract_review_verdict(&response.raw_response);
+        let verdict = self.extract_review_verdict(&response.message);
 
         // Log review result
         self.log_manager.log_review_result(&verdict, &[])?;
@@ -879,8 +1006,10 @@ impl Manager {
         match verdict {
             Verdict::Approved => {
                 info!("Review approved for task {}", task.id);
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
+                self.flog(LogLevel::Info, "task", &format!("Review APPROVED for task {}", task.id));
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                self.sync_roadmap_item(&task.id);
                 self.log_manager.log_task_complete(&task.id)?;
                 self.state
                     .log_records
@@ -888,7 +1017,8 @@ impl Manager {
             }
             Verdict::NeedsFixes => {
                 warn!("Review found issues for task {}", task.id);
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, Some(response))?;
+                self.flog(LogLevel::Warn, "task", &format!("Review NEEDS_FIXES for task {}", task.id));
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
                 // Keep task pending for another cycle
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
             }
@@ -907,6 +1037,7 @@ impl Manager {
     /// 4. Run build verification
     fn execute_fix(&mut self, task: &Task) -> Result<(), ManagerError> {
         debug!("Executing FIX task: {}", task.id);
+        self.flog(LogLevel::Info, "task", &format!("Executing FIX task: {}", task.id));
         self.manager_state = ManagerState::WaitingForAgent;
 
         // Get prior review issues from context
@@ -939,8 +1070,10 @@ impl Manager {
         });
 
         // Spawn and wait for the agent
+        self.flog(LogLevel::Info, "agent", &format!("Agent spawned for FIX task {}", task.id));
         let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
         let output = handle.wait()?;
+        self.flog(LogLevel::Info, "agent", &format!("Agent completed for FIX task {}", task.id));
 
         // Parse the response, retrying with --continue if parse fails
         let response = match ResponseParser::parse(&output.stdout) {
@@ -976,7 +1109,7 @@ impl Manager {
         };
         debug!(
             "Agent response: {}",
-            &response.raw_response[..response.raw_response.len().min(500)]
+            &response.message[..response.message.len().min(500)]
         );
 
         // Log agent response
@@ -993,6 +1126,30 @@ impl Manager {
             inv.exit_status = output.exit_code;
         }
 
+        // Check if agent reported failure
+        if response.status == AgentStatus::Failed {
+            warn!(
+                "Agent reported failure for fix task {}: {}",
+                task.id, response.message
+            );
+            self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        // Verify agent actually made file changes
+        if !self.check_git_changes()? {
+            warn!(
+                "Agent reported success but no file changes detected for fix task {}",
+                task.id
+            );
+            self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
         // Run build verification
         self.manager_state = ManagerState::Verifying;
         let build_result = self.build_verifier.verify_all();
@@ -1000,6 +1157,7 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for fix task {}", task.id);
+                self.flog(LogLevel::Info, "build", &format!("Build PASSED for FIX task {}", task.id));
                 let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
@@ -1013,17 +1171,20 @@ impl Manager {
                     .push(LogManager::create_build_result_record(&build_output));
 
                 // Record successful attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, Some(response))?;
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
 
                 // Mark task as completed
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                self.sync_roadmap_item(&task.id);
                 self.log_manager.log_task_complete(&task.id)?;
                 self.state
                     .log_records
                     .push(LogManager::create_task_complete_record(&task.id));
+                self.flog(LogLevel::Info, "task", &format!("FIX task {} marked completed", task.id));
             }
             Err(e) => {
                 warn!("Build verification failed for fix task {}: {}", task.id, e);
+                self.flog(LogLevel::Warn, "build", &format!("Build FAILED for FIX task {}: {}", task.id, e));
 
                 // Log the build failure
                 let build_output = crate::build::BuildOutput {
@@ -1039,7 +1200,7 @@ impl Manager {
                     .push(LogManager::create_build_result_record(&build_output));
 
                 // Record failed attempt
-                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, Some(response))?;
+                self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
 
                 // Keep task pending for retry
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
@@ -1063,9 +1224,25 @@ impl Manager {
     fn update_state(&mut self) -> Result<(), ManagerError> {
         save_state(&self.state, &self.config.state_path)?;
         debug!("State saved to {:?}", self.config.state_path);
+        self.flog(LogLevel::Debug, "state", &format!("State saved to {:?}", self.config.state_path));
 
         // Regenerate LOG.md from log_records
         self.regenerate_log_md()?;
+
+        // Save roadmap and regenerate ROADMAP.md if loaded
+        if let Some(ref roadmap) = self.roadmap_state {
+            if let Err(e) = save_roadmap(roadmap, &self.config.roadmap_path) {
+                warn!("Failed to save roadmap: {}", e);
+            } else {
+                debug!("Roadmap saved to {:?}", self.config.roadmap_path);
+                let content = generate_roadmap_md(roadmap);
+                if let Err(e) = write_md_file(&content, &self.config.roadmap_md_path) {
+                    warn!("Failed to regenerate ROADMAP.md: {}", e);
+                } else {
+                    debug!("ROADMAP.md regenerated at {:?}", self.config.roadmap_md_path);
+                }
+            }
+        }
 
         Ok(())
     }
@@ -1078,6 +1255,73 @@ impl Manager {
         Ok(())
     }
 
+    /// Sync a completed task's status to the roadmap.
+    ///
+    /// If the task has a `roadmap_item_id`, finds the corresponding roadmap item
+    /// and marks it as completed.
+    fn sync_roadmap_item(&mut self, task_id: &str) {
+        // Find the task's roadmap_item_id
+        let roadmap_item_id = self
+            .state
+            .phases
+            .iter()
+            .flat_map(|p| &p.tasks)
+            .find(|t| t.id == task_id)
+            .and_then(|t| t.roadmap_item_id.clone());
+
+        let item_id = match roadmap_item_id {
+            Some(id) => id,
+            None => return,
+        };
+
+        let roadmap = match &mut self.roadmap_state {
+            Some(r) => r,
+            None => return,
+        };
+
+        // Find and mark the roadmap item as completed
+        for phase in &mut roadmap.phases {
+            for item in &mut phase.items {
+                if item.id == item_id {
+                    item.completed = true;
+                    info!("Roadmap item '{}' marked completed (task {})", item.name, task_id);
+                    return;
+                }
+                // Also check sub-items
+                for sub_item in &mut item.sub_items {
+                    if sub_item.name == item_id {
+                        sub_item.completed = true;
+                        info!("Roadmap sub-item '{}' marked completed (task {})", sub_item.name, task_id);
+                        return;
+                    }
+                }
+            }
+        }
+
+        debug!("Roadmap item {} not found for task {}", item_id, task_id);
+    }
+
+    /// Check if git has any uncommitted changes in the working directory.
+    ///
+    /// Returns `true` if there are file changes (unstaged or staged), `false` otherwise.
+    /// If git is unavailable, returns `true` (assumes changes were made).
+    fn check_git_changes(&self) -> Result<bool, ManagerError> {
+        match std::process::Command::new("git")
+            .args(["diff", "--stat"])
+            .current_dir(&self.config.working_dir)
+            .output()
+        {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                Ok(!stdout.trim().is_empty())
+            }
+            Err(e) => {
+                warn!("Failed to run git diff, assuming changes exist: {}", e);
+                Ok(true)
+            }
+        }
+    }
+
     /// Record a task attempt in the state.
     fn record_attempt(
         &mut self,
@@ -1085,6 +1329,7 @@ impl Manager {
         agent_id: &str,
         started_at: chrono::DateTime<Utc>,
         status: AttemptStatus,
+        prompt: &str,
         response: Option<crate::state::AgentResponse>,
     ) -> Result<(), ManagerError> {
         // Find the task and add the attempt
@@ -1098,6 +1343,7 @@ impl Manager {
                         started_at,
                         completed_at: Some(Utc::now()),
                         status,
+                        prompt: prompt.to_string(),
                         response,
                     });
                     return Ok(());

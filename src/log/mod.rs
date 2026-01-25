@@ -17,6 +17,9 @@ use crate::state::{
     Verdict,
 };
 
+mod file_logger;
+pub use file_logger::{FileLogError, FileLogger, LogLevel, PruneStats};
+
 /// Maximum length for prompts and responses before truncation.
 const MAX_CONTENT_LENGTH: usize = 2000;
 
@@ -239,7 +242,7 @@ impl LogManager {
     ///
     /// * `response` - The response from the agent
     pub fn format_agent_response(response: &AgentResponse) -> String {
-        let truncated_response = truncate_content(&response.raw_response, MAX_CONTENT_LENGTH);
+        let truncated_response = truncate_content(&response.message, MAX_CONTENT_LENGTH);
 
         let mut output = String::from("### Agent Response\n\n");
 
@@ -723,7 +726,7 @@ mod tests {
     use super::*;
     use crate::build::CompilerMessage;
     use crate::build::MessageLevel;
-    use crate::state::{PhaseStatus, Severity, Task, TaskContext, TaskStatus, TaskType};
+    use crate::state::{AgentStatus, PhaseStatus, Severity, Task, TaskContext, TaskStatus, TaskType};
     use std::io::Read;
     use tempfile::NamedTempFile;
 
@@ -849,10 +852,11 @@ mod tests {
     #[test]
     fn test_format_agent_response() {
         let response = AgentResponse {
+            status: AgentStatus::Success,
             files_created: vec!["src/new.rs".to_string()],
             files_modified: vec!["src/lib.rs".to_string()],
             commands_run: vec!["cargo build".to_string()],
-            raw_response: "Agent completed the task".to_string(),
+            message: "Agent completed the task".to_string(),
         };
 
         let formatted = LogManager::format_agent_response(&response);

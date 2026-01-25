@@ -56,11 +56,23 @@ impl PromptBuilder {
 
         // Output format instructions
         prompt.push_str("### Output Format\n\n");
-        prompt.push_str("Respond with a JSON object containing:\n");
-        prompt.push_str("- `files_created`: list of files you created\n");
-        prompt.push_str("- `files_modified`: list of files you modified\n");
-        prompt.push_str("- `commands_run`: list of commands you executed\n");
-        prompt.push_str("- `summary`: brief summary of what you did\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully completed the task:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"summary\": \"Brief description of what you did\",\n");
+        prompt.push_str("  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n");
+        prompt.push_str("  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT complete the task:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the task\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
 
         prompt
     }
@@ -115,15 +127,31 @@ impl PromptBuilder {
 
         // Output format instructions
         prompt.push_str("### Output Format\n\n");
-        prompt.push_str("Respond with a JSON object containing:\n");
-        prompt.push_str("- `verdict`: either \"approved\" or \"needs_fixes\"\n");
-        prompt.push_str("- `issues`: array of issues found (if any), each with:\n");
-        prompt.push_str("  - `id`: unique identifier for the issue\n");
-        prompt.push_str("  - `severity`: \"critical\", \"high\", \"medium\", or \"low\"\n");
-        prompt.push_str("  - `location`: file:line or description of location\n");
-        prompt.push_str("  - `problem`: description of the problem\n");
-        prompt.push_str("  - `suggested_fix`: how to fix the issue\n");
-        prompt.push_str("- `summary`: brief summary of the review\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully completed the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"verdict\": \"approved\" or \"needs_fixes\",\n");
+        prompt.push_str("  \"summary\": \"Brief review summary\",\n");
+        prompt.push_str("  \"issues\": [\n");
+        prompt.push_str("    {\n");
+        prompt.push_str("      \"id\": \"unique-issue-id\",\n");
+        prompt.push_str("      \"severity\": \"critical\" or \"high\" or \"medium\" or \"low\",\n");
+        prompt.push_str("      \"location\": \"file:line\",\n");
+        prompt.push_str("      \"problem\": \"description of the problem\",\n");
+        prompt.push_str("      \"suggested_fix\": \"how to fix the issue\"\n");
+        prompt.push_str("    }\n");
+        prompt.push_str("  ]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT complete the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
 
         prompt
     }
@@ -185,10 +213,22 @@ impl PromptBuilder {
 
         // Output format instructions
         prompt.push_str("### Output Format\n\n");
-        prompt.push_str("Respond with a JSON object containing:\n");
-        prompt.push_str("- `files_modified`: list of files you modified\n");
-        prompt.push_str("- `issues_fixed`: list of issue IDs that you fixed\n");
-        prompt.push_str("- `summary`: brief summary of the fixes applied\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully fixed the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"summary\": \"Brief description of the fixes applied\",\n");
+        prompt.push_str("  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT fix the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
 
         prompt
     }

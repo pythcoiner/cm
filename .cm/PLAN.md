@@ -243,6 +243,36 @@ cm supports crash recovery through checkpointing, real-time monitoring via a ter
 **Workflow:**
 After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --regenerate` to update the markdown documentation (ROADMAP.md, LOG.md) before proceeding to completion.
 
+### Phase 23: Detailed File Logging
+
+**Goal:** Add persistent operational logging to `.cm/cm.log` for debugging and auditing
+
+**Deliverables:**
+- `src/log/file_logger.rs` - Thread-safe FileLogger with log levels
+- `--prune` CLI flag to trim log to last 24 hours
+- FileLogger integrated into Manager for comprehensive event logging
+
+**Log Format:**
+```
+[2026-01-24 10:30:45.123] [INFO] [manager] Manager starting with model: claude-sonnet-4-5-20250929
+[2026-01-24 10:30:45.200] [DEBUG] [state] State loaded: 5 phases, 23 tasks
+[2026-01-24 10:30:45.250] [INFO] [task] Task selected: phase-1.task-1
+```
+
+**Events Logged:**
+- Manager lifecycle (startup, shutdown, config)
+- State operations (load, save)
+- Task selection, completion, deferral
+- Agent spawn/complete with duration
+- Build verification results
+- Signal handling (Ctrl+C)
+
+**Log Levels:**
+- DEBUG: State saves, prompt previews, blocked task details
+- INFO: Major milestones (task start/complete, agent spawn)
+- WARN: Build failures, task deferrals, shutdown signals
+- ERROR: Fatal errors
+
 ## Technical Decisions
 
 ### Error Handling

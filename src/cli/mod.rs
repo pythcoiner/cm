@@ -70,6 +70,10 @@ pub enum CliError {
     /// Markdown generation error.
     #[error("generate error: {0}")]
     GenerateError(#[from] GenerateError),
+
+    /// File log error.
+    #[error("file log error: {0}")]
+    FileLogError(#[from] crate::log::FileLogError),
 }
 
 /// Claude Code Manager - Automated agent coordination for software development.
@@ -146,6 +150,10 @@ pub struct Cli {
     /// Perform comprehensive sanity check on JSON files.
     #[arg(long)]
     pub sanity_check: bool,
+
+    /// Prune cm.log entries older than 24 hours.
+    #[arg(long)]
+    pub prune: bool,
 }
 
 /// Run the CLI application.
@@ -189,7 +197,9 @@ pub fn run() -> Result<(), CliError> {
     }
 
     // Dispatch based on flags
-    let result = if cli.sanity_check {
+    let result = if cli.prune {
+        execute_prune(&cli)
+    } else if cli.sanity_check {
         execute_sanity_check(&cli)
     } else if cli.regenerate {
         execute_regenerate(&cli)
@@ -306,6 +316,9 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
             config = config.working_dir(cwd);
         }
     }
+
+    // Wire verbose flag for file logger level
+    config.verbose = cli.verbose;
 
     debug!("Final ManagerConfig: {:?}", config);
     Ok(config)
@@ -812,6 +825,34 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
     }
 }
 
+/// Execute the prune mode.
+///
+/// Prunes cm.log entries older than 24 hours.
+fn execute_prune(cli: &Cli) -> Result<(), CliError> {
+    let file_log_path = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .join("cm.log");
+
+    info!("Pruning log file: {:?}", file_log_path);
+
+    if !file_log_path.exists() {
+        println!("No log file found at {:?}", file_log_path);
+        return Ok(());
+    }
+
+    let logger = crate::log::FileLogger::new(file_log_path)?;
+    let stats = logger.prune()?;
+
+    println!(
+        "Pruned {} entries, kept {} entries",
+        stats.removed_count, stats.kept_count
+    );
+
+    Ok(())
+}
+
 /// Execute the dry-run mode.
 ///
 /// Prints what would be done without executing any tasks.
@@ -995,6 +1036,12 @@ mod tests {
     fn test_cli_parse_sanity_check() {
         let cli = Cli::parse_from(["cm", "--sanity-check"]);
         assert!(cli.sanity_check);
+    }
+
+    #[test]
+    fn test_cli_parse_prune() {
+        let cli = Cli::parse_from(["cm", "--prune"]);
+        assert!(cli.prune);
     }
 
     #[test]

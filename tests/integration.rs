@@ -532,6 +532,7 @@ fn test_task_with_max_failed_attempts_scenario() {
             started_at: Utc::now(),
             completed_at: Some(Utc::now()),
             status: AttemptStatus::Failed,
+            prompt: String::new(),
             response: None,
         });
     }
@@ -784,6 +785,7 @@ fn test_full_workflow_simulation() {
         started_at: Utc::now(),
         completed_at: Some(Utc::now()),
         status: AttemptStatus::Success,
+        prompt: String::new(),
         response: None,
     });
     let _cp2 = recovery.checkpoint(&state).expect("Checkpoint failed");

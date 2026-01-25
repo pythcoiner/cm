@@ -187,6 +187,9 @@ pub struct TaskAttempt {
     pub completed_at: Option<DateTime<Utc>>,
     /// Status of the attempt.
     pub status: AttemptStatus,
+    /// The full prompt sent to the agent.
+    #[serde(default)]
+    pub prompt: String,
     /// Response from the agent.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<AgentResponse>,
@@ -204,9 +207,22 @@ pub enum AttemptStatus {
     Timeout,
 }
 
+/// Status reported by the agent itself.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentStatus {
+    /// Agent reports task completed successfully.
+    Success,
+    /// Agent reports it could not complete the task.
+    Failed,
+}
+
 /// Response from an agent after executing a task.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentResponse {
+    /// Status reported by the agent (success/failed).
+    #[serde(default = "default_agent_status")]
+    pub status: AgentStatus,
     /// Files created by the agent.
     #[serde(default)]
     pub files_created: Vec<String>,
@@ -216,8 +232,13 @@ pub struct AgentResponse {
     /// Commands run by the agent.
     #[serde(default)]
     pub commands_run: Vec<String>,
-    /// Raw response text from the agent.
-    pub raw_response: String,
+    /// Agent message: summary if success, error details if failed.
+    #[serde(default, alias = "raw_response")]
+    pub message: String,
+}
+
+fn default_agent_status() -> AgentStatus {
+    AgentStatus::Success
 }
 
 /// Result of a code review.

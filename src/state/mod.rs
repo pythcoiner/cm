@@ -18,9 +18,9 @@ pub use roadmap::{
     load_roadmap, save_roadmap, RoadmapItem, RoadmapPhase, RoadmapState, RoadmapSubItem,
 };
 pub use tasks::{
-    AgentInvocation, AgentResponse, AgentType, AttemptStatus, GlobalContext, Phase, PhaseStatus,
-    Project, ReviewIssue, ReviewResult, Severity, Task, TaskAttempt, TaskContext, TaskStatus,
-    TaskType, TasksState, Verdict,
+    AgentInvocation, AgentResponse, AgentStatus, AgentType, AttemptStatus, GlobalContext, Phase,
+    PhaseStatus, Project, ReviewIssue, ReviewResult, Severity, Task, TaskAttempt, TaskContext,
+    TaskStatus, TaskType, TasksState, Verdict,
 };
 pub use validate::{
     validate_all, validate_cross_references, validate_roadmap_json, validate_tasks_json,
