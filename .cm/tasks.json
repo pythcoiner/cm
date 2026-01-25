@@ -134,6 +134,46 @@
       "name": "Skills to Commands Migration",
       "status": "completed",
       "tasks": []
+    },
+    {
+      "id": "phase-27",
+      "name": "Add /run Command",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-27.feat-run-command.impl-1",
+          "name": "Add /run command for cm orchestration",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": ["src/command.rs", "src/cli/init.rs"],
+            "code_style_excerpt": null
+          },
+          "instructions": "Add the /run command that provides main agent orchestration instructions:\n\n1. Create `assets/run.md` with the following content:\n```\nI want to continue working on the cm (Claude Code Manager) crate. Please read:\n\n1. .cm/PLAN.md - Overall implementation plan and workflow rules\n2. .cm/ROADMAP.md - Detailed checklist with all phases\n3. .cm/CODE_STYLE.md - Code style requirements\n\n## Critical Workflow Rules\n\nYou are the MAIN AGENT. You MUST:\n\n1. Only COORDINATE and manage work\n2. NEVER write implementation code directly\n3. NEVER perform reviews directly\n4. Update ROADMAP.json (check items) and tasks.json (detailed logs) AFTER each phase\n   and run `cm --regenerate`\n5. Create a NEW sub-agent for EVERY task (never reuse agent IDs)\n\n## Phase Workflow\n\nFor each phase:\n\n1. READ current state from ROADMAP.md\n2. SPAWN implementation sub-agent with detailed prompt\n3. WAIT for implementation to complete\n4. SPAWN review sub-agent to review (FRESH context!)\n5. IF review finds issues: SPAWN fix sub-agent, then re-review\n6. REPEAT until review APPROVED (max 5 cycles, then DEFER)\n7. UPDATE ROADMAP.json - check off completed items\n8. UPDATE tasks.json - add detailed log entry\n9. RUN `cm --regenerate`\n10. GIT COMMIT - commit all changes with message \"cm: Phase N - [description]\"\n\n## What is the current state?\n\nLook at ROADMAP.md to find the first unchecked item. That's where to continue.\n```\n\n2. Add to `src/command.rs` after line 6:\n   `pub const RUN_COMMAND: &str = include_str!(\"../assets/run.md\");`\n\n3. Update `src/cli/init.rs`:\n   - Add `RUN_COMMAND` to the import from `crate::command`\n   - Add `CommandFile { name: \"run\", content: RUN_COMMAND }` to COMMANDS array\n   - Add `println!(\"  /run  - Run cm orchestration\");` to success message\n   - Add \"run\" to `legacy_skills` array\n\n4. Ensure `cargo build` and `cargo clippy` pass\n5. Ensure `cargo test` passes",
+          "roadmap_item_id": "phase-27-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-28",
+      "name": "Remove LOG.md Generation",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-28.feat-remove-log-md.impl-1",
+          "name": "Remove LOG.md generation entirely",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-27.feat-run-command.impl-1"],
+          "context": {
+            "files_to_read": ["src/generate/log_md.rs", "src/generate/mod.rs", "src/cli/mod.rs"],
+            "code_style_excerpt": null
+          },
+          "instructions": "Remove LOG.md generation from the codebase entirely:\n\n1. Delete `src/generate/log_md.rs`\n\n2. Update `src/generate/mod.rs`:\n   - Remove `pub mod log_md;` line\n   - Remove any re-exports of log_md types\n\n3. Update `src/cli/mod.rs`:\n   - Remove LOG.md regeneration from `--regenerate` command\n   - Update output message to not mention LOG.md\n\n4. Update `src/manager/mod.rs`:\n   - Remove any LOG.md generation calls\n\n5. Update `tests/integration.rs`:\n   - Remove tests that check for LOG.md existence\n   - Update any assertions about regenerated files\n\n6. Update documentation:\n   - `assets/cm.md` - Remove LOG.md references\n   - `assets/end.md` - Remove LOG.md references\n   - `CLAUDE.md` - Remove LOG.md from module layout\n   - `README.md` - Remove LOG.md mentions\n\n7. Update `.cm/` planning files:\n   - Remove LOG.md from STRUCTURE.md if present\n\n8. Delete `.cm/LOG.md` if it exists\n\n9. Ensure `cargo build` and `cargo clippy` pass\n10. Ensure `cargo test` passes",
+          "roadmap_item_id": "phase-28-item-1"
+        }
+      ]
     }
   ],
   "current_phase": null,
