@@ -39,77 +39,22 @@ If prerequisites are met, proceed to Step 1.
 
 ## Step 1: Project Definition
 
-### Step 1.1: Project Name
+Ask these questions in sequence, waiting for each response:
 
-**Ask the user:**
-
-> What is the **project name**?
->
-> (A short identifier like `my-app`, `api-server`, `data-pipeline`)
-
-Wait for the user's response before proceeding.
-
-### Step 1.2: Project Description
-
-**Ask the user:**
-
-> What does this project do? (one sentence)
-
-Wait for the user's response before proceeding.
-
-### Step 1.3: Project Goal
-
-**Ask the user:**
-
-> What is the **overall goal**?
->
-> (What problem does this solve or what does it accomplish?)
-
-Wait for the user's response before proceeding.
+1. **Project name**: "What is the **project name**? (e.g., my-app, api-server)"
+2. **Description**: "What does this project do? (one sentence)"
+3. **Goal**: "What is the **overall goal**? (What problem does it solve?)"
 
 ---
 
 ## Step 2: Scope and Goals
 
-### Step 2.1: Success Criteria
+Ask these questions in sequence, waiting for each response:
 
-**Ask the user:**
-
-> How will we know when the project is **complete**?
->
-> (List 2-4 measurable success criteria)
-
-Wait for the user's response before proceeding.
-
-### Step 2.2: Key Features
-
-**Ask the user:**
-
-> What are the **key features** or capabilities?
->
-> (List the main things this project should do)
-
-Wait for the user's response before proceeding.
-
-### Step 2.3: Constraints
-
-**Ask the user:**
-
-> Are there any **constraints**?
->
-> (Technical constraints, deadlines, limitations - or "none")
-
-Wait for the user's response before proceeding.
-
-### Step 2.4: Out of Scope
-
-**Ask the user:**
-
-> What should we explicitly **NOT include**?
->
-> (Things to avoid or defer - or "nothing specific")
-
-Wait for the user's response before proceeding.
+1. **Success criteria**: "How will we know when the project is **complete**? (2-4 measurable criteria)"
+2. **Key features**: "What are the **key features**? (Main capabilities)"
+3. **Constraints**: "Any **constraints**? (Technical, deadlines - or 'none')"
+4. **Out of scope**: "What should we **NOT include**? (Things to avoid - or 'nothing specific')"
 
 ---
 
@@ -314,24 +259,7 @@ Check the output:
 
 ---
 
-## Step 10: Git Configuration
-
-**Ask the user:**
-
-> Should I add `.cm/` to `.gitignore`?
->
-> - **No (default)**: Keep `.cm/` tracked in git for collaboration and history
-> - **Yes**: Add `.cm/` to `.gitignore` to keep project files local only
->
-> Recommendation: Keep it tracked unless you have a specific reason to exclude it.
-
-If the user chooses "yes":
-1. Create or update `.gitignore`
-2. Add `.cm/` on a new line
-
----
-
-## Step 11: Generate Commit Message
+## Step 10: Generate Commit Message
 
 Generate a commit message for the initial setup:
 
@@ -352,7 +280,7 @@ Wait for user to confirm or provide alternative.
 
 ---
 
-## Step 12: Commit Changes
+## Step 11: Commit Changes
 
 **Ask the user:**
 
@@ -823,7 +751,7 @@ Customized template (when user provides commands):
 
 ## Example Generation
 
-Here's an example of what the wizard should generate for a simple CLI tool project:
+Example output for a CLI tool project:
 
 ### Example PLAN.md
 
@@ -834,63 +762,24 @@ Here's an example of what the wizard should generate for a simple CLI tool proje
 
 ## Overview
 
-my-cli-tool is a Rust CLI application that reads JSON files, applies transformations, and outputs the results. It supports filtering, mapping, and aggregation operations.
+Rust CLI that reads JSON, applies transformations, and outputs in multiple formats.
 
 ## Goals
 
-- Parse and validate JSON input files
-- Apply user-specified transformations
-- Output results in multiple formats (JSON, CSV, table)
-
-## Success Criteria
-
-- [ ] Can read JSON files from disk or stdin
-- [ ] Supports at least 5 transformation operations
-- [ ] Handles malformed input gracefully
-- [ ] Has comprehensive test coverage
-
-## Architecture
-
-The tool follows a pipeline architecture:
-1. Input parsing
-2. Transformation application
-3. Output formatting
-
-### Components
-
-1. **Parser** - Reads and validates JSON input
-2. **Transformer** - Applies operations to data
-3. **Formatter** - Outputs results in desired format
+- Parse and validate JSON input
+- Apply transformations (filter, map, aggregate)
+- Output as JSON, CSV, or table
 
 ## Phases
 
 ### Phase 1: Foundation
-
-**Goal:** Set up project structure and basic CLI
-
-**Tasks:**
-- Initialize Cargo project
-- Add clap for argument parsing
+- Initialize Cargo project with clap, serde, serde_json
 - Create basic CLI structure
 
 ### Phase 2: Core Implementation
-
-**Goal:** Implement parsing and transformation logic
-
-**Tasks:**
 - JSON parser module
 - Transformation operations
 - Error handling
-
-### Phase 3: Output and Polish
-
-**Goal:** Add output formatters and polish
-
-**Tasks:**
-- JSON formatter
-- CSV formatter
-- Table formatter
-- Documentation
 ```
 
 ### Example tasks.json
@@ -900,11 +789,10 @@ The tool follows a pipeline architecture:
   "version": "1.0.0",
   "project": {
     "name": "my-cli-tool",
-    "description": "A command-line tool for processing JSON files",
-    "created_at": "2024-01-15T10:30:00Z"
+    "description": "CLI tool for processing JSON files"
   },
   "global_context": {
-    "plan_summary": "Build a Rust CLI tool that reads JSON files, applies transformations (filter, map, aggregate), and outputs in multiple formats (JSON, CSV, table). Uses clap for CLI parsing and serde for JSON handling."
+    "plan_summary": "Rust CLI for JSON transformations with multiple output formats"
   },
   "phases": [
     {
@@ -918,39 +806,8 @@ The tool follows a pipeline architecture:
           "type": "implement",
           "status": "pending",
           "depends_on": [],
-          "context": {
-            "files_to_read": []
-          },
-          "instructions": "Initialize a new Rust project with Cargo:\n\n1. Create the project structure with `cargo init`\n2. Add dependencies to Cargo.toml:\n   - clap with derive feature\n   - serde with derive feature\n   - serde_json\n   - thiserror\n3. Create src/main.rs with basic clap CLI setup\n4. Create src/lib.rs exporting modules\n5. Ensure `cargo build` succeeds"
-        },
-        {
-          "id": "phase-1.task-2",
-          "name": "Create CLI argument parsing",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": ["phase-1.task-1"],
-          "context": {
-            "files_to_read": ["src/main.rs", "Cargo.toml"]
-          },
-          "instructions": "Implement CLI argument parsing using clap:\n\n1. Define Args struct with:\n   - input: Option<PathBuf> for input file (default: stdin)\n   - output: Option<PathBuf> for output file (default: stdout)\n   - format: OutputFormat enum (json, csv, table)\n   - operation: Operation subcommand\n2. Implement subcommands for: filter, map, select\n3. Add help text and examples\n4. Parse args in main() and print them for now"
-        }
-      ]
-    },
-    {
-      "id": "phase-2",
-      "name": "Core Implementation",
-      "status": "pending",
-      "tasks": [
-        {
-          "id": "phase-2.task-1",
-          "name": "Implement JSON parser module",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": ["phase-1.task-2"],
-          "context": {
-            "files_to_read": ["src/lib.rs", "src/main.rs"]
-          },
-          "instructions": "Create the JSON parser module:\n\n1. Create src/parser.rs module\n2. Implement read_json() function that:\n   - Accepts a Read trait object\n   - Parses JSON into serde_json::Value\n   - Returns Result with custom error type\n3. Handle both JSON objects and arrays\n4. Add unit tests for valid and invalid input\n5. Export from lib.rs"
+          "context": { "files_to_read": [] },
+          "instructions": "Initialize Rust project with Cargo. Add clap, serde, serde_json, thiserror. Create basic CLI setup."
         }
       ]
     }

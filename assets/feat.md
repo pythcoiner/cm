@@ -4,12 +4,7 @@ This command guides users through adding a new feature to an existing cm (Claude
 
 ## Prerequisites
 
-Before using this command, ensure:
-- A `.cm/` directory exists with valid project files
-- `tasks.json`, `PLAN.md`, and `ROADMAP.md` are present
-- The project has been initialized with `/cm` or `cm init`
-
-If prerequisites are not met, inform the user and suggest running `/cm` first.
+Requires: `.cm/` directory with `tasks.json`, `PLAN.md`, and `ROADMAP.md`. If not present, run `/cm` first.
 
 ## CRITICAL: Scope Limitations
 
@@ -268,18 +263,12 @@ Wait for explicit user confirmation before modifying files.
 
 ## Step 9: Handoff to /end
 
-After the user confirms the feature summary, inform them:
+After confirmation:
 
-> The feature plan is ready. To save these changes to the project files, run `/end`.
->
-> This will update:
-> - `.cm/tasks.json` - Add task definitions
-> - `.cm/roadmap.json` - Add roadmap items
-> - `.cm/PLAN.md` - Add feature documentation
->
-> After saving, run `cm run` when ready to start implementation.
+> Ready to save. Run `/end` to write changes to tasks.json, roadmap.json, and PLAN.md.
+> Then run `cm` when ready to implement.
 
-Do NOT modify any files. Wait for the user to run `/end`.
+Do NOT modify files. Wait for `/end`.
 
 ---
 

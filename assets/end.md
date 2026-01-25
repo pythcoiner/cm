@@ -681,52 +681,14 @@ Then fix the errors and re-run validation until it passes.
 
 ## Schema References
 
-### tasks.json Task Schema
+**See `/cm` for full tasks.json and roadmap.json schemas.**
 
-```json
-{
-  "id": "phase-X.task-N",
-  "name": "Task Name",
-  "type": "implement|review|fix|test",
-  "status": "pending|in_progress|completed|deferred",
-  "depends_on": ["task-id-1", "task-id-2"],
-  "context": {
-    "files_to_read": ["file1.rs", "file2.rs"],
-    "code_style_excerpt": "Optional style notes",
-    "prior_review_issues": ["Issue 1", "Issue 2"]
-  },
-  "instructions": "Detailed instructions for the agent",
-  "roadmap_item_id": "optional-item-id"
-}
-```
+Quick reference for task ID naming:
+- **Feature tasks:** `phase-X.feat-[name].task-N`
+- **Fix tasks:** `phase-X.fix-[name]`
+- **Review/Test tasks:** `phase-X.task-N.review` / `phase-X.task-N.test`
 
-### roadmap.json Item Schema
-
-```json
-{
-  "id": "item-X",
-  "name": "Item Name",
-  "completed": false,
-  "sub_items": [
-    { "name": "Sub-item name", "completed": false }
-  ],
-  "linked_task_ids": ["phase-1.task-1"]
-}
-```
-
-### Task ID Naming Conventions
-
-- **Feature tasks:** `phase-X.feat-[feature-name].task-N`
-- **Fix tasks:** `phase-X.fix-[bug-name]` or `phase-X.task-N.fix`
-- **Review tasks:** `phase-X.task-N.review`
-- **Test tasks:** `phase-X.feat-[name].test-N` or `phase-X.task-N.test`
-
-### Dependency Rules
-
-1. Tasks can depend on tasks from the same phase or earlier phases only
-2. No circular dependencies allowed
-3. Dependencies must reference existing task IDs
-4. Use dependencies to enforce implementation order (e.g., test depends on implement)
+**Dependency rule:** Tasks can only depend on tasks from the same or earlier phases. No circular dependencies.
 
 ---
 
@@ -744,91 +706,49 @@ Then fix the errors and re-run validation until it passes.
 
 ## Example Usage
 
-### Example 1: Finalizing a /feat Session
+### Example: /feat Session
 
 ```
-User: I think we've covered everything for the export feature. Can you save this to the planning files?
+User: Save the export feature to planning files.
 
-Agent: I'm going to save the export feature we discussed to the planning files.
-
-**Summary:**
-- Export feature with CSV, JSON, and PDF formats
-- 3 tasks to add (implement, test, review)
-- Phase: phase-2 (Core Features)
-
+Agent: Saving export feature:
+- 3 tasks (CSV, JSON, PDF export)
+- Phase: phase-2
 Proceed? (yes/no)
 
 User: yes
 
-Agent: [Reads tasks.json and roadmap.json]
-Agent: [Adds 3 new tasks to phase-2 in tasks.json]
-Agent: [Adds roadmap items with linked_task_ids]
-Agent: [Updates PLAN.md with export feature documentation]
-Agent: [Runs cm --regenerate]
-Agent: [Runs cm --sanity-check - passes]
+Agent: [Updates tasks.json, roadmap.json, PLAN.md]
+Agent: [Runs cm --regenerate && cm --sanity-check]
 
-**Session finalized successfully!**
+**Session finalized!**
+- Added 3 tasks to tasks.json
+- Added roadmap item with linked_task_ids
+- Validation: ✓ passed
 
-**Changes saved:**
-- `.cm/tasks.json` - Added 3 new tasks
-- `.cm/roadmap.json` - Added 1 new roadmap item
-- `.cm/PLAN.md` - Added export feature documentation
-
-**New tasks added:**
-- `phase-2.feat-export.impl-1`: Implement CSV export
-- `phase-2.feat-export.impl-2`: Implement JSON export
-- `phase-2.feat-export.impl-3`: Implement PDF export
-
-**Validation:** ✓ All checks passed
-
-**Next steps:**
-1. Review the updated files to ensure accuracy
-2. When ready to implement, run `cm run` to start executing tasks
-3. Or run `cm --step` to execute tasks one at a time
-
-The feature has been saved to your planning files and is ready for implementation whenever you choose to run it.
+Run `cm` when ready to implement.
 ```
 
-### Example 2: Finalizing a /fix Session
+### Example: /fix Session
 
 ```
-User: Let's save this fix for the memory leak to the tasks.
+User: Save the memory leak fix.
 
-Agent: I'm going to save the fix we discussed to the planning files.
-
-**Summary:**
-- Fix memory leak in connection pool
-- 1 task to add
-- Phase: phase-1 (immediate priority)
-
+Agent: Saving fix:
+- 1 task: Fix memory leak in connection pool
+- Phase: phase-1 (priority)
 Proceed? (yes/no)
 
 User: yes
 
-Agent: [Reads tasks.json and roadmap.json]
-Agent: [Adds fix task to phase-1 in tasks.json]
-Agent: [Adds roadmap item for the fix]
-Agent: [Skips PLAN.md - not needed for fixes]
-Agent: [Runs cm --regenerate]
-Agent: [Runs cm --sanity-check - passes]
+Agent: [Updates tasks.json, roadmap.json]
+Agent: [Runs cm --regenerate && cm --sanity-check]
 
-**Session finalized successfully!**
+**Session finalized!**
+- Added `phase-1.fix-memory-leak` task
+- Validation: ✓ passed
 
-**Changes saved:**
-- `.cm/tasks.json` - Added 1 new task
-- `.cm/roadmap.json` - Added 1 new roadmap item
-
-**New tasks added:**
-- `phase-1.fix-memory-leak`: Fix memory leak in connection pool
-
-**Validation:** ✓ All checks passed
-
-**Next steps:**
-1. Review the updated files to ensure accuracy
-2. When ready to implement, run `cm run` to start executing tasks
-3. Or run `cm --step` to execute tasks one at a time
-
-The fix has been saved to your planning files and is ready for implementation whenever you choose to run it.
+Run `cm` when ready to implement.
 ```
 
 ---

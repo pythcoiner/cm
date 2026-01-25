@@ -1,35 +1,25 @@
-I want to continue working on the cm (Claude Code Manager) crate. Please read:
+Continue working on this cm-managed project.
 
-1. .cm/PLAN.md - Overall implementation plan and workflow rules
-2. .cm/ROADMAP.md - Detailed checklist with all phases
-3. .cm/CODE_STYLE.md - Code style requirements
+## Context Files
 
-## Critical Workflow Rules
+Read these files to understand the current state:
+- `.cm/PLAN.md` - Project plan and architecture
+- `.cm/ROADMAP.md` - Progress checklist
+- `.cm/TASKS.md` - Task status overview
 
-You are the MAIN AGENT. You MUST:
+## How cm Works
 
-1. Only COORDINATE and manage work
-2. NEVER write implementation code directly
-3. NEVER perform reviews directly
-4. Update ROADMAP.json (check items) and tasks.json (detailed logs) AFTER each phase
-   and run `cm --regenerate`
-5. Create a NEW sub-agent for EVERY task (never reuse agent IDs)
+The `cm` CLI tool orchestrates task execution:
+1. Reads `tasks.json` for the next pending task
+2. Spawns an IMPLEM agent with isolated context
+3. Runs build verification (`cargo build` + `cargo clippy`)
+4. Spawns a REVIEW agent to check the implementation
+5. If issues found: spawns FIX agent, then re-reviews (max 5 cycles)
+6. Marks task complete and updates JSON files
+7. Regenerates markdown files from JSON
 
-## Phase Workflow
+## Your Role
 
-For each phase:
+You are continuing manual work on this project. Check ROADMAP.md for uncompleted items, or run `cm --status` to see current progress.
 
-1. READ current state from ROADMAP.md
-2. SPAWN implementation sub-agent with detailed prompt
-3. WAIT for implementation to complete
-4. SPAWN review sub-agent to review (FRESH context!)
-5. IF review finds issues: SPAWN fix sub-agent, then re-review
-6. REPEAT until review APPROVED (max 5 cycles, then DEFER)
-7. UPDATE ROADMAP.json - check off completed items
-8. UPDATE tasks.json - add detailed log entry
-9. RUN `cm --regenerate`
-10. GIT COMMIT - commit all changes with message "cm: Phase N - [description]"
-
-## What is the current state?
-
-Look at ROADMAP.md to find the first unchecked item. That's where to continue.
+To run automated implementation: `cm` or `cm --step` (one task at a time).

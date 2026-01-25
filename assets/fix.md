@@ -4,12 +4,7 @@ This command guides users through adding a bug fix task to an existing cm (Claud
 
 ## Prerequisites
 
-Before using this command, ensure:
-- A `.cm/` directory exists with valid project files
-- `tasks.json` is present
-- The project has been initialized with `/cm` or `cm init`
-
-If prerequisites are not met, inform the user and suggest running `/cm` first.
+Requires: `.cm/` directory with `tasks.json`. If not present, run `/cm` first.
 
 ## CRITICAL: Scope Limitations
 
@@ -226,17 +221,12 @@ Wait for explicit user confirmation before modifying files.
 
 ## Step 8: Handoff to /end
 
-After the user confirms the fix task summary, inform them:
+After confirmation:
 
-> The fix task is ready. To save these changes to the project files, run `/end`.
->
-> This will update:
-> - `.cm/tasks.json` - Add fix task definition
-> - `.cm/roadmap.json` - Add roadmap entry (if applicable)
->
-> After saving, run `cm run` when ready to start the fix.
+> Ready to save. Run `/end` to write changes to tasks.json and roadmap.json.
+> Then run `cm` when ready to implement.
 
-Do NOT modify any files. Wait for the user to run `/end`.
+Do NOT modify files. Wait for `/end`.
 
 ---
 
