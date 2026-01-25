@@ -4371,11 +4371,10 @@ You are a **Fix Agent**. Your role is to resolve issues identified during code r
 
 ### Agent Spawn
 
-**Type:** Review
-**Task:** phase-27.task-4
+**Type:** review
 
 <details>
-<summary>Prompt</summary>
+<summary>Prompt Preview</summary>
 
 ```
 # Reviewer Agent Instructions
@@ -4388,82 +4387,9 @@ You are a **Reviewer Agent**. Your role is to analyze failed verification result
 2. **Identify Root Causes**: Determine why the verification failed
 3. **Provide Feedback**: Give clear, specific instructions for fixing the issues
 4. **Prioritize Issues**: List problems in order of importance
-5. **Output Results**: Return a JSON response with review findings
+5. **Output Results
 
-## Context You Receive
-
-You are provided with:
-- The original task description
-- The implementation attempt that failed
-- Verification output (build/lint/test errors)
-- List of files that were modified
-- Code style guidelines
-
-You do NOT have access to:
-- Other tasks or implementations
-- Global project state
-- Historical conversations
-
-## Review Guidelines
-
-### Focus on Verification Failures
-
-Only review issues that caused verification to fail:
-- Build errors (compilation failures)
-- Lint warnings (clippy issues)
-- Test failures (failing test cases)
-
-Don't comment on:
-- Code style preferences if linting passes
-- Theoretical improvements unrelated to failures
-- Design decisions that don't affect verification
-
-### Provide Actionable Feedback
-
-For each issue:
-- Quote the exact error message
-- Identify the file and line number
-- Explain what's wrong
-- Suggest a specific fix
-- Prioritize by severity
-
-### Be Specific
-
-Good feedback:
-- "In src/main.rs:42, the function returns Result<(), Error> but Error is not imported. Add 'use crate::Error;' at the top."
-
-Bad feedback:
-- "There are some import issues that need to be fixed."
-
-## Required Output Format
-
-You MUST end your response with a JSON code block in this exact format:
-
-```json
-{
-  "status": "issues_found",
-  "issues": [
-    {
-      "file": "path/to/file.rs",
-      "line": 42,
-      "severity": "error",
-      "message": "Brief description of the issue",
-      "suggestion": "Speci
-
-... [truncated, 68700 more bytes]
-```
-
-</details>
-
-[2026-01-25 08:41:31 UTC] **AGENT_COMPLETE**
-
-### Agent Response
-
-<details>
-<summary>Raw Response</summary>
-
-```
-Clean implementation with comprehensive test coverage. Correctly prunes both main cm.log and all phase logs with proper error handling and user feedback.
+... [truncated, 1535 more bytes]
 ```
 
 </details>
@@ -4472,10 +4398,70 @@ Clean implementation with comprehensive test coverage. Correctly prunes both mai
 
 ### Review Result: NEEDS_FIXES
 
-No issues found.
+**Issues Found:** 0
 
 
 [2026-01-25 08:41:36 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+
+### Agent Spawn
+
+**Type:** review
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+# Reviewer Agent Instructions
+
+You are a **Reviewer Agent**. Your role is to analyze failed verification results and provide actionable feedback for fixing issues.
+
+## Your Responsibilities
+
+1. **Analyze Failures**: Review build errors, lint warnings, and test failures
+2. **Identify Root Causes**: Determine why the verification failed
+3. **Provide Feedback**: Give clear, specific instructions for fixing the issues
+4. **Prioritize Issues**: List problems in order of importance
+5. **Output Results
+
+... [truncated, 1535 more bytes]
+```
+
+</details>
+
+[2026-01-25 08:42:14 UTC] **REVIEW_RESULT**
+
+### Review Result: NEEDS_FIXES
+
+**Issues Found:** 0
+
+
+[2026-01-25 08:42:14 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+
+### Agent Spawn
+
+**Type:** fix
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+# Fix Agent Instructions
+
+You are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.
+
+## Your Responsibilities
+
+1. **Understand Issues**: Carefully read all review feedback and understand what needs to be fixed
+2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems
+3. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality
+4. **Follow Conventions**
+
+... [truncated, 1534 more bytes]
+```
+
+</details>
+
+[2026-01-25 08:42:42 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
 
 ### Agent Spawn
 
@@ -4558,12 +4544,12 @@ You MUST end your response with a JSON code block in this exact format:
       "message": "Brief description of the issue",
       "suggestion": "Speci
 
-... [truncated, 68700 more bytes]
+... [truncated, 78782 more bytes]
 ```
 
 </details>
 
-[2026-01-25 08:42:14 UTC] **AGENT_COMPLETE**
+[2026-01-25 08:43:07 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
@@ -4571,19 +4557,19 @@ You MUST end your response with a JSON code block in this exact format:
 <summary>Raw Response</summary>
 
 ```
-Clean implementation with comprehensive test coverage. Correctly prunes both main cm.log and all phase logs with proper error handling and user feedback.
+Implementation correctly handles per-phase log pruning with proper error handling and comprehensive test coverage. Build and clippy pass clean.
 ```
 
 </details>
 
-[2026-01-25 08:42:14 UTC] **REVIEW_RESULT**
+[2026-01-25 08:43:07 UTC] **REVIEW_RESULT**
 
 ### Review Result: NEEDS_FIXES
 
 No issues found.
 
 
-[2026-01-25 08:42:14 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+[2026-01-25 08:43:07 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
 
 ### Agent Spawn
 
@@ -4637,20 +4623,7 @@ All fixes must:
 - Always test your changes by reading relevant files to understand the broader context
 - Never skip fixing critical or high-severity i
 
-... [truncated, 1399 more bytes]
-```
-
-</details>
-
-[2026-01-25 08:42:41 UTC] **AGENT_COMPLETE**
-
-### Agent Response
-
-<details>
-<summary>Raw Response</summary>
-
-```
-No fixes required - review feedback was positive, confirming the implementation is clean with comprehensive test coverage and correctly prunes both main cm.log and all phase logs with proper error handling and user feedback.
+... [truncated, 1389 more bytes]
 ```
 
 </details>
