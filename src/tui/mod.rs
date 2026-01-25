@@ -37,6 +37,19 @@ pub struct App {
     pub paused: bool,
     /// The ID of the currently executing task.
     pub current_task_id: Option<String>,
+    /// Active retry prompt, if any.
+    pub retry_prompt: Option<RetryPromptState>,
+}
+
+/// State for an active retry prompt.
+#[derive(Debug, Clone)]
+pub struct RetryPromptState {
+    /// The task ID that exhausted cycles.
+    pub task_id: String,
+    /// Number of cycles completed.
+    pub cycles_completed: u32,
+    /// User input buffer for number of cycles.
+    pub input_buffer: String,
 }
 
 impl App {
@@ -50,6 +63,7 @@ impl App {
             should_quit: false,
             paused: false,
             current_task_id,
+            retry_prompt: None,
         }
     }
 
@@ -103,6 +117,13 @@ pub enum TuiCommand {
     Interrupt,
     /// Quit the application.
     Quit,
+    /// User response to retry prompt after max review cycles exhausted.
+    RetryResponse {
+        /// Whether the user wants to retry.
+        retry: bool,
+        /// Number of additional cycles to run (if retry=true).
+        additional_cycles: u32,
+    },
 }
 
 /// Events sent from the manager to the TUI.
@@ -131,6 +152,15 @@ pub enum ManagerEvent {
     Error(String),
     /// The tasks state has been updated.
     StateUpdated(Box<TasksState>),
+    /// Prompt user for retry decision after max review cycles exhausted.
+    RetryPrompt {
+        /// The task ID that exhausted cycles.
+        task_id: String,
+        /// Number of cycles completed.
+        cycles_completed: u32,
+        /// Message to display to the user.
+        message: String,
+    },
 }
 
 /// Create channels for communication between the TUI and manager.
@@ -222,6 +252,61 @@ fn restore_terminal() -> io::Result<()> {
 
 /// Handle a key event and return an optional command.
 fn handle_key_event(app: &mut App, key: KeyEvent) -> Option<TuiCommand> {
+    // If retry prompt is active, handle it specially
+    if let Some(ref mut prompt_state) = app.retry_prompt {
+        match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                // User wants to retry with default 5 cycles
+                let additional = if prompt_state.input_buffer.is_empty() {
+                    5
+                } else {
+                    prompt_state.input_buffer.parse().unwrap_or(5)
+                };
+                app.retry_prompt = None;
+                return Some(TuiCommand::RetryResponse {
+                    retry: true,
+                    additional_cycles: additional,
+                });
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                // User doesn't want to retry
+                app.retry_prompt = None;
+                return Some(TuiCommand::RetryResponse {
+                    retry: false,
+                    additional_cycles: 0,
+                });
+            }
+            KeyCode::Char(c) if c.is_ascii_digit() => {
+                // User typing a number
+                prompt_state.input_buffer.push(c);
+                return None;
+            }
+            KeyCode::Backspace => {
+                prompt_state.input_buffer.pop();
+                return None;
+            }
+            KeyCode::Enter => {
+                // Submit with typed number
+                let additional = prompt_state.input_buffer.parse().unwrap_or(5);
+                if additional > 0 {
+                    app.retry_prompt = None;
+                    return Some(TuiCommand::RetryResponse {
+                        retry: true,
+                        additional_cycles: additional,
+                    });
+                } else {
+                    app.retry_prompt = None;
+                    return Some(TuiCommand::RetryResponse {
+                        retry: false,
+                        additional_cycles: 0,
+                    });
+                }
+            }
+            _ => return None,
+        }
+    }
+
+    // Normal key handling
     match key.code {
         KeyCode::Char('p') => {
             app.paused = !app.paused;
@@ -335,6 +420,22 @@ fn run_event_loop_with_channels(
                 ManagerEvent::StateUpdated(state) => {
                     app.update_state(*state);
                 }
+                ManagerEvent::RetryPrompt {
+                    task_id,
+                    cycles_completed,
+                    message,
+                } => {
+                    // Show the retry prompt
+                    app.add_stream_line(StreamLine::Prompt(message));
+                    app.add_stream_line(StreamLine::Prompt(
+                        "Press [y] to retry (default 5 cycles), [n] to defer, or type a number and press Enter".to_string(),
+                    ));
+                    app.retry_prompt = Some(RetryPromptState {
+                        task_id,
+                        cycles_completed,
+                        input_buffer: String::new(),
+                    });
+                }
             }
         }
 
@@ -387,6 +488,9 @@ mod tests {
                     instructions: "Do task 1".to_string(),
                     attempts: vec![],
                     roadmap_item_id: None,
+                    implem_completed_at: None,
+                    baseline_commit: None,
+                    review_cycles_completed: 0,
                 }],
             }],
             current_phase: Some("phase-1".to_string()),

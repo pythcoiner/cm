@@ -129,6 +129,18 @@ pub struct Task {
     /// ID of the linked roadmap item (for roadmap synchronization).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub roadmap_item_id: Option<String>,
+    /// Timestamp when IMPLEM completed successfully (build passed).
+    /// Indicates review cycle can resume without re-running IMPLEM.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub implem_completed_at: Option<DateTime<Utc>>,
+    /// Git commit hash of the baseline before review cycles began.
+    /// Required for computing diffs during review.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub baseline_commit: Option<String>,
+    /// Number of review cycles already completed for the current attempt.
+    /// Used when resuming to continue from where we left off.
+    #[serde(default)]
+    pub review_cycles_completed: u32,
 }
 
 /// Type of task.
@@ -423,6 +435,9 @@ mod tests {
                     instructions: "Create the module".to_string(),
                     attempts: vec![],
                     roadmap_item_id: None,
+                    implem_completed_at: None,
+                    baseline_commit: None,
+                    review_cycles_completed: 0,
                 }],
             }],
             current_phase: Some("phase-1".to_string()),

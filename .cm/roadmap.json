@@ -2322,6 +2322,47 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-28",
+      "number": "28",
+      "name": "FIX Cycle Retry & Resume",
+      "items": [
+        {
+          "id": "28.1",
+          "name": "Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add implem_completed_at, baseline_commit, review_cycles_completed to Task",
+              "completed": false
+            },
+            {
+              "name": "Add RetryPrompt/RetryResponse to TUI events/commands",
+              "completed": false
+            },
+            {
+              "name": "Implement prompt_retry_cycles() for TUI and daemon modes",
+              "completed": false
+            },
+            {
+              "name": "Modify run_review_cycle() to prompt on max cycles",
+              "completed": false
+            },
+            {
+              "name": "Save IMPLEM completion state before review cycle",
+              "completed": false
+            },
+            {
+              "name": "Resume at REVIEW on --continue when IMPLEM completed",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-28.fix-retry-prompt"
+          ]
+        }
+      ]
     }
   ]
 }

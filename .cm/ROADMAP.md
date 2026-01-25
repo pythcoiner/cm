@@ -548,6 +548,20 @@ Status: **In Progress** (1/6)
 
 ---
 
+## Phase 28: FIX Cycle Retry & Resume
+
+Status: **Not Started** (0/1)
+
+- [ ] Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue
+  - [ ] Add implem_completed_at, baseline_commit, review_cycles_completed to Task
+  - [ ] Add RetryPrompt/RetryResponse to TUI events/commands
+  - [ ] Implement prompt_retry_cycles() for TUI and daemon modes
+  - [ ] Modify run_review_cycle() to prompt on max cycles
+  - [ ] Save IMPLEM completion state before review cycle
+  - [ ] Resume at REVIEW on --continue when IMPLEM completed
+
+---
+
 ## Summary
 
 | Phase | Status | Progress |
@@ -582,4 +596,5 @@ Status: **In Progress** (1/6)
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
 | Phase 27: Per-Phase TRACE Logging | In Progress | 5/28 |
-| **Total** | | **313/336** |
+| Phase 28: FIX Cycle Retry & Resume | Not Started | 0/7 |
+| **Total** | | **313/343** |

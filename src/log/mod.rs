@@ -822,6 +822,9 @@ mod tests {
                 instructions: "Do something".to_string(),
                 attempts: vec![],
                 roadmap_item_id: None,
+                implem_completed_at: None,
+                baseline_commit: None,
+                review_cycles_completed: 0,
             }],
         };
 

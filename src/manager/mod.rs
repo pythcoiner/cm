@@ -204,6 +204,10 @@ pub struct Manager {
     manager_state: ManagerState,
     /// Shutdown flag for graceful termination.
     shutdown_flag: Arc<AtomicBool>,
+    /// Optional event sender for TUI communication.
+    event_tx: Option<Sender<ManagerEvent>>,
+    /// Optional command receiver for TUI communication.
+    cmd_rx: Option<Receiver<TuiCommand>>,
 }
 
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
@@ -271,6 +275,8 @@ impl Manager {
             file_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
+            event_tx: None,
+            cmd_rx: None,
         })
     }
 
@@ -412,6 +418,10 @@ impl Manager {
         info!("Starting manager run loop with TUI channels");
         emit_cm("Starting run loop (TUI)");
 
+        // Store channels for use in nested methods (like prompt_retry_cycles)
+        self.event_tx = Some(event_tx.clone());
+        self.cmd_rx = Some(cmd_rx);
+
         // Ensure clean working tree for commit-per-agent audit trail
         self.preflight_git_check()?;
 
@@ -432,21 +442,26 @@ impl Manager {
             }
 
             // Check for TUI commands (non-blocking)
-            while let Ok(cmd) = cmd_rx.try_recv() {
-                match cmd {
-                    TuiCommand::Pause => {
-                        paused = !paused;
-                        info!("Manager paused: {}", paused);
-                    }
-                    TuiCommand::Interrupt => {
-                        info!("Interrupt received, stopping manager");
-                        self.manager_state = ManagerState::Idle;
-                        return Ok(());
-                    }
-                    TuiCommand::Quit => {
-                        info!("Quit received, stopping manager");
-                        self.manager_state = ManagerState::Idle;
-                        return Ok(());
+            if let Some(ref rx) = self.cmd_rx {
+                while let Ok(cmd) = rx.try_recv() {
+                    match cmd {
+                        TuiCommand::Pause => {
+                            paused = !paused;
+                            info!("Manager paused: {}", paused);
+                        }
+                        TuiCommand::Interrupt => {
+                            info!("Interrupt received, stopping manager");
+                            self.manager_state = ManagerState::Idle;
+                            return Ok(());
+                        }
+                        TuiCommand::Quit => {
+                            info!("Quit received, stopping manager");
+                            self.manager_state = ManagerState::Idle;
+                            return Ok(());
+                        }
+                        TuiCommand::RetryResponse { .. } => {
+                            // Ignore - only expected during prompt_retry_cycles
+                        }
                     }
                 }
             }
@@ -754,6 +769,51 @@ impl Manager {
         self.flog(LogLevel::Info, "task", &format!("Executing IMPLEM task: {}", task.id));
         self.manager_state = ManagerState::WaitingForAgent;
 
+        // Check if we should resume at REVIEW (IMPLEM already completed)
+        if task.implem_completed_at.is_some() {
+            if let Some(ref baseline) = task.baseline_commit {
+                let starting_cycle = task.review_cycles_completed;
+                info!(
+                    "Resuming task {} at REVIEW cycle {} (IMPLEM already completed)",
+                    task.id, starting_cycle
+                );
+                self.flog(
+                    LogLevel::Info,
+                    "task",
+                    &format!("Resuming at REVIEW cycle {} for task {}", starting_cycle, task.id),
+                );
+                emit_cm(&format!("Resuming {} at REVIEW cycle {}", task.id, starting_cycle));
+
+                let verdict = self.run_review_cycle(task, baseline, starting_cycle)?;
+
+                match verdict {
+                    Verdict::Approved => {
+                        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                        self.sync_roadmap_item(&task.id);
+                        self.log_manager.log_task_complete(&task.id)?;
+                        self.state
+                            .log_records
+                            .push(LogManager::create_task_complete_record(&task.id));
+                        self.clear_implem_completion(&task.id);
+                        self.flog(LogLevel::Info, "task", &format!("Task {} completed (resumed review approved)", task.id));
+                    }
+                    Verdict::NeedsFixes => {
+                        let reason = "Review cycle exhausted after resuming".to_string();
+                        self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                        self.log_manager.log_task_deferred(&task.id, &reason)?;
+                        self.state
+                            .log_records
+                            .push(LogManager::create_task_deferred_record(&task.id, &reason));
+                        self.clear_implem_completion(&task.id);
+                        self.flog(LogLevel::Warn, "task", &format!("Task {} deferred: {}", task.id, reason));
+                    }
+                }
+
+                self.manager_state = ManagerState::Executing;
+                return Ok(());
+            }
+        }
+
         // Record baseline commit for later diff
         let baseline_commit = self.get_head_commit().unwrap_or_default();
 
@@ -929,9 +989,13 @@ impl Manager {
         emit_cm(&format!("Build PASSED for {}, starting review", task.id));
         self.flog(LogLevel::Info, "build", &format!("Build PASSED for task {}", task.id));
 
+        // Save IMPLEM completion state for potential resume on --continue
+        self.save_implem_completion(&task.id, &baseline_commit);
+
         // Run review cycle: REVIEW → FIX → re-REVIEW (max_cycles)
         if !baseline_commit.is_empty() {
-            let verdict = self.run_review_cycle(task, &baseline_commit)?;
+            let starting_cycle = task.review_cycles_completed;
+            let verdict = self.run_review_cycle(task, &baseline_commit, starting_cycle)?;
 
             match verdict {
                 Verdict::Approved => {
@@ -941,6 +1005,7 @@ impl Manager {
                     self.state
                         .log_records
                         .push(LogManager::create_task_complete_record(&task.id));
+                    self.clear_implem_completion(&task.id);
                     self.flog(LogLevel::Info, "task", &format!("Task {} completed (review approved)", task.id));
                 }
                 Verdict::NeedsFixes => {
@@ -951,6 +1016,7 @@ impl Manager {
                     self.state
                         .log_records
                         .push(LogManager::create_task_deferred_record(&task.id, &reason));
+                    self.clear_implem_completion(&task.id);
                     self.flog(LogLevel::Warn, "task", &format!("Task {} deferred: {}", task.id, reason));
                 }
             }
@@ -1267,6 +1333,77 @@ impl Manager {
         self.execute_implem(task)
     }
 
+    /// Prompt user whether to retry after max review cycles exhausted.
+    ///
+    /// In TUI mode, sends a RetryPrompt event and waits for RetryResponse.
+    /// In daemon mode (no TUI channels), prompts via stdin/stdout.
+    ///
+    /// Returns Some(additional_cycles) if user wants to retry, None if they decline.
+    fn prompt_retry_cycles(&self, task_id: &str, cycles_completed: u32) -> Option<u32> {
+        let message = format!(
+            "Task {} exhausted {} review cycles. Retry more cycles?",
+            task_id, cycles_completed
+        );
+
+        // TUI mode: send event and wait for response
+        if let (Some(ref tx), Some(ref rx)) = (&self.event_tx, &self.cmd_rx) {
+            let _ = tx.send(ManagerEvent::RetryPrompt {
+                task_id: task_id.to_string(),
+                cycles_completed,
+                message: message.clone(),
+            });
+
+            // Wait for response with 5 minute timeout
+            let timeout = Duration::from_secs(300);
+            loop {
+                match rx.recv_timeout(timeout) {
+                    Ok(TuiCommand::RetryResponse { retry, additional_cycles }) => {
+                        if retry && additional_cycles > 0 {
+                            return Some(additional_cycles);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Ok(TuiCommand::Quit) | Ok(TuiCommand::Interrupt) => {
+                        return None;
+                    }
+                    Ok(_) => {
+                        // Ignore other commands while waiting
+                        continue;
+                    }
+                    Err(_) => {
+                        // Timeout - treat as decline
+                        warn!("Retry prompt timed out for task {}", task_id);
+                        return None;
+                    }
+                }
+            }
+        }
+
+        // Daemon mode: use stdin/stdout
+        use std::io::{self, BufRead, Write};
+
+        println!();
+        println!("{}", message);
+        print!("Retry more cycles? [y/N/number]: ");
+        let _ = io::stdout().flush();
+
+        let stdin = io::stdin();
+        let mut line = String::new();
+        if stdin.lock().read_line(&mut line).is_err() {
+            return None;
+        }
+
+        let input = line.trim().to_lowercase();
+        if input == "y" || input == "yes" {
+            Some(5) // Default to 5 more cycles
+        } else if let Ok(n) = input.parse::<u32>() {
+            if n > 0 { Some(n) } else { None }
+        } else {
+            None
+        }
+    }
+
     /// Run the REVIEW → FIX → re-REVIEW cycle after an IMPLEM task.
     ///
     /// Spawns a REVIEW agent to check the IMPLEM agent's changes (identified
@@ -1278,6 +1415,7 @@ impl Manager {
     ///
     /// * `task` - The original IMPLEM task (for context)
     /// * `baseline_commit` - The HEAD commit hash before the IMPLEM agent ran
+    /// * `starting_cycle` - The cycle number to start from (for resuming)
     ///
     /// # Returns
     ///
@@ -1287,14 +1425,41 @@ impl Manager {
         &mut self,
         task: &Task,
         baseline_commit: &str,
+        starting_cycle: u32,
     ) -> Result<Verdict, ManagerError> {
-        for cycle in 0..self.config.max_cycles {
+        let mut cycle = starting_cycle;
+        let mut max_cycles = self.config.max_cycles;
+        let task_id = task.id.clone();
+
+        loop {
+            // Check if we've exceeded max cycles
+            if cycle >= max_cycles {
+                // Prompt user for more cycles
+                if let Some(additional) = self.prompt_retry_cycles(&task_id, cycle) {
+                    max_cycles += additional;
+                    self.flog(
+                        LogLevel::Info,
+                        "review",
+                        &format!("User requested {} more cycles for task {}", additional, task_id),
+                    );
+                    emit_cm(&format!("Retrying {} more cycles for {}", additional, task_id));
+                } else {
+                    // User declined - return NeedsFixes
+                    warn!("Review cycle exhausted for task {} after {} cycles", task_id, cycle);
+                    self.flog(
+                        LogLevel::Warn,
+                        "review",
+                        &format!("Review cycle exhausted for task {} after {} cycles", task_id, cycle),
+                    );
+                    return Ok(Verdict::NeedsFixes);
+                }
+            }
             self.flog(
                 LogLevel::Info,
                 "review",
-                &format!("Review cycle {}/{} for task {}", cycle + 1, self.config.max_cycles, task.id),
+                &format!("Review cycle {}/{} for task {}", cycle + 1, max_cycles, task_id),
             );
-            emit_cm(&format!("Review cycle {}/{} for {}", cycle + 1, self.config.max_cycles, task.id));
+            emit_cm(&format!("Review cycle {}/{} for {}", cycle + 1, max_cycles, task_id));
 
             // Get diff from baseline to current HEAD
             let diff = self.get_diff_between(baseline_commit, "HEAD")?;
@@ -1405,9 +1570,13 @@ impl Manager {
                         &format!("Review NEEDS_FIXES for task {} (cycle {})", task.id, cycle + 1),
                     );
 
-                    // If this is the last cycle, don't bother spawning a FIX agent
-                    if cycle + 1 >= self.config.max_cycles {
-                        break;
+                    // If this is the last cycle, increment and continue to the loop check
+                    // (which will prompt user for more cycles)
+                    if cycle + 1 >= max_cycles {
+                        cycle += 1;
+                        // Update review_cycles_completed in state
+                        self.update_task_review_cycles(&task_id, cycle);
+                        continue;
                     }
 
                     // Spawn FIX agent with the review feedback
@@ -1478,20 +1647,61 @@ impl Manager {
                     }
                     self.manager_state = ManagerState::WaitingForAgent;
 
+                    // Increment cycle and update state
+                    cycle += 1;
+                    self.update_task_review_cycles(&task_id, cycle);
+
                     // Save state between cycles
                     self.update_state()?;
                 }
             }
         }
+        // Note: loop only exits via return statements above
+    }
 
-        // Max cycles exhausted
-        warn!("Review cycle exhausted for task {} after {} cycles", task.id, self.config.max_cycles);
-        self.flog(
-            LogLevel::Warn,
-            "review",
-            &format!("Review cycle exhausted for task {} after {} cycles", task.id, self.config.max_cycles),
-        );
-        Ok(Verdict::NeedsFixes)
+    /// Update the review_cycles_completed field for a task.
+    fn update_task_review_cycles(&mut self, task_id: &str, cycles: u32) {
+        for phase in &mut self.state.phases {
+            for task in &mut phase.tasks {
+                if task.id == task_id {
+                    task.review_cycles_completed = cycles;
+                    return;
+                }
+            }
+        }
+    }
+
+    /// Save IMPLEM completion state for a task.
+    ///
+    /// This allows resuming at the REVIEW stage on --continue instead of
+    /// re-running IMPLEM.
+    fn save_implem_completion(&mut self, task_id: &str, baseline_commit: &str) {
+        for phase in &mut self.state.phases {
+            for task in &mut phase.tasks {
+                if task.id == task_id {
+                    task.implem_completed_at = Some(Utc::now());
+                    task.baseline_commit = Some(baseline_commit.to_string());
+                    task.review_cycles_completed = 0;
+                    return;
+                }
+            }
+        }
+    }
+
+    /// Clear IMPLEM completion state for a task.
+    ///
+    /// Called when a task is completed or deferred.
+    fn clear_implem_completion(&mut self, task_id: &str) {
+        for phase in &mut self.state.phases {
+            for task in &mut phase.tasks {
+                if task.id == task_id {
+                    task.implem_completed_at = None;
+                    task.baseline_commit = None;
+                    task.review_cycles_completed = 0;
+                    return;
+                }
+            }
+        }
     }
 
     /// Save the current state to disk and regenerate LOG.md.
@@ -1743,6 +1953,9 @@ impl Manager {
             instructions,
             attempts: vec![],
             roadmap_item_id: None,
+            implem_completed_at: None,
+            baseline_commit: None,
+            review_cycles_completed: 0,
         };
 
         self.state.add_task_to_phase(phase_id, task)?;

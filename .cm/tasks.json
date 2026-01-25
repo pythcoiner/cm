@@ -2477,7 +2477,7 @@
           "id": "phase-27.task-2",
           "name": "Create PhaseLogger struct",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-27.task-1"
           ],
@@ -2510,7 +2510,9 @@
               }
             }
           ],
-          "roadmap_item_id": "27.2"
+          "roadmap_item_id": "27.2",
+          "implem_completed_at": "2026-01-25T07:12:32.172345530Z",
+          "review_cycles_completed": 5
         },
         {
           "id": "phase-27.task-3",
@@ -2589,6 +2591,35 @@
           "instructions": "Final verification of per-phase TRACE logging:\n\n1. Run `cargo build` - must pass\n2. Run `cargo clippy` - must pass with no warnings\n3. Run `cargo test` - all tests must pass\n4. Verify PhaseLogger is integrated in Manager\n5. Verify TRACE level is added to LogLevel enum\n6. Verify --prune handles phase logs",
           "attempts": [],
           "roadmap_item_id": "27.6"
+        }
+      ]
+    },
+    {
+      "id": "phase-28",
+      "name": "FIX Cycle Retry & Resume",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-28.fix-retry-prompt",
+          "name": "Fix: Interactive retry prompt after max FIX cycles + resume at REVIEW on --continue",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs",
+              "src/state/tasks.rs",
+              "src/cli/mod.rs",
+              "src/tui/mod.rs"
+            ],
+            "prior_review_issues": [
+              "Bug: After 5 REVIEW+FIX cycles, cm defers task without asking user",
+              "Bug: cm --continue restarts from IMPLEM instead of resuming at REVIEW"
+            ]
+          },
+          "instructions": "Fix the FIX cycle retry and recovery behavior:\n\n## Bug Details\n- Observed: After 5 REVIEW+FIX cycles exhaust, task is deferred without user prompt\n- Observed: cm --continue restarts from IMPLEM even though IMPLEM succeeded\n- Expected: Prompt user 'Retry N more cycles?' before deferring\n- Expected: cm --continue should resume at REVIEW stage, not IMPLEM\n\n## Root Cause\n1. run_review_cycle() returns NeedsFixes without prompting when max_cycles reached\n2. Task struct doesn't track IMPLEM completion state\n3. execute_implem() always runs IMPLEM, even on retry\n\n## Fix Steps\n\n### 1. Add state tracking fields to Task (src/state/tasks.rs)\nAdd to Task struct:\n```rust\n#[serde(default, skip_serializing_if = \"Option::is_none\")]\npub implem_completed_at: Option<DateTime<Utc>>,\n\n#[serde(default, skip_serializing_if = \"Option::is_none\")]\npub baseline_commit: Option<String>,\n\n#[serde(default)]\npub review_cycles_completed: u32,\n```\n\n### 2. Add TUI communication for retry prompt (src/tui/mod.rs)\nAdd to TuiCommand enum:\n```rust\nRetryResponse { retry: bool, additional_cycles: u32 },\n```\nAdd to ManagerEvent enum:\n```rust\nRetryPrompt { task_id: String, cycles_completed: u32, message: String },\n```\n\n### 3. Add prompt_retry_cycles() method (src/manager/mod.rs)\nCreate method that:\n- In TUI mode: sends RetryPrompt event, waits for RetryResponse\n- In daemon mode: prints to stdout, reads from stdin\n- Returns Option<u32> (None = defer, Some(n) = retry n more cycles)\n\n### 4. Modify run_review_cycle() (src/manager/mod.rs)\n- When max_cycles exhausted, call prompt_retry_cycles()\n- If user says yes: extend max_cycles and continue loop\n- If user says no: return NeedsFixes to trigger defer\n- Update review_cycles_completed in state after each cycle\n\n### 5. Save IMPLEM completion state (src/manager/mod.rs)\nIn execute_implem(), after build passes and before run_review_cycle():\n- Set task.implem_completed_at = Some(Utc::now())\n- Set task.baseline_commit = Some(baseline_commit)\n- Set task.review_cycles_completed = 0\n\n### 6. Resume at REVIEW on --continue (src/manager/mod.rs)\nModify execute_implem() to check:\n- If task.implem_completed_at.is_some() && task.baseline_commit.is_some()\n- Skip IMPLEM, call run_review_cycle() with review_cycles_completed as offset\n\n### 7. Clear state on completion/defer\nWhen task is completed or deferred, clear:\n- implem_completed_at = None\n- baseline_commit = None\n- review_cycles_completed = 0\n\n## Testing\n1. Run cargo build and cargo clippy - must pass\n2. Test retry prompt appears after 5 cycles\n3. Test 'y' continues with more cycles\n4. Test 'n' defers the task\n5. Test cm --continue resumes at REVIEW\n\n## Verification\n- [ ] New fields added to Task struct\n- [ ] TUI commands/events added\n- [ ] Retry prompt works in TUI and daemon mode\n- [ ] cm --continue resumes at REVIEW\n- [ ] All tests pass",
+          "attempts": [],
+          "roadmap_item_id": "28.1"
         }
       ]
     }
@@ -3313,6 +3344,12 @@
       "completed_at": "2026-01-25T07:15:15.371898368Z",
       "exit_status": 0,
       "commit_hash": "8b160bed59a2a62a685087273b3e4c90f9c526f8"
+    },
+    {
+      "id": "64f67e34-14c6-424a-b582-307c84e19c34",
+      "task_id": "phase-27.task-2",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T07:36:01.352949362Z"
     }
   ],
   "log_records": [
@@ -5697,6 +5734,26 @@
         "type": "agent_spawn",
         "agent_type": "fix",
         "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Create PhaseLogger struct\n\n### Original Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nPhaseLogger implementation is complete, correct, and well-tested with proper error handling and thread safety\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT fix the issues:\n`\n\n... [truncated, 107 more bytes]"
+      }
+    },
+    {
+      "id": "fd7bb128-f724-4f64-bb33-a53e69363681",
+      "timestamp": "2026-01-25T07:36:01.352948711Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Create PhaseLogger struct\n\n### Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "d99cc572-4081-4e4c-8f65-eb358902fc99",
+      "timestamp": "2026-01-25T07:36:10.068520572Z",
+      "action": "error",
+      "data": {
+        "type": "error",
+        "message": "Task phase-27.task-2 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0"
       }
     }
   ]
