@@ -223,15 +223,15 @@ Status: **Complete** (1/1)
 
 ## Phase 33: Add PLAN Agent Before IMPLEM
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Add PLAN agent step before IMPLEM with conditional detailed planning
-  - [ ] Create PLANNER.md template in assets/templates/
-  - [ ] Add PLANNER_TEMPLATE to src/command.rs
-  - [ ] Add PlanAgentResponse struct to src/agent/response.rs
-  - [ ] Add build_phase_plan_prompt() to src/agent/prompt.rs
-  - [ ] Modify execute_phase() to run PLAN agent before IMPLEM
-  - [ ] Log PLAN agent prompt/response same as other agents
+- [x] Add PLAN agent step before IMPLEM with conditional detailed planning
+  - [x] Create PLANNER.md template in assets/templates/
+  - [x] Add PLANNER_TEMPLATE to src/command.rs
+  - [x] Add PlanAgentResponse struct to src/agent/response.rs
+  - [x] Add build_phase_plan_prompt() to src/agent/prompt.rs
+  - [x] Modify execute_phase() to run PLAN agent before IMPLEM
+  - [x] Log PLAN agent prompt/response same as other agents
 
 ---
 
@@ -281,6 +281,6 @@ Status: **Not Started** (0/2)
 | Phase 30: Add /cm Prerequisites Check | Complete | 4/4 |
 | Phase 31: Add .cm/logs/ to .gitignore | Complete | 4/4 |
 | Phase 32: Add Phase Selection by Number | Complete | 6/6 |
-| Phase 33: Add PLAN Agent Before IMPLEM | Not Started | 0/7 |
+| Phase 33: Add PLAN Agent Before IMPLEM | Complete | 7/7 |
 | Phase 34: Add /split Command + Extend /end | Not Started | 0/8 |
-| **Total** | | **30/45** |
+| **Total** | | **37/45** |

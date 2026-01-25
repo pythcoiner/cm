@@ -11,7 +11,7 @@ use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
     IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
-    STRUCTURE_TEMPLATE,
+    SPLIT_COMMAND, STRUCTURE_TEMPLATE,
 };
 
 /// Command file definition.
@@ -51,6 +51,10 @@ const COMMANDS: &[CommandFile] = &[
     CommandFile {
         name: "run",
         content: RUN_COMMAND,
+    },
+    CommandFile {
+        name: "split",
+        content: SPLIT_COMMAND,
     },
 ];
 
@@ -171,11 +175,12 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("Commands initialized successfully!");
     println!();
     println!("Available commands:");
-    println!("  /cm   - Project setup wizard");
-    println!("  /feat - Feature addition wizard");
-    println!("  /fix  - Bug fix wizard");
-    println!("  /end  - Finalize feat/fix session");
-    println!("  /run  - Run cm orchestration");
+    println!("  /cm    - Project setup wizard");
+    println!("  /feat  - Feature addition wizard");
+    println!("  /fix   - Bug fix wizard");
+    println!("  /split - Refine PLAN.md into detailed phases");
+    println!("  /end   - Finalize feat/fix/cm session");
+    println!("  /run   - Run cm orchestration");
 
     Ok(())
 }

@@ -5,6 +5,7 @@ pub const FEAT_COMMAND: &str = include_str!("../assets/feat.md");
 pub const FIX_COMMAND: &str = include_str!("../assets/fix.md");
 pub const END_COMMAND: &str = include_str!("../assets/end.md");
 pub const RUN_COMMAND: &str = include_str!("../assets/run.md");
+pub const SPLIT_COMMAND: &str = include_str!("../assets/split.md");
 
 // Template files for cm init
 pub const MANAGER_TEMPLATE: &str = include_str!("../assets/templates/MANAGER.md");

@@ -1,23 +1,29 @@
 # End Session Wizard
 
-This command finalizes a `/feat` or `/fix` conversational session by saving all gathered information to the planning files without starting implementation. Use this when you've discussed a feature or fix with the user and want to save it to the project plan for later execution.
+This command finalizes a `/feat`, `/fix`, or `/cm` conversational session by saving all gathered information to the planning files without starting implementation.
+
+## Use Cases
+
+1. **After `/feat` or `/fix`**: Add new tasks to existing tasks.json/roadmap.json
+2. **After `/cm` (or `/cm` + `/split`)**: Generate initial tasks.json and roadmap.json from PLAN.md
 
 ## Prerequisites
 
 Before using this command, ensure:
-- You are completing a `/feat` or `/fix` session
-- A `.cm/` directory exists with valid project files
-- The user has confirmed all details about the feature/fix
-- All required information has been gathered
+- You are completing a `/feat`, `/fix`, or `/cm` session
+- A `.cm/` directory exists
+- For `/feat` or `/fix`: tasks.json and roadmap.json exist
+- For `/cm`: PLAN.md exists
+- The user has confirmed all details
 
 If prerequisites are not met, inform the user.
 
 ## CRITICAL: Scope Limitations
 
 This command ONLY updates planning files:
-- `.cm/tasks.json` - Add new task definitions
-- `.cm/roadmap.json` - Add new roadmap items
-- `.cm/PLAN.md` - Add feature documentation (for `/feat` sessions)
+- `.cm/tasks.json` - Add new tasks (or generate initial file for `/cm` sessions)
+- `.cm/roadmap.json` - Add new items (or generate initial file for `/cm` sessions)
+- `.cm/PLAN.md` - Add feature documentation (for `/feat` sessions only)
 
 This command does NOT:
 - Implement any code
@@ -28,17 +34,32 @@ After this command completes, the user must manually run `cm run` when ready to 
 
 ## Important: Session Context
 
+**For `/feat` or `/fix` sessions:**
 This command assumes you have already:
 - Gathered all feature/fix requirements from the user
 - Confirmed task breakdown and approach
 - Received user approval for the plan
 - Identified phase placement for new tasks
 
-DO NOT use this command to start a new planning session. Use `/feat` or `/fix` for that.
+**For `/cm` sessions:**
+This command assumes:
+- `/cm` wizard has created PLAN.md with phases
+- User has optionally refined it with `/split`
+- User is ready to generate JSON files
+
+DO NOT use this command to start a new planning session. Use `/feat`, `/fix`, or `/cm` for that.
 
 ---
 
-## Step 1: Recognize Session Type
+## Step 1: Detect Session Type
+
+First, determine what type of session you're finalizing:
+
+1. **Check if `.cm/tasks.json` exists:**
+   - **If YES** → This is a `/feat` or `/fix` session (go to Step 1A)
+   - **If NO** → This is a `/cm` session (go to Step 1B)
+
+### Step 1A: Recognize /feat or /fix Session
 
 Determine which type of session you're finalizing:
 
@@ -65,7 +86,60 @@ Confirm with the user:
 >
 > Proceed? (yes/no)
 
-Wait for confirmation before proceeding.
+Wait for confirmation before proceeding to Step 2.
+
+### Step 1B: Recognize /cm Session
+
+For `/cm` sessions, you are generating initial JSON files from PLAN.md:
+
+1. Check if `.cm/PLAN.md` exists:
+   - **If NO** → Error: "Please run `/cm` first to create PLAN.md"
+   - **If YES** → Continue
+
+2. Confirm with the user:
+
+> I'm going to generate tasks.json and roadmap.json from your PLAN.md.
+>
+> This will create the initial project structure based on the phases you've defined.
+>
+> Proceed? (yes/no)
+
+Wait for confirmation before proceeding to Step 1C.
+
+### Step 1C: Parse PLAN.md for /cm Session
+
+Read and parse `.cm/PLAN.md` to extract:
+
+1. **Project metadata:**
+   - Project name (from title line)
+   - Description (from subtitle line)
+   - Overview text
+
+2. **Phases section:**
+   - Parse all "### Phase N:" sections
+   - Extract phase names, goals, tasks, and deliverables
+   - Note task dependencies if mentioned
+
+3. **Success criteria:**
+   - Extract from "## Success Criteria" section if present
+
+Present summary:
+
+> **Parsed from PLAN.md:**
+>
+> **Project:** [name]
+> **Description:** [description]
+>
+> **Phases to create:**
+> 1. Phase 1: [name] - [N tasks]
+> 2. Phase 2: [name] - [M tasks]
+> ...
+>
+> **Total:** [X] phases, [Y] tasks
+>
+> Does this look correct? Reply "yes" to generate JSON files, or "no" to review PLAN.md.
+
+Wait for confirmation before proceeding to Step 2CM.
 
 ---
 
@@ -282,7 +356,220 @@ Warnings (e.g., orphaned roadmap items) indicate roadmap items that no task will
 
 ---
 
-## Step 7: Completion Summary
+## Step 2CM: Generate tasks.json for /cm Session
+
+**This step is ONLY for /cm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 2.
+
+Create `.cm/tasks.json` from PLAN.md phases:
+
+### 2CM.1 Generate Project Metadata
+
+```json
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "[project-name from PLAN.md title]",
+    "description": "[description from PLAN.md subtitle]",
+    "created_at": "[current ISO 8601 timestamp]"
+  },
+  "global_context": {
+    "plan_summary": "[overview text from PLAN.md]"
+  }
+}
+```
+
+### 2CM.2 Generate Phases and Tasks
+
+For each phase in PLAN.md:
+
+1. Create a phase object with sequential ID (`phase-1`, `phase-2`, etc.)
+2. For each task listed under that phase:
+   - Create task with ID format: `phase-N.task-M`
+   - Set type to "implement"
+   - Set status to "pending"
+   - Use the task description from PLAN.md as the name
+   - Generate detailed instructions based on the task name, phase goal, and deliverables
+   - Add relevant files to `files_to_read` if mentioned in PLAN.md
+
+Example:
+
+```json
+{
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Foundation",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-1.task-1",
+          "name": "Initialize project structure",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": []
+          },
+          "instructions": "Initialize a new Rust project with Cargo:\n\n1. Create the project structure\n2. Add dependencies to Cargo.toml\n3. Create src/main.rs with basic setup\n4. Ensure `cargo build` succeeds",
+          "roadmap_item_id": "phase-1-item-1"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 2CM.3 Add Empty History
+
+```json
+{
+  "current_phase": null,
+  "current_task": null,
+  "agent_history": [],
+  "log_records": []
+}
+```
+
+### 2CM.4 Write tasks.json
+
+Write the complete JSON structure to `.cm/tasks.json`.
+
+---
+
+## Step 3CM: Generate roadmap.json for /cm Session
+
+**This step is ONLY for /cm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 3.
+
+Create `.cm/roadmap.json` from PLAN.md phases:
+
+### 3CM.1 Generate Roadmap Structure
+
+```json
+{
+  "version": "1.0.0",
+  "title": "[Project name from PLAN.md]",
+  "phases": []
+}
+```
+
+### 3CM.2 Generate Roadmap Phases
+
+For each phase in PLAN.md, create a roadmap phase with items:
+
+```json
+{
+  "id": "phase-1",
+  "number": "1",
+  "name": "Foundation",
+  "items": [
+    {
+      "id": "phase-1-item-1",
+      "name": "Initialize project structure",
+      "completed": false,
+      "linked_task_ids": ["phase-1.task-1"]
+    },
+    {
+      "id": "phase-1-item-2",
+      "name": "Create CLI argument parsing",
+      "completed": false,
+      "linked_task_ids": ["phase-1.task-2"]
+    }
+  ]
+}
+```
+
+**Linking strategy:**
+- Each task in tasks.json should have a corresponding roadmap item
+- Use `roadmap_item_id` in tasks.json to link to the item
+- Use `linked_task_ids` in roadmap.json to link back to tasks
+
+### 3CM.3 Write roadmap.json
+
+Write the complete JSON structure to `.cm/roadmap.json`.
+
+---
+
+## Step 4CM: Create Plan Files for /cm Session (Optional)
+
+**This step is ONLY for /cm sessions.**
+
+If the project structure includes individual plan files (`.cm/plans/plan-N.md`), create them:
+
+For each phase:
+1. Create `.cm/plans/plan-N.md` where N is the phase number
+2. Include phase details, task breakdown, and implementation notes
+
+**Note:** This is optional. Many projects don't use separate plan files.
+
+---
+
+## Step 5CM: Regenerate and Validate for /cm Session
+
+**This step is ONLY for /cm sessions.**
+
+After generating JSON files:
+
+1. Run regeneration:
+```bash
+cm --regenerate
+```
+
+This generates:
+- `ROADMAP.md` from roadmap.json
+- `TASKS.md` from tasks.json
+
+2. Run validation:
+```bash
+cm --sanity-check
+```
+
+**If validation fails:**
+- Review error messages
+- Fix issues in tasks.json or roadmap.json
+- Re-run `cm --sanity-check`
+- Repeat until all errors are resolved
+
+**DO NOT proceed until validation passes.**
+
+After validation passes, proceed to Step 7CM.
+
+---
+
+## Step 7CM: Completion Summary for /cm Session
+
+**This step is ONLY for /cm sessions.**
+
+After all files are generated and validated, inform the user:
+
+> **Project initialized successfully!**
+>
+> **Generated files:**
+> - `.cm/tasks.json` - [N] phases, [M] tasks
+> - `.cm/roadmap.json` - [N] phases, [M] items
+> - `.cm/ROADMAP.md` - Generated from roadmap.json
+> - `.cm/TASKS.md` - Generated from tasks.json
+>
+> **Phases created:**
+> 1. Phase 1: [name] - [X] tasks
+> 2. Phase 2: [name] - [Y] tasks
+> ...
+>
+> **Validation:** ✓ All checks passed
+>
+> **Next steps:**
+> 1. Review the generated files to ensure accuracy
+> 2. When ready to implement, run `cm` to start executing tasks
+> 3. Or run `cm --step` to execute tasks one at a time
+>
+> Your project is now ready for automated implementation!
+
+**END of /cm session flow. The steps below (Step 7) are for /feat and /fix sessions only.**
+
+---
+
+## Step 7: Completion Summary (for /feat and /fix sessions)
+
+**This step is ONLY for /feat and /fix sessions.** For /cm sessions, see Step 7CM above.
 
 After all files are updated and validated, inform the user:
 
@@ -302,7 +589,7 @@ After all files are updated and validated, inform the user:
 >
 > **Next steps:**
 > 1. Review the updated files to ensure accuracy
-> 2. When ready to implement, run `cm run` to start executing tasks
+> 2. When ready to implement, run `cm` to start executing tasks
 > 3. Or run `cm --step` to execute tasks one at a time
 >
 > The feature/fix has been saved to your planning files and is ready for implementation whenever you choose to run it.
@@ -317,7 +604,19 @@ If the wizard encounters issues:
 
 > I couldn't find the `.cm/` directory. This command requires an initialized cm project.
 >
-> Please run `/cm` first to initialize the project, then return to your `/feat` or `/fix` session.
+> Please run `cm init` and then `/cm` to initialize the project.
+
+### Missing PLAN.md (for /cm sessions)
+
+> I couldn't find `.cm/PLAN.md`. This file is required to generate tasks.json and roadmap.json.
+>
+> Please run `/cm` first to create the project plan, then return here to finalize with `/end`.
+
+### tasks.json already exists (for /cm sessions)
+
+> Warning: `tasks.json` already exists. The `/end` command after `/cm` is meant for initial project setup.
+>
+> It looks like your project is already initialized. Use `/feat` or `/fix` to add new features or fixes instead.
 
 ### Invalid tasks.json
 
@@ -537,9 +836,39 @@ The fix has been saved to your planning files and is ready for implementation wh
 ## Summary
 
 The `/end` command bridges the gap between planning and execution by:
-1. Capturing all details from /feat or /fix sessions
+
+**For /feat and /fix sessions:**
+1. Capturing all details from conversational sessions
 2. Updating planning files (tasks.json, roadmap.json, PLAN.md)
 3. Ensuring consistency with validation
 4. Providing clear summary of what was saved
 
+**For /cm sessions:**
+1. Parsing PLAN.md to extract phases and tasks
+2. Generating initial tasks.json and roadmap.json
+3. Creating the foundation for automated implementation
+4. Validating all cross-references and structure
+
 This allows users to have thoughtful planning conversations, save the results, and execute them later when ready - without losing context or requiring re-discussion.
+
+## Workflow Summary
+
+```
+/cm           → Creates high-level PLAN.md (interactive wizard)
+    ↓
+/split        → (optional) Refines PLAN.md into detailed phases
+    ↓
+/end          → Finalizes session, generates tasks.json + roadmap.json
+    ↓
+cm            → Executes tasks with automated agents
+```
+
+Or for adding to existing projects:
+
+```
+/feat or /fix → Discuss feature/fix requirements
+    ↓
+/end          → Add tasks to existing tasks.json/roadmap.json
+    ↓
+cm            → Execute new tasks
+```

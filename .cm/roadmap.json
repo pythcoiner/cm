@@ -358,37 +358,37 @@
         {
           "id": "phase-33-item-1",
           "name": "Add PLAN agent step before IMPLEM with conditional detailed planning",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-33-item-1.sub-0",
               "name": "Create PLANNER.md template in assets/templates/",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-33-item-1.sub-1",
               "name": "Add PLANNER_TEMPLATE to src/command.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-33-item-1.sub-2",
               "name": "Add PlanAgentResponse struct to src/agent/response.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-33-item-1.sub-3",
               "name": "Add build_phase_plan_prompt() to src/agent/prompt.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-33-item-1.sub-4",
               "name": "Modify execute_phase() to run PLAN agent before IMPLEM",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-33-item-1.sub-5",
               "name": "Log PLAN agent prompt/response same as other agents",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
