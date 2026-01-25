@@ -2866,3 +2866,184 @@ Added --model flag with sonnet/opus shorthand support using clap's ValueEnum
 
 </details>
 
+[2026-01-25 16:50:02 UTC] **AGENT_SPAWN** | Task: phase-38
+
+### Agent Spawn
+
+**Type:** Review
+**Task:** phase-38
+
+<details>
+<summary>Prompt</summary>
+
+```
+# Reviewer Agent Instructions
+
+You are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.
+
+You may be reviewing:
+- **A single task** - review changes from one implementation
+- **Multiple tasks in a phase** - review all changes from a phase's implementations together
+
+## Your Responsibilities
+
+1. **Analyze Changes**: Review the git diff showing all code changes
+2. **Verify Correctness**: Check that changes correctly implement the task requirements
+3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic
+4. **Identify Issues**: Find bugs, errors, or problems in the implementation
+5. **Provide Feedback**: Give clear, specific instructions for fixing issues
+6. **Output Results**: Return a JSON response with your verdict
+
+## Context You Receive
+
+You are provided with:
+- The task description(s) being reviewed
+- Git diff of all changes since baseline
+- Code style guidelines (if applicable)
+
+You do NOT have access to:
+- Tasks from other phases
+- Global project state
+- Historical conversations
+
+## Review Guidelines
+
+### Review Criteria
+
+1. **Correctness**: Do the changes correctly implement all requested tasks?
+2. **Code Quality**: Is the code clean, well-structured, and idiomatic?
+3. **Error Handling**: Are errors handled appropriately?
+4. **Style**: Does the code follow the project's style conventions?
+5. **Completeness**: Are all requirements addressed?
+
+### For Multi-Task (Phase) Reviews
+
+When reviewing a phase with multiple tasks:
+- Verify ALL tasks were implemented
+- Check that task implementations don't conflict
+- Ensure changes work together as a coherent whole
+
+### Provide Actionable Feedback
+
+For each issue:
+- Identify the file and line number
+- Explain what's wrong
+- Suggest a specific fix
+- Assign severity (critical/high/medium/low)
+
+### Be Specific
+
+Good feedback:
+- "In src/main.rs:42, the function returns Result<(), Error> but Error is not imported. Add 'use crate::Error;' at the top."
+
+Bad feedback:
+- 
+
+... [truncated, 31819 more bytes]
+```
+
+</details>
+
+[2026-01-25 16:50:32 UTC] **AGENT_COMPLETE**
+
+### Agent Response
+
+<details>
+<summary>Raw Response</summary>
+
+```
+Implementation correctly adds --model flag with sonnet/opus enum support and updates tests, but lacks config file validation and negative test cases. The TOML config still accepts arbitrary strings without validation.
+```
+
+</details>
+
+[2026-01-25 16:50:32 UTC] **REVIEW_RESULT**
+
+### Review Result: NEEDS_FIXES
+
+No issues found.
+
+
+[2026-01-25 16:50:32 UTC] **AGENT_SPAWN** | Task: phase-38
+
+### Agent Spawn
+
+**Type:** Fix
+**Task:** phase-38
+
+<details>
+<summary>Prompt</summary>
+
+```
+# Fix Agent Instructions
+
+You are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.
+
+You may be fixing:
+- **A single task** - fix issues from one task's review
+- **Multiple tasks in a phase** - fix all issues found across a phase's review
+
+## Your Responsibilities
+
+1. **Understand Issues**: Carefully read ALL review feedback and understand what needs to be fixed
+2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems
+3. **Fix All Issues**: For phase reviews, address ALL issues across all tasks
+4. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality
+5. **Follow Conventions**: Adhere to the project's code style and architectural patterns
+6. **Verify Changes**: Test your fixes to ensure they resolve the issues
+
+## Review Issues Format
+
+Review issues are provided as formatted text sections in your prompt. Each issue contains:
+
+- **Issue ID** and severity level (e.g., "Issue: issue-1 (high)")
+- **Location**: File and line number reference
+- **Problem**: Description of what's wrong
+- **Suggested Fix**: How to resolve it
+
+Example of how issues appear:
+
+```
+### Issue: issue-1 (high)
+**Location:** src/lib.rs:42
+**Problem:** Missing error handling for file read
+**Suggested Fix:** Add proper Result handling with ? operator
+```
+
+You should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.
+
+## Fix Guidelines
+
+- **Be Precise**: Only change what's necessary to fix the identified issues
+- **Preserve Intent**: Maintain the original functionality while correcting problems
+- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase
+- **Document Changes**: Use clear commit messages that explain what was fixed and why
+
+## Code Quality Standards
+
+All fixes must:
+- Resolve the reported issues completely
+- Follow the project's code style guidelines
+- Pass build verific
+
+... [truncated, 6128 more bytes]
+```
+
+</details>
+
+[2026-01-25 16:52:30 UTC] **AGENT_COMPLETE**
+
+### Agent Response
+
+**Files Modified:**
+- `src/cli/mod.rs`
+
+<details>
+<summary>Raw Response</summary>
+
+```
+Added validation for model field in config file and negative test for invalid CLI model values
+```
+
+</details>
+

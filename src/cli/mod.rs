@@ -265,6 +265,13 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     // 3. Apply config file values (if present)
     if let Some(cf) = config_file {
         if let Some(model) = cf.model {
+            // Validate model value from config file
+            if model != "sonnet" && model != "opus" {
+                return Err(CliError::ValidationFailed(format!(
+                    "invalid model '{}' in config file, must be 'sonnet' or 'opus'",
+                    model
+                )));
+            }
             config = config.model(model);
         }
         if let Some(max_cycles) = cf.max_cycles {
@@ -1168,6 +1175,13 @@ mod tests {
     }
 
     #[test]
+    fn test_cli_parse_model_invalid() {
+        // This should fail because clap's ValueEnum rejects invalid values
+        let result = Cli::try_parse_from(["cm", "--model", "invalid"]);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_cli_parse_max_cycles() {
         let cli = Cli::parse_from(["cm", "--max-cycles", "10"]);
         assert_eq!(cli.max_cycles, Some(10));
@@ -1239,5 +1253,81 @@ mod tests {
     fn test_cli_config_error_display() {
         let err = CliError::ConfigError(ConfigError::NotFound(PathBuf::from("/nonexistent")));
         assert!(err.to_string().contains("config error"));
+    }
+
+    #[test]
+    fn test_build_manager_config_invalid_model_in_file() {
+        use tempfile::TempDir;
+
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.toml");
+
+        // Write config with invalid model value
+        let content = r#"model = "invalid-model""#;
+        std::fs::write(&config_path, content).unwrap();
+
+        let cli = Cli::parse_from([
+            "cm",
+            "--config", config_path.to_str().unwrap(),
+            "--state", "/tmp/tasks.json",
+        ]);
+
+        let result = build_manager_config(&cli);
+        assert!(result.is_err());
+
+        if let Err(CliError::ValidationFailed(msg)) = result {
+            assert!(msg.contains("invalid model 'invalid-model'"));
+            assert!(msg.contains("must be 'sonnet' or 'opus'"));
+        } else {
+            panic!("Expected ValidationFailed error");
+        }
+    }
+
+    #[test]
+    fn test_build_manager_config_valid_model_sonnet_in_file() {
+        use tempfile::TempDir;
+
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.toml");
+
+        // Write config with valid sonnet model
+        let content = r#"model = "sonnet""#;
+        std::fs::write(&config_path, content).unwrap();
+
+        let cli = Cli::parse_from([
+            "cm",
+            "--config", config_path.to_str().unwrap(),
+            "--state", "/tmp/tasks.json",
+        ]);
+
+        let result = build_manager_config(&cli);
+        assert!(result.is_ok());
+
+        let config = result.unwrap();
+        assert_eq!(config.model, "sonnet");
+    }
+
+    #[test]
+    fn test_build_manager_config_valid_model_opus_in_file() {
+        use tempfile::TempDir;
+
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.toml");
+
+        // Write config with valid opus model
+        let content = r#"model = "opus""#;
+        std::fs::write(&config_path, content).unwrap();
+
+        let cli = Cli::parse_from([
+            "cm",
+            "--config", config_path.to_str().unwrap(),
+            "--state", "/tmp/tasks.json",
+        ]);
+
+        let result = build_manager_config(&cli);
+        assert!(result.is_ok());
+
+        let config = result.unwrap();
+        assert_eq!(config.model, "opus");
     }
 }
