@@ -3279,6 +3279,23 @@
       "completed_at": "2026-01-25T07:13:29.249360678Z",
       "exit_status": 0,
       "commit_hash": "5ca24aa75eefb6d13f2a0526e47877a6468e2f29"
+    },
+    {
+      "id": "5c20ec0f-e9ff-41e2-889c-e2ca8460f6cd",
+      "task_id": "phase-27.task-2",
+      "agent_type": "review",
+      "started_at": "2026-01-25T07:13:32.950747034Z",
+      "completed_at": "2026-01-25T07:13:54.990206127Z",
+      "exit_status": 0
+    },
+    {
+      "id": "61692dfd-6e5f-4d82-b117-93025fd7321d",
+      "task_id": "phase-27.task-2",
+      "agent_type": "fix",
+      "started_at": "2026-01-25T07:13:54.990754462Z",
+      "completed_at": "2026-01-25T07:14:22.432057674Z",
+      "exit_status": 0,
+      "commit_hash": "2c445fd81fa3acdc5f3f3c5fd239d4afae4c518d"
     }
   ],
   "log_records": [
@@ -5599,6 +5616,38 @@
         "type": "agent_spawn",
         "agent_type": "fix",
         "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Create PhaseLogger struct\n\n### Original Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nPhaseLogger implementation is complete, correct, and well-tested. All requirements met with proper error handling and thread safety.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes applied\",\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you coul\n\n... [truncated, 130 more bytes]"
+      }
+    },
+    {
+      "id": "a5977be7-191a-4e87-906d-27311daff968",
+      "timestamp": "2026-01-25T07:13:32.950731855Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Create PhaseLogger struct\n\n### What was requested\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex f7cc6e9..18af874 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -3376,11 +3376,10 @@ Task completed with status: **completed**\n \n ### Agent Spawn\n \n-**Type:** Implem\n-**Task:** phase-27.task-1\n+**Type:** implem\n \n <details>\n-<summary>Prompt</summary>\n+<summary>Prompt Preview</summary>\n \n ```\n You are an IMPLEMENTATION agent. Your task is to implement the following:\n@@ -3405,19 +3404,125 @@ Add TRACE log level to FileLogger:\n \n 2. Update `Display` impl to handle `Trace => \"TRACE\"`\n \n-3. Add `trace()` convenience method to `FileLogger`\n+3. Add `trace()` conveni\n\n... [truncated, 35459 more bytes]"
+      }
+    },
+    {
+      "id": "48e60213-853b-4105-9018-02f28811bc31",
+      "timestamp": "2026-01-25T07:13:54.990375654Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "ade41fac-4115-4db0-a757-8ecc0117b0db",
+      "timestamp": "2026-01-25T07:13:54.990751737Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "You are a FIX agent. Fix the issues found during code review.\n\n## Original Task: Create PhaseLogger struct\n\n### Original Instructions\n\nCreate PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass\n\n### Review Feedback\n\nThe following issues were found during review. Fix all of them:\n\nPhaseLogger implementation is complete, correct, and well-tested with proper error handling and thread safety. The review verdict 'needs_fixes' with zero issues is contradictory - this should have been approved.\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/log/file_logger.rs\n- src/log/mod.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully fixed the issues:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of the fixes appli\n\n... [truncated, 209 more bytes]"
       }
     }
   ]
