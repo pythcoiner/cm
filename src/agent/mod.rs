@@ -17,7 +17,7 @@ mod prompt;
 mod response;
 
 pub use prompt::PromptBuilder;
-pub use response::ResponseParser;
+pub use response::{PhaseAgentResponse, ResponseParser, TaskCompletionInfo};
 
 /// Errors that can occur during agent operations.
 #[derive(Debug, Error)]

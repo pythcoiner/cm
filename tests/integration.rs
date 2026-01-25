@@ -60,6 +60,9 @@ fn create_state_with_task() -> TasksState {
             id: "phase-1".to_string(),
             name: "Test Phase".to_string(),
             status: PhaseStatus::Pending,
+            review_cycles_completed: 0,
+            baseline_commit: None,
+            implem_completed_at: None,
             tasks: vec![Task {
                 id: "phase-1.task-1".to_string(),
                 name: "Test Task".to_string(),
@@ -101,6 +104,9 @@ fn create_state_with_dependencies() -> TasksState {
             id: "phase-1".to_string(),
             name: "Test Phase".to_string(),
             status: PhaseStatus::InProgress,
+            review_cycles_completed: 0,
+            baseline_commit: None,
+            implem_completed_at: None,
             tasks: vec![
                 Task {
                     id: "task-a".to_string(),
@@ -189,6 +195,9 @@ fn test_basic_state_flow() {
         id: "phase-1".to_string(),
         name: "Test Phase".to_string(),
         status: PhaseStatus::Pending,
+        review_cycles_completed: 0,
+        baseline_commit: None,
+        implem_completed_at: None,
         tasks: vec![Task {
             id: "phase-1.task-1".to_string(),
             name: "Test Task".to_string(),
@@ -657,6 +666,9 @@ fn test_task_types() {
         id: "phase-1".to_string(),
         name: "Mixed Phase".to_string(),
         status: PhaseStatus::Pending,
+        review_cycles_completed: 0,
+        baseline_commit: None,
+        implem_completed_at: None,
         tasks: vec![
             Task {
                 id: "t1".to_string(),
@@ -857,6 +869,9 @@ fn test_multi_phase_workflow() {
             id: "phase-1".to_string(),
             name: "Phase 1".to_string(),
             status: PhaseStatus::Completed,
+            review_cycles_completed: 0,
+            baseline_commit: None,
+            implem_completed_at: None,
             tasks: vec![Task {
                 id: "p1-t1".to_string(),
                 name: "P1 Task".to_string(),
@@ -880,6 +895,9 @@ fn test_multi_phase_workflow() {
             id: "phase-2".to_string(),
             name: "Phase 2".to_string(),
             status: PhaseStatus::Pending,
+            review_cycles_completed: 0,
+            baseline_commit: None,
+            implem_completed_at: None,
             tasks: vec![
                 Task {
                     id: "p2-t1".to_string(),

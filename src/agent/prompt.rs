@@ -4,7 +4,7 @@
 //! of agent tasks, ensuring context isolation - agents only receive
 //! task-specific context, never global knowledge.
 
-use crate::state::{ReviewIssue, Task};
+use crate::state::{Phase, ReviewIssue, Task};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -482,6 +482,278 @@ impl PromptBuilder {
             prompt.push_str("Ensure fixes follow these style guidelines:\n\n");
             prompt.push_str(style);
             prompt.push_str("\n\n");
+        }
+
+        // Output format instructions
+        prompt.push_str("### Output Format\n\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully fixed the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"summary\": \"Brief description of the fixes applied\",\n");
+        prompt.push_str("  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT fix the issues:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
+
+        prompt
+    }
+
+    /// Build a prompt for implementing ALL tasks in a phase.
+    ///
+    /// This is the phase-level equivalent of `build_implem_prompt()`.
+    /// The agent receives all tasks in the phase and should implement
+    /// them in sequence within a single session.
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - The phase being implemented
+    /// * `tasks` - All pending tasks in the phase to implement
+    pub fn build_phase_implem_prompt(phase: &Phase, tasks: &[&Task]) -> String {
+        let mut prompt = String::new();
+
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/IMPLEMENTER.md");
+        let template = ensure_template(&template_path, crate::command::IMPLEMENTER_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::error!("Failed to load IMPLEMENTER template: {}, using embedded default", e);
+                crate::command::IMPLEMENTER_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
+
+        // Phase context
+        prompt.push_str(&format!("## Phase: {} ({})\n\n", phase.name, phase.id));
+        prompt.push_str(&format!(
+            "You are implementing **{} tasks** in this phase. Complete all of them in order.\n\n",
+            tasks.len()
+        ));
+
+        // List all tasks with their instructions
+        prompt.push_str("### Tasks to Implement\n\n");
+        for (i, task) in tasks.iter().enumerate() {
+            prompt.push_str(&format!(
+                "#### Task {}: {} ({})\n\n",
+                i + 1,
+                task.name,
+                task.id
+            ));
+            prompt.push_str(&format!("**Instructions:**\n{}\n\n", task.instructions));
+
+            // Include task-specific context files
+            if !task.context.files_to_read.is_empty() {
+                prompt.push_str("**Files to read:**\n");
+                for file in &task.context.files_to_read {
+                    prompt.push_str(&format!("- {}\n", file));
+                }
+                prompt.push('\n');
+            }
+        }
+
+        // Aggregate code style excerpt (use first non-empty one)
+        let code_style = tasks
+            .iter()
+            .filter_map(|t| t.context.code_style_excerpt.as_ref())
+            .next();
+        if let Some(style) = code_style {
+            prompt.push_str("### Code Style Guidelines\n\n");
+            prompt.push_str("Follow these code style guidelines:\n\n");
+            prompt.push_str(style);
+            prompt.push_str("\n\n");
+        }
+
+        // Output format instructions for multi-task response
+        prompt.push_str("### Output Format\n\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully completed all tasks:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"summary\": \"Brief description of what you did for the entire phase\",\n");
+        prompt.push_str("  \"tasks_completed\": [\n");
+        prompt.push_str("    {\n");
+        prompt.push_str("      \"task_id\": \"phase-X.task-Y\",\n");
+        prompt.push_str("      \"summary\": \"What was done for this task\"\n");
+        prompt.push_str("    }\n");
+        prompt.push_str("  ],\n");
+        prompt.push_str("  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n");
+        prompt.push_str("  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT complete the tasks:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the tasks\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
+
+        prompt
+    }
+
+    /// Build a prompt for reviewing ALL changes in a phase.
+    ///
+    /// This is the phase-level equivalent of `build_auto_review_prompt()`.
+    /// The reviewer sees the complete diff of all task implementations
+    /// and the original task descriptions for context.
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - The phase being reviewed
+    /// * `diff` - The git diff of all changes since baseline
+    pub fn build_phase_review_prompt(phase: &Phase, diff: &str) -> String {
+        let mut prompt = String::new();
+
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
+        let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::error!("Failed to load REVIEWER template: {}, using embedded default", e);
+                crate::command::REVIEWER_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
+
+        // Phase context
+        prompt.push_str(&format!("## Phase Review: {} ({})\n\n", phase.name, phase.id));
+        prompt.push_str(&format!(
+            "This phase contains **{} tasks**. Review all changes together.\n\n",
+            phase.tasks.len()
+        ));
+
+        // List all tasks with their instructions for context
+        prompt.push_str("### Tasks in This Phase\n\n");
+        for (i, task) in phase.tasks.iter().enumerate() {
+            prompt.push_str(&format!(
+                "{}. **{}** ({}): {}\n",
+                i + 1,
+                task.name,
+                task.id,
+                task.instructions.lines().next().unwrap_or(&task.instructions)
+            ));
+        }
+        prompt.push('\n');
+
+        // Code changes to review
+        prompt.push_str("### Code Changes (git diff)\n\n");
+        prompt.push_str("```diff\n");
+        prompt.push_str(diff);
+        prompt.push_str("\n```\n\n");
+
+        // Review criteria
+        prompt.push_str("### Review Criteria\n\n");
+        prompt.push_str("1. **Correctness**: Do the changes correctly implement all requested tasks?\n");
+        prompt.push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
+        prompt.push_str("3. **Error handling**: Are errors handled appropriately?\n");
+        prompt.push_str("4. **Style**: Does the code follow the project's style conventions?\n");
+        prompt.push_str("5. **Completeness**: Are all phase requirements addressed?\n\n");
+
+        // Output format instructions
+        prompt.push_str("### Output Format\n\n");
+        prompt.push_str("When you are done, you MUST end your response with a JSON code block in this exact format.\n\n");
+        prompt.push_str("If you successfully completed the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"success\",\n");
+        prompt.push_str("  \"verdict\": \"approved\" or \"needs_fixes\",\n");
+        prompt.push_str("  \"summary\": \"Brief review summary for the entire phase\",\n");
+        prompt.push_str("  \"issues\": [\n");
+        prompt.push_str("    {\n");
+        prompt.push_str("      \"id\": \"unique-issue-id\",\n");
+        prompt.push_str("      \"severity\": \"critical\" or \"high\" or \"medium\" or \"low\",\n");
+        prompt.push_str("      \"location\": \"file:line\",\n");
+        prompt.push_str("      \"problem\": \"description of the problem\",\n");
+        prompt.push_str("      \"suggested_fix\": \"how to fix the issue\"\n");
+        prompt.push_str("    }\n");
+        prompt.push_str("  ]\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n\n");
+        prompt.push_str("If you could NOT complete the review:\n");
+        prompt.push_str("```json\n");
+        prompt.push_str("{\n");
+        prompt.push_str("  \"status\": \"failed\",\n");
+        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str("}\n");
+        prompt.push_str("```\n");
+
+        prompt
+    }
+
+    /// Build a prompt for fixing issues found in a phase review.
+    ///
+    /// This is the phase-level equivalent of `build_auto_fix_prompt()`.
+    /// The fixer receives the review feedback for the entire phase
+    /// and should address all issues.
+    ///
+    /// # Arguments
+    ///
+    /// * `phase` - The phase being fixed
+    /// * `review_feedback` - The raw review agent response containing issues
+    pub fn build_phase_fix_prompt(phase: &Phase, review_feedback: &str) -> String {
+        let mut prompt = String::new();
+
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/FIX.md");
+        let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::error!("Failed to load FIX template: {}, using embedded default", e);
+                crate::command::FIX_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
+
+        // Phase context
+        prompt.push_str(&format!("## Phase Fix: {} ({})\n\n", phase.name, phase.id));
+        prompt.push_str(&format!(
+            "This phase contains **{} tasks**. Fix all issues found in the review.\n\n",
+            phase.tasks.len()
+        ));
+
+        // List all tasks with their instructions for context
+        prompt.push_str("### Tasks in This Phase\n\n");
+        for (i, task) in phase.tasks.iter().enumerate() {
+            prompt.push_str(&format!(
+                "{}. **{}** ({}): {}\n",
+                i + 1,
+                task.name,
+                task.id,
+                task.instructions.lines().next().unwrap_or(&task.instructions)
+            ));
+        }
+        prompt.push('\n');
+
+        // Review feedback
+        prompt.push_str("### Review Feedback\n\n");
+        prompt.push_str("The following issues were found during phase review. Fix all of them:\n\n");
+        prompt.push_str(review_feedback);
+        prompt.push_str("\n\n");
+
+        // Collect all files to read from all tasks
+        let all_files: std::collections::HashSet<&String> = phase
+            .tasks
+            .iter()
+            .flat_map(|t| &t.context.files_to_read)
+            .collect();
+        if !all_files.is_empty() {
+            prompt.push_str("### Files to Read for Context\n\n");
+            prompt.push_str("Read the following files to understand the existing codebase:\n\n");
+            for file in all_files {
+                prompt.push_str(&format!("- {}\n", file));
+            }
+            prompt.push('\n');
         }
 
         // Output format instructions

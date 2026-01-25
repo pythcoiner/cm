@@ -808,6 +808,9 @@ mod tests {
             id: "phase-1".to_string(),
             name: "Setup Phase".to_string(),
             status: PhaseStatus::InProgress,
+            review_cycles_completed: 0,
+            baseline_commit: None,
+            implem_completed_at: None,
             tasks: vec![Task {
                 id: "task-1".to_string(),
                 name: "Task 1".to_string(),

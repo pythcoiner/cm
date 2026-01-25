@@ -148,6 +148,18 @@ pub enum ManagerEvent {
         /// The ID of the task.
         task_id: String,
     },
+    /// A phase has started (phase-based execution).
+    PhaseStarted {
+        /// The ID of the phase.
+        phase_id: String,
+        /// Number of pending tasks in this phase.
+        task_count: usize,
+    },
+    /// A phase has completed (phase-based execution).
+    PhaseCompleted {
+        /// The ID of the phase.
+        phase_id: String,
+    },
     /// An error occurred.
     Error(String),
     /// The tasks state has been updated.
@@ -414,6 +426,18 @@ fn run_event_loop_with_channels(
                         task_id
                     )));
                 }
+                ManagerEvent::PhaseStarted { phase_id, task_count } => {
+                    app.add_stream_line(StreamLine::Prompt(format!(
+                        "Starting phase: {} ({} tasks)",
+                        phase_id, task_count
+                    )));
+                }
+                ManagerEvent::PhaseCompleted { phase_id } => {
+                    app.add_stream_line(StreamLine::Response(format!(
+                        "Phase completed: {}",
+                        phase_id
+                    )));
+                }
                 ManagerEvent::Error(err) => {
                     app.add_stream_line(StreamLine::Error(err));
                 }
@@ -474,6 +498,9 @@ mod tests {
                 id: "phase-1".to_string(),
                 name: "Phase 1".to_string(),
                 status: PhaseStatus::InProgress,
+                review_cycles_completed: 0,
+                baseline_commit: None,
+                implem_completed_at: None,
                 tasks: vec![Task {
                     id: "task-1".to_string(),
                     name: "Task 1".to_string(),

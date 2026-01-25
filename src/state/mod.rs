@@ -254,6 +254,64 @@ impl TasksState {
 
         Err(StateError::TaskNotFound(task_id.to_string()))
     }
+
+    /// Get all pending tasks in a phase.
+    ///
+    /// Returns a vector of references to tasks with status `Pending`.
+    pub fn pending_tasks_in_phase(&self, phase_id: &str) -> Vec<&Task> {
+        self.phases
+            .iter()
+            .find(|p| p.id == phase_id)
+            .map(|p| {
+                p.tasks
+                    .iter()
+                    .filter(|t| t.status == TaskStatus::Pending)
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    /// Mark all tasks in a phase with the given status.
+    ///
+    /// # Errors
+    ///
+    /// Returns `StateError::PhaseNotFound` if the phase does not exist.
+    pub fn mark_phase_tasks_status(
+        &mut self,
+        phase_id: &str,
+        status: TaskStatus,
+    ) -> Result<(), StateError> {
+        for phase in &mut self.phases {
+            if phase.id == phase_id {
+                for task in &mut phase.tasks {
+                    task.status = status.clone();
+                }
+                return Ok(());
+            }
+        }
+        Err(StateError::PhaseNotFound(phase_id.to_string()))
+    }
+
+    /// Get the next runnable phase (first non-completed phase).
+    ///
+    /// Returns the first phase that is not `Completed`.
+    pub fn next_runnable_phase(&self) -> Option<&Phase> {
+        self.phases
+            .iter()
+            .find(|p| p.status != PhaseStatus::Completed)
+    }
+
+    /// Get a mutable reference to a phase by ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `StateError::PhaseNotFound` if the phase does not exist.
+    pub fn get_phase_mut(&mut self, phase_id: &str) -> Result<&mut Phase, StateError> {
+        self.phases
+            .iter_mut()
+            .find(|p| p.id == phase_id)
+            .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))
+    }
 }
 
 #[cfg(test)]
@@ -275,6 +333,9 @@ mod tests {
                 id: "phase-1".to_string(),
                 name: "Phase 1".to_string(),
                 status: PhaseStatus::InProgress,
+                review_cycles_completed: 0,
+                baseline_commit: None,
+                implem_completed_at: None,
                 tasks: vec![
                     Task {
                         id: "task-1".to_string(),

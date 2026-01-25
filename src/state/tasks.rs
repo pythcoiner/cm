@@ -90,6 +90,18 @@ pub struct Phase {
     pub status: PhaseStatus,
     /// Tasks within this phase.
     pub tasks: Vec<Task>,
+    /// Number of phase-level review cycles completed.
+    /// Used when resuming to continue from where we left off.
+    #[serde(default)]
+    pub review_cycles_completed: u32,
+    /// Git commit hash of the baseline before phase execution began.
+    /// Required for computing diffs during review.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub baseline_commit: Option<String>,
+    /// Timestamp when phase IMPLEM completed successfully (build passed).
+    /// Indicates review cycle can resume without re-running IMPLEM.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub implem_completed_at: Option<DateTime<Utc>>,
 }
 
 /// Status of a phase.
@@ -421,6 +433,9 @@ mod tests {
                 id: "phase-1".to_string(),
                 name: "Setup".to_string(),
                 status: PhaseStatus::InProgress,
+                review_cycles_completed: 0,
+                baseline_commit: None,
+                implem_completed_at: None,
                 tasks: vec![Task {
                     id: "phase-1.task-1".to_string(),
                     name: "Create module".to_string(),

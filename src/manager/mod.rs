@@ -324,9 +324,9 @@ impl Manager {
     /// - State cannot be saved
     /// - Shutdown was requested
     pub fn run(&mut self) -> Result<(), ManagerError> {
-        info!("Starting manager run loop");
-        emit_cm("Starting run loop");
-        self.flog(LogLevel::Info, "manager", "Execution loop started");
+        info!("Starting manager run loop (phase-based)");
+        emit_cm("Starting run loop (phase-based)");
+        self.flog(LogLevel::Info, "manager", "Execution loop started (phase-based)");
 
         // Ensure clean working tree for commit-per-agent audit trail
         self.preflight_git_check()?;
@@ -334,7 +334,7 @@ impl Manager {
         self.manager_state = ManagerState::Executing;
 
         loop {
-            // Check for shutdown signal before selecting next task
+            // Check for shutdown signal before selecting next phase
             if self.shutdown_flag.load(Ordering::SeqCst) {
                 info!("Shutdown signal received, saving state and exiting gracefully");
                 self.flog(LogLevel::Warn, "manager", "Shutdown signal received, saving state");
@@ -343,57 +343,49 @@ impl Manager {
                 return Err(ManagerError::ShutdownRequested);
             }
 
-            // Select next task
-            let task_id = match self.select_next_task() {
-                Some(task) => task.id.clone(),
+            // Select next runnable phase
+            let phase_id = match self.state.next_runnable_phase() {
+                Some(phase) => phase.id.clone(),
                 None => {
-                    info!("No more runnable tasks, exiting loop");
-                    emit_cm("No more runnable tasks");
-                    self.flog(LogLevel::Info, "manager", "No more runnable tasks");
+                    info!("No more runnable phases, exiting loop");
+                    emit_cm("No more runnable phases");
+                    self.flog(LogLevel::Info, "manager", "No more runnable phases");
                     break;
                 }
             };
 
-            info!("Selected task for execution: {}", task_id);
-            emit_cm(&format!("Selected task: {}", task_id));
-            self.flog(LogLevel::Info, "task", &format!("Task selected: {}", task_id));
+            info!("Selected phase for execution: {}", phase_id);
+            emit_cm(&format!("Selected phase: {}", phase_id));
+            self.flog(LogLevel::Info, "phase", &format!("Phase selected: {}", phase_id));
 
-            // Execute the task
-            match self.execute_task(&task_id) {
+            // Execute the phase (all pending tasks in one agent call)
+            match self.execute_phase(&phase_id) {
                 Ok(()) => {
-                    info!("Task {} completed successfully", task_id);
-                    emit_cm(&format!("Task {} completed", task_id));
-                    self.flog(LogLevel::Info, "task", &format!("Task {} completed", task_id));
+                    info!("Phase {} completed successfully", phase_id);
+                    emit_cm(&format!("Phase {} completed", phase_id));
+                    self.flog(LogLevel::Info, "phase", &format!("Phase {} completed", phase_id));
                 }
                 Err(e) => {
-                    let error_msg = format!("Task {} failed: {}", task_id, e);
+                    let error_msg = format!("Phase {} failed: {}", phase_id, e);
                     error!("{}", error_msg);
-                    emit_cm(&format!("Task {} failed: {}", task_id, e));
-                    self.flog(LogLevel::Error, "task", &error_msg);
+                    emit_cm(&format!("Phase {} failed: {}", phase_id, e));
+                    self.flog(LogLevel::Error, "phase", &error_msg);
                     self.log_manager.log_error(&error_msg)?;
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
 
-                    // Don't propagate the error; continue with next task
-                    // The task will be marked as failed/deferred in execute_task
+                    // Don't propagate the error; continue with next phase
                 }
             }
 
-            // Save state after each task
+            // Save state after each phase
             self.update_state()?;
 
-            // Check if the task's phase is now complete
-            if let Some(phase) = self.state.find_phase_for_task(&task_id) {
-                let phase_id = phase.id.clone();
-                self.check_phase_completion(&phase_id)?;
-                self.update_state()?;
-            }
-
-            // Check for shutdown signal after task completion
+            // Check for shutdown signal after phase completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
-                info!("Shutdown signal received after task completion, exiting gracefully");
-                self.flog(LogLevel::Warn, "manager", "Shutdown signal received after task completion");
+                info!("Shutdown signal received after phase completion, exiting gracefully");
+                self.flog(LogLevel::Warn, "manager", "Shutdown signal received after phase completion");
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
             }
@@ -409,6 +401,7 @@ impl Manager {
     /// Run the main orchestration loop with TUI channel communication.
     ///
     /// This variant of `run()` sends events to the TUI and checks for commands.
+    /// Uses phase-based execution where all tasks in a phase are handled by one agent.
     ///
     /// # Arguments
     ///
@@ -418,7 +411,7 @@ impl Manager {
     /// # Errors
     ///
     /// Returns an error if:
-    /// - Task execution fails
+    /// - Phase execution fails
     /// - State cannot be saved
     /// - Shutdown was requested
     pub fn run_with_channels(
@@ -426,8 +419,8 @@ impl Manager {
         event_tx: Sender<ManagerEvent>,
         cmd_rx: Receiver<TuiCommand>,
     ) -> Result<(), ManagerError> {
-        info!("Starting manager run loop with TUI channels");
-        emit_cm("Starting run loop (TUI)");
+        info!("Starting manager run loop with TUI channels (phase-based)");
+        emit_cm("Starting run loop (TUI, phase-based)");
 
         // Store channels for use in nested methods (like prompt_retry_cycles)
         self.event_tx = Some(event_tx.clone());
@@ -483,64 +476,60 @@ impl Manager {
                 continue;
             }
 
-            // Select next task
-            let task_id = match self.select_next_task() {
-                Some(task) => task.id.clone(),
+            // Select next runnable phase
+            let phase_id = match self.state.next_runnable_phase() {
+                Some(phase) => phase.id.clone(),
                 None => {
-                    info!("No more runnable tasks, exiting loop");
-                    emit_cm("No more runnable tasks");
+                    info!("No more runnable phases, exiting loop");
+                    emit_cm("No more runnable phases");
                     break;
                 }
             };
 
-            info!("Selected task for execution: {}", task_id);
-            emit_cm(&format!("Selected task: {}", task_id));
+            // Count pending tasks in phase for TUI event
+            let task_count = self.state.pending_tasks_in_phase(&phase_id).len();
 
-            // Send TaskStarted event
-            let _ = event_tx.send(ManagerEvent::TaskStarted {
-                task_id: task_id.clone(),
+            info!("Selected phase for execution: {} ({} tasks)", phase_id, task_count);
+            emit_cm(&format!("Selected phase: {} ({} tasks)", phase_id, task_count));
+
+            // Send PhaseStarted event
+            let _ = event_tx.send(ManagerEvent::PhaseStarted {
+                phase_id: phase_id.clone(),
+                task_count,
             });
 
-            // Execute the task
-            match self.execute_task(&task_id) {
+            // Execute the phase (all pending tasks in one agent call)
+            match self.execute_phase(&phase_id) {
                 Ok(()) => {
-                    info!("Task {} completed successfully", task_id);
-                    emit_cm(&format!("Task {} completed", task_id));
-                    let _ = event_tx.send(ManagerEvent::TaskCompleted {
-                        task_id: task_id.clone(),
+                    info!("Phase {} completed successfully", phase_id);
+                    emit_cm(&format!("Phase {} completed", phase_id));
+                    let _ = event_tx.send(ManagerEvent::PhaseCompleted {
+                        phase_id: phase_id.clone(),
                     });
                 }
                 Err(e) => {
-                    let error_msg = format!("Task {} failed: {}", task_id, e);
+                    let error_msg = format!("Phase {} failed: {}", phase_id, e);
                     error!("{}", error_msg);
-                    emit_cm(&format!("Task {} failed: {}", task_id, e));
+                    emit_cm(&format!("Phase {} failed: {}", phase_id, e));
                     let _ = event_tx.send(ManagerEvent::Error(error_msg.clone()));
                     self.log_manager.log_error(&error_msg)?;
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
 
-                    // Don't propagate the error; continue with next task
-                    // The task will be marked as failed/deferred in execute_task
+                    // Don't propagate the error; continue with next phase
                 }
             }
 
-            // Save state after each task
+            // Save state after each phase
             self.update_state()?;
-
-            // Check if the task's phase is now complete
-            if let Some(phase) = self.state.find_phase_for_task(&task_id) {
-                let phase_id = phase.id.clone();
-                self.check_phase_completion(&phase_id)?;
-                self.update_state()?;
-            }
 
             // Send updated state to TUI
             let _ = event_tx.send(ManagerEvent::StateUpdated(Box::new(self.state.clone())));
 
-            // Check for shutdown signal after task completion
+            // Check for shutdown signal after phase completion
             if self.shutdown_flag.load(Ordering::SeqCst) {
-                info!("Shutdown signal received after task completion, exiting gracefully");
+                info!("Shutdown signal received after phase completion, exiting gracefully");
                 self.manager_state = ManagerState::Idle;
                 return Err(ManagerError::ShutdownRequested);
             }
@@ -552,26 +541,22 @@ impl Manager {
         Ok(())
     }
 
-    /// Execute a single step (one task) and return.
+    /// Execute a single step (one phase) and return.
+    ///
+    /// In phase-based mode, this executes all pending tasks in the next
+    /// runnable phase with a single agent call.
     ///
     /// # Errors
     ///
-    /// Returns `ManagerError::NoRunnableTasks` if there are no tasks to run.
+    /// Returns `ManagerError::NoRunnableTasks` if there are no phases to run.
     pub fn step(&mut self) -> Result<(), ManagerError> {
-        let task_id = match self.select_next_task() {
-            Some(task) => task.id.clone(),
+        let phase_id = match self.state.next_runnable_phase() {
+            Some(phase) => phase.id.clone(),
             None => return Err(ManagerError::NoRunnableTasks),
         };
 
-        self.execute_task(&task_id)?;
+        self.execute_phase(&phase_id)?;
         self.update_state()?;
-
-        // Check if the task's phase is now complete
-        if let Some(phase) = self.state.find_phase_for_task(&task_id) {
-            let phase_id = phase.id.clone();
-            self.check_phase_completion(&phase_id)?;
-            self.update_state()?;
-        }
 
         Ok(())
     }
@@ -1698,6 +1683,510 @@ impl Manager {
             }
         }
         // Note: loop only exits via return statements above
+    }
+
+    // =========================================================================
+    // Phase-level execution methods (all tasks in a phase with one agent call)
+    // =========================================================================
+
+    /// Execute an entire phase: IMPLEM all tasks → BUILD → phase-level REVIEW cycle.
+    ///
+    /// This is the phase-level equivalent of `execute_implem()`. Instead of running
+    /// one agent per task, it runs one agent for all pending tasks in the phase.
+    pub fn execute_phase(&mut self, phase_id: &str) -> Result<(), ManagerError> {
+        info!("Executing phase: {}", phase_id);
+        emit_cm(&format!("Executing phase: {}", phase_id));
+        self.flog(LogLevel::Info, "phase", &format!("Executing phase: {}", phase_id));
+
+        // Mark phase as in progress
+        self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
+
+        // Get all pending tasks in this phase
+        let pending_tasks: Vec<Task> = self
+            .state
+            .pending_tasks_in_phase(phase_id)
+            .into_iter()
+            .cloned()
+            .collect();
+
+        if pending_tasks.is_empty() {
+            info!("No pending tasks in phase {}, checking completion", phase_id);
+            self.check_phase_completion(phase_id)?;
+            return Ok(());
+        }
+
+        emit_cm(&format!("Phase {} has {} pending tasks", phase_id, pending_tasks.len()));
+
+        // Check if we should resume at REVIEW (phase IMPLEM already completed)
+        let phase = self.state.get_phase_mut(phase_id)?;
+        if phase.implem_completed_at.is_some() {
+            if let Some(ref baseline) = phase.baseline_commit.clone() {
+                let starting_cycle = phase.review_cycles_completed;
+                info!(
+                    "Resuming phase {} at REVIEW cycle {} (IMPLEM already completed)",
+                    phase_id, starting_cycle
+                );
+                emit_cm(&format!("Resuming {} at REVIEW cycle {}", phase_id, starting_cycle));
+
+                let verdict = self.run_phase_review_cycle(phase_id, baseline, starting_cycle)?;
+
+                match verdict {
+                    Verdict::Approved => {
+                        // Mark all pending tasks as completed
+                        for task in &pending_tasks {
+                            self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                            self.sync_roadmap_item(&task.id);
+                        }
+                        self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
+                        self.clear_phase_implem_completion(phase_id);
+                        self.flog(LogLevel::Info, "phase", &format!("Phase {} completed (resumed review approved)", phase_id));
+                    }
+                    Verdict::NeedsFixes => {
+                        // Defer all tasks
+                        for task in &pending_tasks {
+                            self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                        }
+                        self.clear_phase_implem_completion(phase_id);
+                        self.flog(LogLevel::Warn, "phase", &format!("Phase {} deferred: review cycle exhausted", phase_id));
+                    }
+                }
+                return Ok(());
+            }
+        }
+
+        // Record baseline commit for later diff
+        let baseline_commit = self.get_head_commit().unwrap_or_default();
+
+        // Mark all tasks as in progress
+        for task in &pending_tasks {
+            self.state.mark_task_status(&task.id, TaskStatus::InProgress)?;
+        }
+
+        // Get phase for prompt building
+        let phase = self
+            .state
+            .phases
+            .iter()
+            .find(|p| p.id == phase_id)
+            .cloned()
+            .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
+
+        // Build phase-level IMPLEM prompt
+        let task_refs: Vec<&Task> = pending_tasks.iter().collect();
+        let prompt = PromptBuilder::build_phase_implem_prompt(&phase, &task_refs);
+
+        // Log full prompt to phase logger
+        let _ = self.phase_logger.log_prompt(phase_id, "PHASE_IMPLEM", &prompt);
+
+        // Log agent spawn
+        self.log_manager
+            .log_agent_spawn(&AgentType::Implem, phase_id, &prompt)?;
+        self.state.log_records.push(
+            LogManager::create_agent_spawn_record(&AgentType::Implem, phase_id, &prompt),
+        );
+
+        // Generate agent ID
+        let agent_id = Uuid::new_v4().to_string();
+        let started_at = Utc::now();
+
+        // Record the invocation
+        self.state.agent_history.push(AgentInvocation {
+            id: agent_id.clone(),
+            task_id: phase_id.to_string(), // Use phase_id for phase-level invocations
+            agent_type: AgentType::Implem,
+            started_at,
+            completed_at: None,
+            exit_status: None,
+            commit_hash: None,
+        });
+
+        // Spawn and wait for the agent
+        self.manager_state = ManagerState::WaitingForAgent;
+        self.flog(LogLevel::Info, "agent", &format!("Agent spawned for PHASE_IMPLEM {}", phase_id));
+        let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")?;
+        let output = handle.wait()?;
+        self.flog(LogLevel::Info, "agent", &format!("Agent completed for PHASE_IMPLEM {}", phase_id));
+
+        // Log full response to phase logger
+        let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code);
+
+        // Parse the response
+        let response = match ResponseParser::parse(&output.stdout) {
+            Ok(resp) => resp,
+            Err(AgentError::ParseError(msg)) => {
+                let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+                eprintln!("[{} PHASE_IMPLEM] {} parse failed: {}", now, phase_id, msg);
+
+                if let Some(session_id) = &output.session_id {
+                    eprintln!("[{} PHASE_IMPLEM] {} retrying with --continue...", now, phase_id);
+                    let retry_handle = self.agent_spawner.spawn_with_continue(
+                        session_id,
+                        "Your previous response could not be parsed. Please provide a summary of your changes.",
+                        phase_id,
+                        "PHASE_IMPLEM",
+                    )?;
+                    let retry_output = retry_handle.wait()?;
+                    ResponseParser::parse(&retry_output.stdout).map_err(|e| {
+                        eprintln!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e);
+                        e
+                    })?
+                } else {
+                    return Err(AgentError::ParseError(msg).into());
+                }
+            }
+            Err(e) => return Err(e.into()),
+        };
+
+        // Log agent response
+        self.log_manager.log_agent_response(&response)?;
+
+        // Update invocation completion
+        if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == agent_id) {
+            inv.completed_at = Some(Utc::now());
+            inv.exit_status = output.exit_code;
+        }
+
+        // Check if agent reported failure
+        if response.status == AgentStatus::Failed {
+            warn!("Agent reported failure for phase {}: {}", phase_id, response.message);
+            // Mark tasks back to pending
+            for task in &pending_tasks {
+                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            }
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        // Verify agent actually made file changes
+        if !self.check_git_changes()? {
+            warn!("Agent reported success but no file changes detected for phase {}", phase_id);
+            for task in &pending_tasks {
+                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            }
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        // Commit IMPLEM agent changes for audit trail
+        match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
+            Ok(_) => {}
+            Err(e) => {
+                warn!("Failed to commit PHASE_IMPLEM changes for {}: {}", phase_id, e);
+            }
+        }
+
+        // Run build verification
+        self.manager_state = ManagerState::Verifying;
+        let build_result = self.build_verifier.verify_all();
+
+        if let Err(e) = build_result {
+            let err_msg = match &e {
+                BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                _ => e.to_string(),
+            };
+            warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, err_msg);
+            emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {}", phase_id));
+            // Mark tasks back to pending for retry
+            for task in &pending_tasks {
+                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            }
+            self.manager_state = ManagerState::Executing;
+            return Ok(());
+        }
+
+        emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
+
+        // Save phase IMPLEM completion state for potential resume
+        self.save_phase_implem_completion(phase_id, &baseline_commit);
+
+        // Run phase-level review cycle
+        if !baseline_commit.is_empty() {
+            let verdict = self.run_phase_review_cycle(phase_id, &baseline_commit, 0)?;
+
+            match verdict {
+                Verdict::Approved => {
+                    // Mark all tasks as completed
+                    for task in &pending_tasks {
+                        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                        self.sync_roadmap_item(&task.id);
+                        self.log_manager.log_task_complete(&task.id)?;
+                        self.state
+                            .log_records
+                            .push(LogManager::create_task_complete_record(&task.id));
+                    }
+                    self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
+                    self.clear_phase_implem_completion(phase_id);
+                    self.flog(LogLevel::Info, "phase", &format!("Phase {} completed (review approved)", phase_id));
+                }
+                Verdict::NeedsFixes => {
+                    // Defer all tasks
+                    let reason = format!("Review cycle exhausted after {} cycles", self.config.max_cycles);
+                    for task in &pending_tasks {
+                        self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                        self.log_manager.log_task_deferred(&task.id, &reason)?;
+                        self.state
+                            .log_records
+                            .push(LogManager::create_task_deferred_record(&task.id, &reason));
+                    }
+                    self.clear_phase_implem_completion(phase_id);
+                    self.flog(LogLevel::Warn, "phase", &format!("Phase {} deferred: {}", phase_id, reason));
+                }
+            }
+        } else {
+            // No baseline commit — skip review, mark complete
+            warn!("No baseline commit for phase {}, skipping review", phase_id);
+            for task in &pending_tasks {
+                self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                self.sync_roadmap_item(&task.id);
+            }
+            self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
+        }
+
+        self.manager_state = ManagerState::Executing;
+        Ok(())
+    }
+
+    /// Run phase-level REVIEW → FIX → re-REVIEW cycle.
+    ///
+    /// Similar to `run_review_cycle()` but operates on the entire phase's changes
+    /// rather than a single task.
+    fn run_phase_review_cycle(
+        &mut self,
+        phase_id: &str,
+        baseline_commit: &str,
+        starting_cycle: u32,
+    ) -> Result<Verdict, ManagerError> {
+        let mut cycle = starting_cycle;
+        let mut max_cycles = self.config.max_cycles;
+
+        loop {
+            // Check if we've exceeded max cycles
+            if cycle >= max_cycles {
+                if let Some(additional) = self.prompt_retry_cycles(phase_id, cycle) {
+                    max_cycles += additional;
+                    emit_cm(&format!("Retrying {} more cycles for phase {}", additional, phase_id));
+                } else {
+                    warn!("Phase review cycle exhausted for {} after {} cycles", phase_id, cycle);
+                    return Ok(Verdict::NeedsFixes);
+                }
+            }
+
+            emit_cm(&format!("Phase review cycle {}/{} for {}", cycle + 1, max_cycles, phase_id));
+
+            // Get diff from baseline to current HEAD
+            let diff = self.get_diff_between(baseline_commit, "HEAD")?;
+
+            if diff.trim().is_empty() {
+                warn!("No diff found for phase {}", phase_id);
+                return Ok(Verdict::Approved);
+            }
+
+            // Get phase for prompt building
+            let phase = self
+                .state
+                .phases
+                .iter()
+                .find(|p| p.id == phase_id)
+                .cloned()
+                .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
+
+            // Build phase-level review prompt
+            let review_prompt = PromptBuilder::build_phase_review_prompt(&phase, &diff);
+
+            // Log full prompt to phase logger
+            let _ = self.phase_logger.log_prompt(phase_id, "PHASE_REVIEW", &review_prompt);
+
+            self.log_manager
+                .log_agent_spawn(&AgentType::Review, phase_id, &review_prompt)?;
+            self.state.log_records.push(
+                LogManager::create_agent_spawn_record(&AgentType::Review, phase_id, &review_prompt),
+            );
+
+            let review_agent_id = Uuid::new_v4().to_string();
+            let review_started = Utc::now();
+
+            self.state.agent_history.push(AgentInvocation {
+                id: review_agent_id.clone(),
+                task_id: phase_id.to_string(),
+                agent_type: AgentType::Review,
+                started_at: review_started,
+                completed_at: None,
+                exit_status: None,
+                commit_hash: None,
+            });
+
+            self.flog(LogLevel::Info, "agent", &format!("Spawning PHASE_REVIEW for {}", phase_id));
+            let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")?;
+            let review_output = review_handle.wait()?;
+            self.flog(LogLevel::Info, "agent", &format!("PHASE_REVIEW completed for {}", phase_id));
+
+            // Log full response
+            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code);
+
+            // Parse review response
+            let review_response = match ResponseParser::parse(&review_output.stdout) {
+                Ok(resp) => resp,
+                Err(AgentError::ParseError(_)) => {
+                    if let Some(session_id) = &review_output.session_id {
+                        let retry_handle = self.agent_spawner.spawn_with_continue(
+                            session_id,
+                            "Please provide your review verdict.",
+                            phase_id,
+                            "PHASE_REVIEW",
+                        )?;
+                        let retry_output = retry_handle.wait()?;
+                        match ResponseParser::parse(&retry_output.stdout) {
+                            Ok(resp) => resp,
+                            Err(_) => {
+                                warn!("Phase review parse failed twice, treating as approved");
+                                return Ok(Verdict::Approved);
+                            }
+                        }
+                    } else {
+                        warn!("Phase review parse failed, treating as approved");
+                        return Ok(Verdict::Approved);
+                    }
+                }
+                Err(e) => return Err(e.into()),
+            };
+
+            // Update invocation
+            if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == review_agent_id) {
+                inv.completed_at = Some(Utc::now());
+                inv.exit_status = review_output.exit_code;
+            }
+
+            self.log_manager.log_agent_response(&review_response)?;
+
+            if review_response.status == AgentStatus::Failed {
+                warn!("Phase review agent failed for {}", phase_id);
+                return Ok(Verdict::Approved);
+            }
+
+            // Extract verdict
+            let verdict = self.extract_review_verdict(&review_response.message);
+
+            self.log_manager.log_review_result(&verdict, &[])?;
+            self.state
+                .log_records
+                .push(LogManager::create_review_result_record(&verdict, &[]));
+
+            match verdict {
+                Verdict::Approved => {
+                    info!("Phase review approved for {}", phase_id);
+                    emit_cm(&format!("Phase review APPROVED for {}", phase_id));
+                    return Ok(Verdict::Approved);
+                }
+                Verdict::NeedsFixes => {
+                    warn!("Phase review found issues for {} (cycle {})", phase_id, cycle + 1);
+                    emit_cm(&format!("Phase review NEEDS_FIXES for {} (cycle {})", phase_id, cycle + 1));
+
+                    if cycle + 1 >= max_cycles {
+                        cycle += 1;
+                        self.update_phase_review_cycles(phase_id, cycle);
+                        continue;
+                    }
+
+                    // Re-fetch phase for fix prompt
+                    let phase = self
+                        .state
+                        .phases
+                        .iter()
+                        .find(|p| p.id == phase_id)
+                        .cloned()
+                        .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
+
+                    // Spawn FIX agent
+                    let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &review_response.message);
+
+                    let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
+
+                    self.log_manager
+                        .log_agent_spawn(&AgentType::Fix, phase_id, &fix_prompt)?;
+                    self.state.log_records.push(
+                        LogManager::create_agent_spawn_record(&AgentType::Fix, phase_id, &fix_prompt),
+                    );
+
+                    let fix_agent_id = Uuid::new_v4().to_string();
+                    let fix_started = Utc::now();
+
+                    self.state.agent_history.push(AgentInvocation {
+                        id: fix_agent_id.clone(),
+                        task_id: phase_id.to_string(),
+                        agent_type: AgentType::Fix,
+                        started_at: fix_started,
+                        completed_at: None,
+                        exit_status: None,
+                        commit_hash: None,
+                    });
+
+                    self.flog(LogLevel::Info, "agent", &format!("Spawning PHASE_FIX for {}", phase_id));
+                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")?;
+                    let fix_output = fix_handle.wait()?;
+                    self.flog(LogLevel::Info, "agent", &format!("PHASE_FIX completed for {}", phase_id));
+
+                    let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code);
+
+                    if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
+                        inv.completed_at = Some(Utc::now());
+                        inv.exit_status = fix_output.exit_code;
+                    }
+
+                    if let Ok(fix_response) = ResponseParser::parse(&fix_output.stdout) {
+                        self.log_manager.log_agent_response(&fix_response)?;
+                    }
+
+                    if !self.check_git_changes()? {
+                        warn!("PHASE_FIX made no changes for {}", phase_id);
+                        continue;
+                    }
+
+                    match self.commit_agent_changes(phase_id, "PHASE_FIX", &fix_agent_id) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            warn!("Failed to commit PHASE_FIX changes: {}", e);
+                            continue;
+                        }
+                    }
+
+                    // Re-verify build after FIX
+                    self.manager_state = ManagerState::Verifying;
+                    if let Err(e) = self.build_verifier.verify_all() {
+                        warn!("Build failed after PHASE_FIX: {}", e);
+                    }
+                    self.manager_state = ManagerState::WaitingForAgent;
+
+                    cycle += 1;
+                    self.update_phase_review_cycles(phase_id, cycle);
+                    self.update_state()?;
+                }
+            }
+        }
+    }
+
+    /// Update the review_cycles_completed field for a phase.
+    fn update_phase_review_cycles(&mut self, phase_id: &str, cycles: u32) {
+        if let Ok(phase) = self.state.get_phase_mut(phase_id) {
+            phase.review_cycles_completed = cycles;
+        }
+    }
+
+    /// Save phase IMPLEM completion state.
+    fn save_phase_implem_completion(&mut self, phase_id: &str, baseline_commit: &str) {
+        if let Ok(phase) = self.state.get_phase_mut(phase_id) {
+            phase.implem_completed_at = Some(Utc::now());
+            phase.baseline_commit = Some(baseline_commit.to_string());
+            phase.review_cycles_completed = 0;
+        }
+    }
+
+    /// Clear phase IMPLEM completion state.
+    fn clear_phase_implem_completion(&mut self, phase_id: &str) {
+        if let Ok(phase) = self.state.get_phase_mut(phase_id) {
+            phase.implem_completed_at = None;
+            phase.baseline_commit = None;
+            phase.review_cycles_completed = 0;
+        }
     }
 
     /// Update the review_cycles_completed field for a task.

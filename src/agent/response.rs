@@ -3,11 +3,50 @@
 //! This module provides functionality to parse JSON responses from Claude agents,
 //! extracting structured information about files created/modified and commands run.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::state::{AgentResponse, AgentStatus};
 
 use super::AgentError;
+
+/// Response from a phase-level agent that implements multiple tasks.
+///
+/// This is the structured response expected from `build_phase_implem_prompt()`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhaseAgentResponse {
+    /// Status reported by the agent (success/failed).
+    #[serde(default = "default_agent_status")]
+    pub status: AgentStatus,
+    /// Summary of the entire phase implementation.
+    #[serde(default)]
+    pub summary: String,
+    /// Information about each completed task.
+    #[serde(default)]
+    pub tasks_completed: Vec<TaskCompletionInfo>,
+    /// Files created during phase implementation.
+    #[serde(default)]
+    pub files_created: Vec<String>,
+    /// Files modified during phase implementation.
+    #[serde(default)]
+    pub files_modified: Vec<String>,
+    /// Error message if status is failed.
+    #[serde(default)]
+    pub error: Option<String>,
+}
+
+fn default_agent_status() -> AgentStatus {
+    AgentStatus::Success
+}
+
+/// Information about a single completed task within a phase.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskCompletionInfo {
+    /// The task ID (e.g., "phase-1.task-2").
+    pub task_id: String,
+    /// Summary of what was done for this task.
+    #[serde(default)]
+    pub summary: String,
+}
 
 /// Parses raw JSON output from Claude agents.
 ///
@@ -192,6 +231,95 @@ impl ResponseParser {
 
         // If no JSON found, return empty defaults
         ParsedResponse::default()
+    }
+
+    /// Parse raw JSON output from claude CLI into a PhaseAgentResponse.
+    ///
+    /// Similar to `parse()` but returns a `PhaseAgentResponse` which includes
+    /// multi-task completion information.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AgentError::ParseError` if the JSON cannot be parsed at all.
+    pub fn parse_phase_response(raw_json: &str) -> Result<PhaseAgentResponse, AgentError> {
+        let trimmed = raw_json.trim();
+
+        // Get the result text from the raw JSON
+        let result_text = if trimmed.starts_with('[') {
+            Self::extract_result_from_streaming(trimmed)?
+        } else {
+            let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
+                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+            })?;
+            output.result
+        };
+
+        // Try to extract embedded JSON from the result text
+        let parsed = Self::extract_phase_response_json(&result_text);
+
+        Ok(parsed.unwrap_or_else(|| PhaseAgentResponse {
+            status: AgentStatus::Success,
+            summary: result_text,
+            tasks_completed: vec![],
+            files_created: vec![],
+            files_modified: vec![],
+            error: None,
+        }))
+    }
+
+    /// Extract result text from streaming format.
+    fn extract_result_from_streaming(raw_json: &str) -> Result<String, AgentError> {
+        let events: Vec<serde_json::Value> = serde_json::from_str(raw_json).map_err(|e| {
+            AgentError::ParseError(format!("failed to parse streaming output: {}", e))
+        })?;
+
+        let mut result_text = String::new();
+
+        for event in &events {
+            let event_type = event.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
+            if event_type == "result" {
+                if let Some(result) = event.get("result").and_then(|v| v.as_str()) {
+                    result_text = result.to_string();
+                    break;
+                }
+            }
+            if event_type == "assistant" {
+                if let Some(content) = event
+                    .get("message")
+                    .and_then(|m| m.get("content"))
+                    .and_then(|c| c.as_str())
+                {
+                    result_text.push_str(content);
+                }
+            }
+        }
+
+        Ok(result_text)
+    }
+
+    /// Attempt to extract a PhaseAgentResponse from embedded JSON in the text.
+    fn extract_phase_response_json(text: &str) -> Option<PhaseAgentResponse> {
+        // Try to find JSON in code blocks first
+        if let Some(json_str) = Self::extract_json_from_code_block(text) {
+            if let Ok(parsed) = serde_json::from_str::<PhaseAgentResponse>(&json_str) {
+                return Some(parsed);
+            }
+        }
+
+        // Try to find raw JSON object in the text
+        if let Some(start) = text.find('{') {
+            if let Some(end) = text.rfind('}') {
+                if end > start {
+                    let potential_json = &text[start..=end];
+                    if let Ok(parsed) = serde_json::from_str::<PhaseAgentResponse>(potential_json) {
+                        return Some(parsed);
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     /// Extract JSON from markdown code blocks.

@@ -941,6 +941,9 @@ mod tests {
                     id: "phase-1".to_string(),
                     name: "Phase 1".to_string(),
                     status: PhaseStatus::Completed,
+                    review_cycles_completed: 0,
+                    baseline_commit: None,
+                    implem_completed_at: None,
                     tasks: vec![Task {
                         id: "task-1".to_string(),
                         name: "Task 1".to_string(),
@@ -964,6 +967,9 @@ mod tests {
                     id: "phase-2".to_string(),
                     name: "Phase 2".to_string(),
                     status: PhaseStatus::InProgress,
+                    review_cycles_completed: 0,
+                    baseline_commit: None,
+                    implem_completed_at: None,
                     tasks: vec![
                         Task {
                             id: "task-2".to_string(),
