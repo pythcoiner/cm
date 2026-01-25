@@ -2618,7 +2618,7 @@
           "id": "phase-27.task-4",
           "name": "Update --prune for per-phase logs",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-27.task-2"
           ],
@@ -2630,9 +2630,30 @@
             "prior_review_issues": []
           },
           "instructions": "Update --prune CLI flag to handle per-phase log files:\n\n1. Add `prune_all(logs_dir: &Path)` function to PhaseLogger or file_logger.rs:\n   - Iterate over all `.log` files in `.cm/logs/`\n   - Apply same 24-hour pruning logic to each file\n   - Return combined PruneStats\n\n2. Update `execute_prune()` in `src/cli/mod.rs`:\n   - Prune main `cm.log` (existing behavior)\n   - Also prune all phase logs in `.cm/logs/`\n   - Report combined stats\n\n3. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "3886697e-f07c-454b-83cd-a6e5e29ad12d",
+              "started_at": "2026-01-25T08:32:48.835962179Z",
+              "completed_at": "2026-01-25T08:36:08.889715673Z",
+              "status": "success",
+              "prompt": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n\n## Important Notes\n\n- Never ask questions or request clarification - work with the information provided\n- If the task is ambiguous, make reasonable assumptions based on codebase patterns\n- If you encounter blockers, return a \"failed\" status with details\n- Focus solely on completing the single task assigned to you\n- Trust that the manager has provided all necessary context\n\n\n---\n\n## Task: Update --prune for per-phase logs\n\n### Instructions\n\nUpdate --prune CLI flag to handle per-phase log files:\n\n1. Add `prune_all(logs_dir: &Path)` function to PhaseLogger or file_logger.rs:\n   - Iterate over all `.log` files in `.cm/logs/`\n   - Apply same 24-hour pruning logic to each file\n   - Return combined PruneStats\n\n2. Update `execute_prune()` in `src/cli/mod.rs`:\n   - Prune main `cm.log` (existing behavior)\n   - Also prune all phase logs in `.cm/logs/`\n   - Report combined stats\n\n3. Ensure `cargo build` and `cargo clippy` pass\n\n### Files to Read for Context\n\nRead the following files to understand the existing codebase:\n\n- src/cli/mod.rs\n- src/log/phase_logger.rs\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [
+                  "src/log/phase_logger.rs",
+                  "src/cli/mod.rs"
+                ],
+                "commands_run": [],
+                "message": "Updated --prune to handle per-phase logs in .cm/logs/"
+              }
+            }
+          ],
           "roadmap_item_id": "27.4",
-          "review_cycles_completed": 0
+          "implem_completed_at": "2026-01-25T08:36:14.901079438Z",
+          "baseline_commit": "34612c9030a10255920c996241305ec5c9078318",
+          "review_cycles_completed": 1
         },
         {
           "id": "phase-27.task-5",
@@ -3504,6 +3525,32 @@
       "started_at": "2026-01-25T08:32:29.581449088Z",
       "completed_at": "2026-01-25T08:32:48.813572423Z",
       "exit_status": 0
+    },
+    {
+      "id": "3886697e-f07c-454b-83cd-a6e5e29ad12d",
+      "task_id": "phase-27.task-4",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T08:32:48.835962179Z",
+      "completed_at": "2026-01-25T08:36:08.804481713Z",
+      "exit_status": 0,
+      "commit_hash": "e49a935e616c233606cab1c9c09e1b9633dd9b82"
+    },
+    {
+      "id": "49975522-e383-42a9-bff0-e24708e81a48",
+      "task_id": "phase-27.task-4",
+      "agent_type": "review",
+      "started_at": "2026-01-25T08:36:14.923593887Z",
+      "completed_at": "2026-01-25T08:36:37.159374430Z",
+      "exit_status": 0
+    },
+    {
+      "id": "3ddda7c3-baf6-42bf-88cd-75811155f12f",
+      "task_id": "phase-27.task-4",
+      "agent_type": "fix",
+      "started_at": "2026-01-25T08:36:37.159765812Z",
+      "completed_at": "2026-01-25T08:36:56.992776380Z",
+      "exit_status": 0,
+      "commit_hash": "05979878e1c2517f7def22ce1f8140fc66d8dc90"
     }
   ],
   "log_records": [
@@ -6137,6 +6184,60 @@
       "data": {
         "type": "task_complete",
         "status": "completed"
+      }
+    },
+    {
+      "id": "d9530dd6-f2cd-4195-b2d2-331c3a122f30",
+      "timestamp": "2026-01-25T08:32:48.835957050Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute a single, isolated task according to the specification provided by the manager.\n\n## Your Responsibilities\n\n1. **Read the Task**: Understand the exact requirements from the task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution**: Write clean, focused code that solves the task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The current task description\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Other tasks or their implementations\n- Global project roadmap\n- Historical conversations\n- Cross-task dependencies\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you coul\n\n... [truncated, 1700 more bytes]"
+      }
+    },
+    {
+      "id": "51d8e8db-78c5-4038-b0e1-48db190d2227",
+      "timestamp": "2026-01-25T08:36:14.900923847Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "3656990e-c656-436a-bdb9-a328fc543cf3",
+      "timestamp": "2026-01-25T08:36:14.923592875Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze failed verification results and provide actionable feedback for fixing issues.\n\n## Your Responsibilities\n\n1. **Analyze Failures**: Review build errors, lint warnings, and test failures\n2. **Identify Root Causes**: Determine why the verification failed\n3. **Provide Feedback**: Give clear, specific instructions for fixing the issues\n4. **Prioritize Issues**: List problems in order of importance\n5. **Output Results**: Return a JSON response with review findings\n\n## Context You Receive\n\nYou are provided with:\n- The original task description\n- The implementation attempt that failed\n- Verification output (build/lint/test errors)\n- List of files that were modified\n- Code style guidelines\n\nYou do NOT have access to:\n- Other tasks or implementations\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Focus on Verification Failures\n\nOnly review issues that caused verification to fail:\n- Build errors (compilation failures)\n- Lint warnings (clippy issues)\n- Test failures (failing test cases)\n\nDon't comment on:\n- Code style preferences if linting passes\n- Theoretical improvements unrelated to failures\n- Design decisions that don't affect verification\n\n### Provide Actionable Feedback\n\nFor each issue:\n- Quote the exact error message\n- Identify the file and line number\n- Explain what's wrong\n- Suggest a specific fix\n- Prioritize by severity\n\n### Be Specific\n\nGood feedback:\n- \"In src/main.rs:42, the function returns Result<(), Error> but Error is not imported. Add 'use crate::Error;' at the top.\"\n\nBad feedback:\n- \"There are some import issues that need to be fixed.\"\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block in this exact format:\n\n```json\n{\n  \"status\": \"issues_found\",\n  \"issues\": [\n    {\n      \"file\": \"path/to/file.rs\",\n      \"line\": 42,\n      \"severity\": \"error\",\n      \"message\": \"Brief description of the issue\",\n      \"suggestion\": \"Speci\n\n... [truncated, 31018 more bytes]"
+      }
+    },
+    {
+      "id": "c5f7757d-7a68-4dc3-a5ce-d258e15468a9",
+      "timestamp": "2026-01-25T08:36:37.159424824Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "6181348d-7583-4f27-9031-e35dcae6281f",
+      "timestamp": "2026-01-25T08:36:37.159762295Z",
+      "action": "agent_spawn",
+      "task_id": "phase-27.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "# Fix Agent Instructions\n\nYou are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.\n\n## Your Responsibilities\n\n1. **Understand Issues**: Carefully read all review feedback and understand what needs to be fixed\n2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems\n3. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality\n4. **Follow Conventions**: Adhere to the project's code style and architectural patterns\n5. **Verify Changes**: Test your fixes to ensure they resolve the issues\n\n## Fix Guidelines\n\n- **Be Precise**: Only change what's necessary to fix the identified issues\n- **Preserve Intent**: Maintain the original functionality while correcting problems\n- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase\n- **Document Changes**: Use clear commit messages that explain what was fixed and why\n\n## Code Quality Standards\n\nAll fixes must:\n- Resolve the reported issues completely\n- Follow the project's code style guidelines\n- Pass build verification (compilation + clippy)\n- Not introduce new warnings or errors\n- Maintain backward compatibility unless explicitly required to break it\n\n## Common Fix Patterns\n\n- **Error Handling**: Replace `.unwrap()` with proper `?` or `match` error handling\n- **Type Safety**: Add explicit type annotations where needed\n- **Memory Safety**: Fix ownership/borrowing issues, avoid unnecessary clones\n- **Style Violations**: Correct formatting, naming, and idiomatic Rust patterns\n- **Logic Errors**: Fix incorrect algorithms or control flow\n\n## Important Notes\n\n- Read the review feedback carefully - it contains critical context about what's wrong\n- If review feedback is unclear, make your best judgment based on code quality standards\n- Always test your changes by reading relevant files to understand the broader context\n- Never skip fixing critical or high-severity i\n\n... [truncated, 1399 more bytes]"
       }
     }
   ]

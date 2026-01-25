@@ -4099,11 +4099,10 @@ Task completed with status: **completed**
 
 ### Agent Spawn
 
-**Type:** Implem
-**Task:** phase-27.task-4
+**Type:** implem
 
 <details>
-<summary>Prompt</summary>
+<summary>Prompt Preview</summary>
 
 ```
 # Implementer Agent Instructions
@@ -4115,85 +4114,9 @@ You are an **Implementer Agent**. Your role is to execute a single, isolated tas
 1. **Read the Task**: Understand the exact requirements from the task description
 2. **Read Context Files**: Review all files listed in "Files to Read for Context"
 3. **Implement the Solution**: Write clean, focused code that solves the task
-4. **Follow Conventions**: Adhere to the project's code style and patterns
-5. **Output Results**: Return a JSON response with your completion status
+4. **Follow Conventions**: Adhere to the project's code sty
 
-## Context Boundaries
-
-You receive ONLY:
-- The current task description
-- A list of relevant files to read
-- Code style guidelines
-- Prior review feedback (if this is a fix attempt)
-
-You do NOT have access to:
-- Other tasks or their implementations
-- Global project roadmap
-- Historical conversations
-- Cross-task dependencies
-
-## Implementation Guidelines
-
-### Code Quality
-
-- Match existing code style exactly
-- Use the same patterns found in the codebase
-- Keep changes minimal and focused
-- Don't over-engineer solutions
-- Don't add features beyond the task scope
-
-### Error Handling
-
-- Use the project's established error types
-- Follow the error handling patterns in existing code
-- Never use generic string errors if typed errors exist
-
-### Testing
-
-- Add tests for new functionality
-- Update tests when modifying existing code
-- Ensure tests follow the project's testing conventions
-
-### Documentation
-
-- Add comments only where logic isn't self-evident
-- Update documentation if the task requires it
-- Don't add unnecessary comments to unchanged code
-
-## Required Output Format
-
-You MUST end your response with a JSON code block in this exact format:
-
-If you successfully completed the task:
-```json
-{
-  "status": "success",
-  "summary": "Brief description of what you did",
-  "files_created": ["list", "of", "new", "files"],
-  "files_modified": ["list", "of", "modified", "files"]
-}
-```
-
-If you coul
-
-... [truncated, 1700 more bytes]
-```
-
-</details>
-
-[2026-01-25 08:36:08 UTC] **AGENT_COMPLETE**
-
-### Agent Response
-
-**Files Modified:**
-- `src/log/phase_logger.rs`
-- `src/cli/mod.rs`
-
-<details>
-<summary>Raw Response</summary>
-
-```
-Updated --prune to handle per-phase logs in .cm/logs/
+... [truncated, 1534 more bytes]
 ```
 
 </details>
@@ -4205,6 +4128,66 @@ Updated --prune to handle per-phase logs in .cm/logs/
 
 
 [2026-01-25 08:36:14 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+
+### Agent Spawn
+
+**Type:** review
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+# Reviewer Agent Instructions
+
+You are a **Reviewer Agent**. Your role is to analyze failed verification results and provide actionable feedback for fixing issues.
+
+## Your Responsibilities
+
+1. **Analyze Failures**: Review build errors, lint warnings, and test failures
+2. **Identify Root Causes**: Determine why the verification failed
+3. **Provide Feedback**: Give clear, specific instructions for fixing the issues
+4. **Prioritize Issues**: List problems in order of importance
+5. **Output Results
+
+... [truncated, 1535 more bytes]
+```
+
+</details>
+
+[2026-01-25 08:36:37 UTC] **REVIEW_RESULT**
+
+### Review Result: NEEDS_FIXES
+
+**Issues Found:** 0
+
+
+[2026-01-25 08:36:37 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+
+### Agent Spawn
+
+**Type:** fix
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+# Fix Agent Instructions
+
+You are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.
+
+## Your Responsibilities
+
+1. **Understand Issues**: Carefully read all review feedback and understand what needs to be fixed
+2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems
+3. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality
+4. **Follow Conventions**
+
+... [truncated, 1534 more bytes]
+```
+
+</details>
+
+[2026-01-25 08:36:57 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
 
 ### Agent Spawn
 
@@ -4287,12 +4270,12 @@ You MUST end your response with a JSON code block in this exact format:
       "message": "Brief description of the issue",
       "suggestion": "Speci
 
-... [truncated, 31018 more bytes]
+... [truncated, 36307 more bytes]
 ```
 
 </details>
 
-[2026-01-25 08:36:37 UTC] **AGENT_COMPLETE**
+[2026-01-25 08:37:16 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
@@ -4305,14 +4288,14 @@ Clean implementation with comprehensive test coverage. Correctly prunes both mai
 
 </details>
 
-[2026-01-25 08:36:37 UTC] **REVIEW_RESULT**
+[2026-01-25 08:37:16 UTC] **REVIEW_RESULT**
 
 ### Review Result: NEEDS_FIXES
 
 No issues found.
 
 
-[2026-01-25 08:36:37 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
+[2026-01-25 08:37:16 UTC] **AGENT_SPAWN** | Task: phase-27.task-4
 
 ### Agent Spawn
 
@@ -4371,7 +4354,7 @@ All fixes must:
 
 </details>
 
-[2026-01-25 08:36:56 UTC] **AGENT_COMPLETE**
+[2026-01-25 08:37:50 UTC] **AGENT_COMPLETE**
 
 ### Agent Response
 
@@ -4379,7 +4362,7 @@ All fixes must:
 <summary>Raw Response</summary>
 
 ```
-No fixes needed - implementation already complete and correct per review feedback
+Implementation already complete. The --prune flag correctly handles both main cm.log and all per-phase logs with comprehensive test coverage and proper error handling.
 ```
 
 </details>
