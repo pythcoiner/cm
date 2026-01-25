@@ -17,7 +17,7 @@ use thiserror::Error;
 use crate::config::{ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
-use crate::state::{load_roadmap, load_state, save_state, validate_all, StateError, TaskStatus, TasksState};
+use crate::state::{load_roadmap, load_state, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
 use crate::tui::{self, ManagerEvent, TuiCommand};
 
 /// Subcommands for the cm CLI.
@@ -149,6 +149,10 @@ pub struct Cli {
     /// Prune phase log entries older than 24 hours.
     #[arg(long)]
     pub prune: bool,
+
+    /// Reset a phase to pending status and clear execution state.
+    #[arg(long, value_name = "PHASE_ID")]
+    pub reset: Option<String>,
 }
 
 /// Run the CLI application.
@@ -192,7 +196,9 @@ pub fn run() -> Result<(), CliError> {
     }
 
     // Dispatch based on flags
-    let result = if cli.prune {
+    let result = if cli.reset.is_some() {
+        execute_reset(&cli)
+    } else if cli.prune {
         execute_prune(&cli)
     } else if cli.sanity_check {
         execute_sanity_check(&cli)
@@ -875,6 +881,45 @@ fn execute_dry_run(cli: &Cli) -> Result<(), CliError> {
             );
         }
     }
+
+    Ok(())
+}
+
+/// Execute the reset mode.
+///
+/// Resets a phase to pending status and clears all execution state.
+fn execute_reset(cli: &Cli) -> Result<(), CliError> {
+    info!("Reset mode: resetting phase {:?}", cli.reset);
+
+    let phase_id = cli.reset.as_ref().unwrap();
+    let mut state = load_state(&cli.state)?;
+
+    // Find and reset the phase
+    let phase = state.get_phase_mut(phase_id)?;
+
+    // Reset phase fields
+    phase.status = PhaseStatus::Pending;
+    phase.review_cycles_completed = 0;
+    phase.baseline_commit = None;
+    phase.implem_completed_at = None;
+
+    let task_count = phase.tasks.len();
+
+    // Reset all tasks in the phase
+    for task in &mut phase.tasks {
+        task.status = TaskStatus::Pending;
+        task.attempts.clear();
+        task.implem_completed_at = None;
+        task.baseline_commit = None;
+        task.review_cycles_completed = 0;
+    }
+
+    // Save modified state
+    save_state(&state, &cli.state)?;
+
+    println!("Phase '{}' reset to pending state", phase_id);
+    println!("  - Phase status: pending");
+    println!("  - {} task(s) reset", task_count);
 
     Ok(())
 }

@@ -74,5 +74,6 @@ cm --sanity-check   # Deep JSON validation
 cm --regenerate     # Regenerate markdown from JSON
 cm --dry-run        # Preview without executing
 cm --prune          # Trim cm.log to last 24 hours
+cm --reset <ID>     # Reset phase to pending
 cm init             # Create .claude/commands/ files
 ```
