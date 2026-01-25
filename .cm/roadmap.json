@@ -2276,23 +2276,23 @@
         {
           "id": "27.5",
           "name": "Add unit tests for PhaseLogger",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Test extract_phase_id",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test directory creation",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test log file creation and format",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Test multiple phases create separate files",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -2302,19 +2302,19 @@
         {
           "id": "27.6",
           "name": "Build and verify per-phase logging",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify PhaseLogger integration",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Verify TRACE level added",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

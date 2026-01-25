@@ -2505,7 +2505,7 @@
     {
       "id": "phase-27",
       "name": "Per-Phase TRACE Logging",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-27.task-1",
@@ -2659,7 +2659,7 @@
           "id": "phase-27.task-5",
           "name": "Add unit tests for PhaseLogger",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-3"
           ],
@@ -2678,7 +2678,7 @@
           "id": "phase-27.task-6",
           "name": "Build and verify per-phase logging",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-27.task-3",
             "phase-27.task-4",
