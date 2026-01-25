@@ -199,87 +199,19 @@ Wait for explicit user confirmation before modifying files.
 
 ---
 
-## Step 7: Update Project Files
+## Step 7: Handoff to /end
 
-Once confirmed, update the tasks.json file:
+After the user confirms the fix task summary, inform them:
 
-### 7.1 Generate Task ID
-
-Use the format: `phase-X.fix-[short-name]` or `phase-X.task-N.fix` if fixing a specific task.
-
-### 7.2 Add Fix Task to tasks.json
-
-Insert the task in the appropriate position based on priority:
-- **Immediate**: Insert at the beginning of pending tasks
-- **Current phase**: Append to current phase
-- **Specific phase**: Append to specified phase
-- **Deferred**: Add with status "deferred"
-
-### 7.3 Optionally Update ROADMAP.md
-
-If the user wants, add a checkbox entry:
-
-```markdown
-- [ ] Fix: [bug summary]
-```
-
----
-
-## Step 8: Regenerate Markdown
-
-After updating the JSON files, regenerate the markdown documentation:
-
-```bash
-cm --regenerate
-```
-
-This ensures ROADMAP.md and LOG.md stay in sync with tasks.json.
-
----
-
-## Step 9: Validate Changes
-
-After updating the files, run validation to ensure all JSON files are correct:
-
-```bash
-cm --sanity-check
-```
-
-Check the output:
-- If validation **passes**: Proceed to Step 10
-- If validation **fails**:
-  1. Review the error messages
-  2. Fix the issues in tasks.json
-  3. Re-run `cm --sanity-check`
-  4. Repeat until all errors are resolved
-
-**Common issues:**
-- Duplicate task IDs
-- Invalid depends_on references
-- Missing required fields in new tasks
-
----
-
-## Step 10: Completion
-
-After updating files, inform the user:
-
-> Fix task "[task-id]" has been added successfully!
+> The fix task is ready. To save these changes to the project files, run `/end`.
 >
-> **Task details:**
-> - ID: [task-id]
-> - Name: Fix: [summary]
-> - Phase: [phase-name]
-> - Priority: [placement]
+> This will update:
+> - `.cm/tasks.json` - Add fix task definition
+> - `.cm/roadmap.json` - Add roadmap entry (if applicable)
 >
-> **Files updated:**
-> - `.cm/tasks.json` - Added fix task
->
-> **Next steps:**
-> 1. Review the updated task definition
-> 2. When ready, run `cm run` to execute the fix (or `cm --step` for just this task)
->
-> Would you like to add another bug fix?
+> After saving, run `cm run` when ready to start the fix.
+
+Do NOT modify any files. Wait for the user to run `/end`.
 
 ---
 

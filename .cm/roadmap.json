@@ -1786,7 +1786,7 @@
         {
           "id": "24.1",
           "name": "Create assets/end.md skill",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "YAML frontmatter (name, description, user-invocable)",
@@ -1812,7 +1812,7 @@
         {
           "id": "24.2",
           "name": "Register END_SKILL in src/skill.rs",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-24.task-2"
@@ -1821,7 +1821,7 @@
         {
           "id": "24.3",
           "name": "Register end skill in src/cli/init.rs",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add END_SKILL import",
@@ -1843,7 +1843,7 @@
         {
           "id": "24.4",
           "name": "Modify assets/feat.md to delegate saves to /end",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Remove Steps 8-11 (file updates, regenerate, validate, completion)",
@@ -1861,7 +1861,7 @@
         {
           "id": "24.5",
           "name": "Modify assets/fix.md to delegate saves to /end",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Remove Steps 7-10 (file updates, regenerate, validate, completion)",
@@ -1879,7 +1879,7 @@
         {
           "id": "24.6",
           "name": "Build, reinstall skills, and verify",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
@@ -1896,6 +1896,75 @@
           ],
           "linked_task_ids": [
             "phase-24.task-6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-25",
+      "number": "25",
+      "name": "Labeled Stderr Output",
+      "items": [
+        {
+          "id": "25.1",
+          "name": "Thread agent_label through AgentSpawner",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Add agent_label param to spawn()",
+              "completed": false
+            },
+            {
+              "name": "Add agent_label param to spawn_with_continue()",
+              "completed": false
+            },
+            {
+              "name": "Use label in run_agent_thread() eprint lines",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-25.task-1"
+          ]
+        },
+        {
+          "id": "25.2",
+          "name": "Pass agent labels at spawn sites and add [CM] eprints",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Pass IMPLEM/REVIEW/FIX at 6 spawn call sites",
+              "completed": false
+            },
+            {
+              "name": "Replace inline [AGENT] eprints with specific labels",
+              "completed": false
+            },
+            {
+              "name": "Add emit_cm() helper and [CM] orchestration eprints",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-25.task-2"
+          ]
+        },
+        {
+          "id": "25.3",
+          "name": "Build and verify labeled output",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "cargo build + clippy + test pass",
+              "completed": false
+            },
+            {
+              "name": "No remaining hardcoded AGENT strings in eprints",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-25.task-3"
           ]
         }
       ]

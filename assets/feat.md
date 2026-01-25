@@ -248,123 +248,20 @@ Wait for explicit user confirmation before modifying files.
 
 ---
 
-## Step 8: Update Project Files
+## Step 8: Handoff to /end
 
-Once confirmed, update all three files:
+After the user confirms the feature summary, inform them:
 
-### 8.1 Update PLAN.md
-
-Add a new section for the feature under the appropriate module or create a new
-module section:
-
-```markdown
-### [Feature Name]
-
-**Purpose:** [Feature description]
-
-**Key files:**
-- `path/to/file1.rs` - [Description]
-- `path/to/file2.rs` - [Description]
-
-**Requirements:**
-- [Requirement 1]
-- [Requirement 2]
-```
-
-### 8.2 Update ROADMAP.md
-
-Add checkboxes for the new tasks in the appropriate phase:
-
-```markdown
-### [Feature Name]
-
-- [ ] [Task 1] - [Brief description]
-- [ ] [Task 2] - [Brief description]
-  - [ ] [Subtask 2.1]
-  - [ ] [Subtask 2.2]
-- [ ] [Task 3] - [Brief description]
-```
-
-Update the Summary table with new task counts.
-
-### 8.3 Update tasks.json
-
-Add new tasks to the appropriate phase:
-
-```json
-{
-  "id": "phase-X.feat-[name].task-1",
-  "name": "[Task Name]",
-  "type": "implement",
-  "status": "pending",
-  "depends_on": ["previous-task-id"],
-  "context": {
-    "files_to_read": ["relevant/files.rs"],
-    "code_style_excerpt": "Relevant style notes if any"
-  },
-  "instructions": "Detailed implementation instructions..."
-}
-```
-
----
-
-## Step 9: Regenerate Markdown
-
-After updating the JSON files, regenerate the markdown documentation:
-
-```bash
-cm --regenerate
-```
-
-This ensures ROADMAP.md and LOG.md stay in sync with the JSON source files
-(roadmap.json, tasks.json).
-
----
-
-## Step 10: Validate Changes
-
-After updating the files, run validation to ensure all JSON files are correct:
-
-```bash
-cm --sanity-check
-```
-
-Check the output:
-- If validation **passes**: Proceed to Step 11
-- If validation **fails**:
-  1. Review the error messages
-  2. Fix the issues in the JSON files (tasks.json or roadmap.json)
-  3. Re-run `cm --sanity-check`
-  4. Repeat until all errors are resolved
-
-**Common issues:**
-- Invalid cross-references (roadmap_item_id pointing to non-existent item)
-- Duplicate task IDs
-- Missing required fields in new tasks
-
----
-
-## Step 11: Completion
-
-After updating all files, inform the user:
-
-> Feature "[feature-name]" has been added successfully!
+> The feature plan is ready. To save these changes to the project files, run `/end`.
 >
-> **Updated files:**
-> - `.cm/PLAN.md` - Added feature documentation
-> - `.cm/ROADMAP.md` - Added [N] new tasks
-> - `.cm/tasks.json` - Added [N] task definitions
+> This will update:
+> - `.cm/tasks.json` - Add task definitions
+> - `.cm/roadmap.json` - Add roadmap items
+> - `.cm/PLAN.md` - Add feature documentation
 >
-> **New tasks added:**
-> - [task-id-1]: [task-name-1]
-> - [task-id-2]: [task-name-2]
-> - [task-id-3]: [task-name-3]
->
-> **Next steps:**
-> 1. Review the updated files to ensure accuracy
-> 2. When ready to implement, run `cm run` to start executing tasks
->
-> Would you like to add another feature or make any adjustments?
+> After saving, run `cm run` when ready to start implementation.
+
+Do NOT modify any files. Wait for the user to run `/end`.
 
 ---
 

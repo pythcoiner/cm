@@ -423,28 +423,46 @@ Status: **Not Started** (0/7)
 
 ## Phase 24: /end Skill
 
-Status: **Not Started** (0/6)
+Status: **Complete** (6/6)
 
-- [ ] Create assets/end.md skill
+- [x] Create assets/end.md skill
   - [ ] YAML frontmatter (name, description, user-invocable)
   - [ ] Skill body with save pipeline instructions
   - [ ] Scope limitations (no implementation)
   - [ ] Error handling sections
-- [ ] Register END_SKILL in src/skill.rs
-- [ ] Register end skill in src/cli/init.rs
+- [x] Register END_SKILL in src/skill.rs
+- [x] Register end skill in src/cli/init.rs
   - [ ] Add END_SKILL import
   - [ ] Add SkillFile entry to SKILLS array
   - [ ] Add /end to available skills output
-- [ ] Modify assets/feat.md to delegate saves to /end
+- [x] Modify assets/feat.md to delegate saves to /end
   - [ ] Remove Steps 8-11 (file updates, regenerate, validate, completion)
   - [ ] Add Step 8: Handoff to /end
-- [ ] Modify assets/fix.md to delegate saves to /end
+- [x] Modify assets/fix.md to delegate saves to /end
   - [ ] Remove Steps 7-10 (file updates, regenerate, validate, completion)
   - [ ] Add Step 7: Handoff to /end
-- [ ] Build, reinstall skills, and verify
+- [x] Build, reinstall skills, and verify
   - [ ] cargo build + clippy + test pass
   - [ ] cm init --force installs /end skill
   - [ ] Verify feat/fix skills have /end handoff
+
+---
+
+## Phase 25: Labeled Stderr Output
+
+Status: **Not Started** (0/3)
+
+- [ ] Thread agent_label through AgentSpawner
+  - [ ] Add agent_label param to spawn()
+  - [ ] Add agent_label param to spawn_with_continue()
+  - [ ] Use label in run_agent_thread() eprint lines
+- [ ] Pass agent labels at spawn sites and add [CM] eprints
+  - [ ] Pass IMPLEM/REVIEW/FIX at 6 spawn call sites
+  - [ ] Replace inline [AGENT] eprints with specific labels
+  - [ ] Add emit_cm() helper and [CM] orchestration eprints
+- [ ] Build and verify labeled output
+  - [ ] cargo build + clippy + test pass
+  - [ ] No remaining hardcoded AGENT strings in eprints
 
 ---
 
@@ -477,5 +495,6 @@ Status: **Not Started** (0/6)
 | Phase 21: Agent Templates & Project Documentation | Not Started | 0/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
 | Phase 23: Detailed File Logging | Not Started | 0/35 |
-| Phase 24: /end Skill | Not Started | 0/20 |
-| **Total** | | **91/264** |
+| Phase 24: /end Skill | In Progress | 6/20 |
+| Phase 25: Labeled Stderr Output | Not Started | 0/11 |
+| **Total** | | **97/275** |

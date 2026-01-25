@@ -1842,3 +1842,283 @@ The skill body s
 **Error:** Task phase-24.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
 
 
+[2026-01-25 01:23:31 UTC] **AGENT_SPAWN** | Task: phase-24.task-1
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Create assets/end.md skill
+
+### Instructions
+
+Create assets/end.md with the /end skill content.
+
+This skill finalizes a /feat or /fix session by saving all gathered information to planning files without starting implementation.
+
+The file must have YAML frontmatter:
+```yaml
+---
+name: end
+description: Finalize a /feat or /fix session by saving changes to planning files
+user-invocable: true
+---
+```
+
+The skill body s
+
+... [truncated, 1533 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:25:32 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:25:32 UTC] **TASK_COMPLETE** | Task: phase-24.task-1
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:25:32 UTC] **AGENT_SPAWN** | Task: phase-24.task-2
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Register END_SKILL in src/skill.rs
+
+### Instructions
+
+Add the END_SKILL constant to src/skill.rs:
+
+1. Add this line after the existing constants:
+   ```rust
+   pub const END_SKILL: &str = include_str!("../assets/end.md");
+   ```
+
+2. Ensure `cargo build` passes.
+
+### Files to Read for Context
+
+Read the following files to understand the existing codebase:
+
+- src/skill.rs
+
+### Output Format
+
+When you are done, you M
+
+... [truncated, 452 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:25:54 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:25:54 UTC] **TASK_COMPLETE** | Task: phase-24.task-2
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:25:54 UTC] **AGENT_SPAWN** | Task: phase-24.task-3
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Register end skill in src/cli/init.rs
+
+### Instructions
+
+Register the /end skill in src/cli/init.rs:
+
+1. Add `END_SKILL` to the import from `crate::skill`:
+   ```rust
+   use crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL};
+   ```
+
+2. Add a new SkillFile entry to the SKILLS array:
+   ```rust
+   SkillFile {
+       dir_name: "end",
+       content: END_SKILL,
+   },
+   ```
+
+3. Add `/end` to the "Available s
+
+... [truncated, 784 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:26:38 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:26:38 UTC] **TASK_COMPLETE** | Task: phase-24.task-3
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:26:38 UTC] **AGENT_SPAWN** | Task: phase-24.task-4
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Modify assets/feat.md to delegate saves to /end
+
+### Instructions
+
+Modify assets/feat.md to remove file-update steps and delegate to /end:
+
+1. Remove Steps 8-11 entirely:
+   - Step 8: Update Project Files
+   - Step 9: Regenerate Markdown
+   - Step 10: Validate Changes
+   - Step 11: Completion
+
+2. Replace them with a single new Step 8:
+
+## Step 8: Handoff to /end
+
+After the user confirms the feature summary, infor
+
+... [truncated, 1081 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:27:23 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:27:23 UTC] **TASK_COMPLETE** | Task: phase-24.task-4
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:27:23 UTC] **AGENT_SPAWN** | Task: phase-24.task-5
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Modify assets/fix.md to delegate saves to /end
+
+### Instructions
+
+Modify assets/fix.md to remove file-update steps and delegate to /end:
+
+1. Remove Steps 7-10 entirely:
+   - Step 7: Update Project Files
+   - Step 8: Regenerate Markdown
+   - Step 9: Validate Changes
+   - Step 10: Completion
+
+2. Replace them with a single new Step 7:
+
+## Step 7: Handoff to /end
+
+After the user confirms the fix task summary, inform 
+
+... [truncated, 1043 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:28:01 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:28:01 UTC] **TASK_COMPLETE** | Task: phase-24.task-5
+
+Task completed with status: **completed**
+
+
+[2026-01-25 01:28:01 UTC] **AGENT_SPAWN** | Task: phase-24.task-6
+
+### Agent Spawn
+
+**Type:** implem
+
+<details>
+<summary>Prompt Preview</summary>
+
+```
+You are an IMPLEMENTATION agent. Your task is to implement the following:
+
+## Task: Build, reinstall skills, and verify
+
+### Instructions
+
+Build and verify the /end skill:
+
+1. Run `cargo build` - must pass
+2. Run `cargo clippy` - must pass
+3. Run `cargo test` - must pass
+4. Run `cargo run -- init --force` to install updated skills
+5. Verify `.claude/skills/end/SKILL.md` exists and contains correct frontmatter
+6. Verify `.claude/skills/feat/SKILL.md` no longer has file-update steps (Steps 8-11 re
+
+... [truncated, 855 more bytes]
+```
+
+</details>
+
+[2026-01-25 01:29:37 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 01:29:37 UTC] **TASK_COMPLETE** | Task: phase-24.task-6
+
+Task completed with status: **completed**
+
+

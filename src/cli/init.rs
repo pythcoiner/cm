@@ -8,7 +8,7 @@ use std::path::Path;
 use log::info;
 
 use super::CliError;
-use crate::skill::{CM_SKILL, FEAT_SKILL, FIX_SKILL};
+use crate::skill::{CM_SKILL, END_SKILL, FEAT_SKILL, FIX_SKILL};
 
 /// Skill file definition.
 struct SkillFile {
@@ -31,6 +31,10 @@ const SKILLS: &[SkillFile] = &[
     SkillFile {
         dir_name: "fix",
         content: FIX_SKILL,
+    },
+    SkillFile {
+        dir_name: "end",
+        content: END_SKILL,
     },
 ];
 
@@ -93,6 +97,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("  /cm   - Project setup wizard");
     println!("  /feat - Feature addition wizard");
     println!("  /fix  - Bug fix wizard");
+    println!("  /end  - Finalize feat/fix session");
 
     Ok(())
 }
