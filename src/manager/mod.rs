@@ -35,12 +35,14 @@ pub use recovery::{CheckpointId, RecoveryAction, RecoveryError, RecoveryManager,
 pub use state::ManagerState;
 
 /// Task selection mode from user prompt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TaskSelection {
     /// Run a single task (the next runnable one)
     Single,
     /// Run all remaining tasks
     All,
+    /// Run specific phases by ID
+    Phases(Vec<String>),
     /// Quit without running
     Quit,
 }
@@ -577,7 +579,7 @@ impl Manager {
         }
 
         // Prompt
-        print!("\n[s]ingle / [a]ll / [q]uit: ");
+        print!("\n[s]ingle / [a]ll / [p]hase <#...> / [q]uit: ");
         io::stdout()
             .flush()
             .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
@@ -589,12 +591,26 @@ impl Manager {
             .read_line(&mut line)
             .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
 
-        match line.trim().to_lowercase().as_str() {
+        let input = line.trim().to_lowercase();
+        match input.as_str() {
             "s" | "single" => Ok(TaskSelection::Single),
             "a" | "all" => Ok(TaskSelection::All),
             "q" | "quit" | "" => Ok(TaskSelection::Quit),
+            _ if input.starts_with("p ") || input.starts_with("phase ") => {
+                let nums_part = input.strip_prefix("p ").or_else(|| input.strip_prefix("phase ")).unwrap();
+                let phase_ids: Vec<String> = nums_part
+                    .split_whitespace()
+                    .map(|n| format!("phase-{}", n))
+                    .collect();
+                if phase_ids.is_empty() {
+                    println!("No phase numbers provided.");
+                    self.prompt_task_selection()
+                } else {
+                    Ok(TaskSelection::Phases(phase_ids))
+                }
+            }
             _ => {
-                println!("Invalid selection. Use 's', 'a', or 'q'.");
+                println!("Invalid selection. Use 's', 'a', 'p <#...>', or 'q'.");
                 self.prompt_task_selection() // Retry
             }
         }
@@ -626,9 +642,50 @@ impl Manager {
                     self.run()?;
                     break;
                 }
+                TaskSelection::Phases(phase_ids) => {
+                    self.run_specific_phases(&phase_ids)?;
+                    // Continue looping for another selection
+                }
                 TaskSelection::Quit => {
                     println!("Exiting.");
                     break;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Run specific phases by ID.
+    ///
+    /// Skips phases that don't exist or are already completed, with warnings.
+    fn run_specific_phases(&mut self, phase_ids: &[String]) -> Result<(), ManagerError> {
+        for phase_id in phase_ids {
+            // Reload state to check current status
+            let state = load_state(&self.config.state_path)?;
+
+            // Find the phase
+            let phase = state.phases.iter().find(|p| p.id == *phase_id);
+
+            match phase {
+                None => {
+                    println!("Warning: Phase '{}' not found, skipping.", phase_id);
+                    continue;
+                }
+                Some(p) if p.status == PhaseStatus::Completed => {
+                    println!("Warning: Phase '{}' already completed, skipping.", phase_id);
+                    continue;
+                }
+                Some(_) => {
+                    // Execute the phase
+                    match self.execute_phase(phase_id) {
+                        Ok(()) => {
+                            self.update_state()?;
+                        }
+                        Err(e) => {
+                            println!("Phase '{}' failed: {}", phase_id, e);
+                            // Continue with next phase
+                        }
+                    }
                 }
             }
         }
