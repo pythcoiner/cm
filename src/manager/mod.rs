@@ -1659,11 +1659,10 @@ mod tests {
         assert_eq!(ManagerState::default(), ManagerState::Idle);
     }
 
-    #[test]
-    fn test_phase_range_parsing_valid_range() {
-        // Test valid range "3-6" expands to ["phase-3", "phase-4", "phase-5", "phase-6"]
-        let input = "3-6";
-        let result: Vec<String> = input
+    /// Helper function to parse phase input with range support.
+    /// Matches the parsing logic in `prompt_task_selection()`.
+    fn parse_phase_input(input: &str) -> Vec<String> {
+        input
             .split_whitespace()
             .flat_map(|token| {
                 if let Some((start_str, end_str)) = token.split_once('-') {
@@ -1687,173 +1686,48 @@ mod tests {
                     }
                 }
             })
-            .collect();
+            .collect()
+    }
 
+    #[test]
+    fn test_phase_range_parsing_valid_range() {
+        // Test valid range "3-6" expands to ["phase-3", "phase-4", "phase-5", "phase-6"]
+        let result = parse_phase_input("3-6");
         assert_eq!(result, vec!["phase-3", "phase-4", "phase-5", "phase-6"]);
     }
 
     #[test]
     fn test_phase_range_parsing_single_number() {
         // Test single number "3" returns ["phase-3"]
-        let input = "3";
-        let result: Vec<String> = input
-            .split_whitespace()
-            .flat_map(|token| {
-                if let Some((start_str, end_str)) = token.split_once('-') {
-                    let start = match start_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    let end = match end_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    if start > end {
-                        return vec![];
-                    }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
-                } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
-                }
-            })
-            .collect();
-
+        let result = parse_phase_input("3");
         assert_eq!(result, vec!["phase-3"]);
     }
 
     #[test]
     fn test_phase_range_parsing_mixed_input() {
         // Test mixed input "1 3-5 8" returns ["phase-1", "phase-3", "phase-4", "phase-5", "phase-8"]
-        let input = "1 3-5 8";
-        let result: Vec<String> = input
-            .split_whitespace()
-            .flat_map(|token| {
-                if let Some((start_str, end_str)) = token.split_once('-') {
-                    let start = match start_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    let end = match end_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    if start > end {
-                        return vec![];
-                    }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
-                } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
-                }
-            })
-            .collect();
-
+        let result = parse_phase_input("1 3-5 8");
         assert_eq!(result, vec!["phase-1", "phase-3", "phase-4", "phase-5", "phase-8"]);
     }
 
     #[test]
     fn test_phase_range_parsing_invalid_range() {
         // Test invalid range "5-3" returns empty (start > end)
-        let input = "5-3";
-        let result: Vec<String> = input
-            .split_whitespace()
-            .flat_map(|token| {
-                if let Some((start_str, end_str)) = token.split_once('-') {
-                    let start = match start_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    let end = match end_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    if start > end {
-                        return vec![];
-                    }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
-                } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
-                }
-            })
-            .collect();
-
+        let result = parse_phase_input("5-3");
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_phase_range_parsing_invalid_text() {
         // Test invalid text "abc-def" returns empty
-        let input = "abc-def";
-        let result: Vec<String> = input
-            .split_whitespace()
-            .flat_map(|token| {
-                if let Some((start_str, end_str)) = token.split_once('-') {
-                    let start = match start_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    let end = match end_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    if start > end {
-                        return vec![];
-                    }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
-                } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
-                }
-            })
-            .collect();
-
+        let result = parse_phase_input("abc-def");
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_phase_range_parsing_edge_case_same_start_end() {
         // Test edge case "3-3" returns ["phase-3"]
-        let input = "3-3";
-        let result: Vec<String> = input
-            .split_whitespace()
-            .flat_map(|token| {
-                if let Some((start_str, end_str)) = token.split_once('-') {
-                    let start = match start_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    let end = match end_str.parse::<u32>() {
-                        Ok(n) => n,
-                        Err(_) => return vec![],
-                    };
-                    if start > end {
-                        return vec![];
-                    }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
-                } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
-                }
-            })
-            .collect();
-
+        let result = parse_phase_input("3-3");
         assert_eq!(result, vec!["phase-3"]);
     }
 }
