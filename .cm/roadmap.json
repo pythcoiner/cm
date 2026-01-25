@@ -462,37 +462,37 @@
         {
           "id": "phase-35-item-1",
           "name": "Remove TUI and make daemon mode default",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-35-item-1.sub-0",
               "name": "Delete src/tui/ directory (mod.rs, layout.rs, widgets.rs)",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-35-item-1.sub-1",
               "name": "Remove pub mod tui from src/lib.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-35-item-1.sub-2",
               "name": "Remove ratatui and crossterm from Cargo.toml",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-35-item-1.sub-3",
               "name": "Remove --daemon flag and TUI imports from src/cli/mod.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-35-item-1.sub-4",
               "name": "Remove TUI channel fields and run_with_channels() from src/manager/mod.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-35-item-1.sub-5",
               "name": "Update CLAUDE.md and .cm/PLAN.md documentation",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

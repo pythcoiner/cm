@@ -71,38 +71,6 @@ fn ensure_template(path: &Path, default_content: &str) -> io::Result<String> {
 pub struct PromptBuilder;
 
 impl PromptBuilder {
-    /// Build a prompt for the main manager agent.
-    ///
-    /// The manager agent coordinates development by delegating tasks to specialized
-    /// agents and ensuring the project progresses smoothly.
-    ///
-    /// # Arguments
-    ///
-    /// * `context` - Additional context to include in the prompt (optional)
-    pub fn build_manager_prompt(context: Option<&str>) -> String {
-        let mut prompt = String::new();
-
-        // Load template from disk (or create it if it doesn't exist)
-        let template_path = PathBuf::from(".cm/agents/MANAGER.md");
-        let template = ensure_template(&template_path, crate::command::MANAGER_TEMPLATE)
-            .unwrap_or_else(|e| {
-                log::error!("Failed to load MANAGER template: {}, using embedded default", e);
-                crate::command::MANAGER_TEMPLATE.to_string()
-            });
-
-        // Add template
-        prompt.push_str(&template);
-
-        // Add any additional context if provided
-        if let Some(ctx) = context {
-            prompt.push_str("\n\n---\n\n");
-            prompt.push_str("## Additional Context\n\n");
-            prompt.push_str(ctx);
-        }
-
-        prompt
-    }
-
     /// Build a prompt for an implementation task.
     ///
     /// The prompt includes:
@@ -1197,24 +1165,4 @@ mod tests {
         assert!(prompt.contains("## Original Task: Test Task"));
     }
 
-    #[test]
-    fn test_build_manager_prompt_no_context() {
-        let prompt = PromptBuilder::build_manager_prompt(None);
-
-        // Should contain manager agent instructions
-        assert!(!prompt.is_empty());
-        // Check for manager-specific content (case-insensitive)
-        let prompt_lower = prompt.to_lowercase();
-        assert!(prompt_lower.contains("manager"));
-    }
-
-    #[test]
-    fn test_build_manager_prompt_with_context() {
-        let context = "Current phase: Phase 1\nTasks remaining: 5";
-        let prompt = PromptBuilder::build_manager_prompt(Some(context));
-
-        // Should contain both template and context
-        assert!(prompt.contains(context));
-        assert!(prompt.contains("## Additional Context"));
-    }
 }

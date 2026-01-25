@@ -259,14 +259,13 @@ Once confirmed, generate all files in the `.cm/` directory:
 4. Generate `ROADMAP.md` from roadmap.json (or use template for initial creation)
 5. Generate `tasks.json` using the tasks.json Schema below
 6. Generate `TASKS.md` from tasks.json
-7. Generate `.cm/agents/MANAGER.md` using the Manager Agent Template below
-8. Generate `.cm/agents/IMPLEMENTER.md` using the Implementer Agent Template below
-9. Generate `.cm/agents/REVIEWER.md` using the Reviewer Agent Template below
-10. Generate `.cm/STRUCTURE.md`:
+7. Generate `.cm/agents/IMPLEMENTER.md` using the Implementer Agent Template below
+8. Generate `.cm/agents/REVIEWER.md` using the Reviewer Agent Template below
+9. Generate `.cm/STRUCTURE.md`:
     - If user provided project structure info in Step 5: customize template with specific directories, entry points, and config files
     - If user skipped Step 5: use default STRUCTURE.md template with placeholder text
     - If file doesn't exist, create it from template
-11. Generate `.cm/ACTIONS.md`:
+10. Generate `.cm/ACTIONS.md`:
     - If user provided build/test/lint commands in Step 6: customize template with actual commands
     - If user skipped Step 6: use default ACTIONS.md template with placeholder text like `[build command]`
     - If file doesn't exist, create it from template
@@ -283,7 +282,6 @@ After generation, inform the user:
 > - `.cm/ROADMAP.md` - Human-readable roadmap (generated from roadmap.json)
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
 > - `.cm/TASKS.md` - Task status overview (generated from tasks.json)
-> - `.cm/agents/MANAGER.md` - Manager agent instructions
 > - `.cm/agents/IMPLEMENTER.md` - Implementer agent instructions
 > - `.cm/agents/REVIEWER.md` - Reviewer agent instructions
 > - `.cm/STRUCTURE.md` - Project structure documentation
@@ -697,31 +695,6 @@ The `roadmap.json` file is the source of truth for ROADMAP.md:
 | completed | boolean | Yes | Whether sub-item is completed |
 
 ---
-```
-
-### MANAGER.md Template
-
-```markdown
-# Manager Agent
-
-This agent coordinates the implementation process for [Project Name].
-
-## Role
-- Plan and sequence tasks
-- Spawn implementation and review agents
-- Track progress against roadmap
-- Make architectural decisions
-
-## Key Files
-- `.cm/tasks.json` - Task definitions
-- `.cm/ROADMAP.md` - Progress tracking
-- `.cm/PLAN.md` - Project plan
-
-## Guidelines
-1. Never implement code directly
-2. Always verify builds after implementations
-3. Follow the IMPLEM -> REVIEW -> FIX cycle
-4. Update roadmap after each phase completion
 ```
 
 ### IMPLEMENTER.md Template

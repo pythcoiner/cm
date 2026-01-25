@@ -252,15 +252,15 @@ Status: **Complete** (2/2)
 
 ## Phase 35: Remove TUI Module
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Remove TUI and make daemon mode default
-  - [ ] Delete src/tui/ directory (mod.rs, layout.rs, widgets.rs)
-  - [ ] Remove pub mod tui from src/lib.rs
-  - [ ] Remove ratatui and crossterm from Cargo.toml
-  - [ ] Remove --daemon flag and TUI imports from src/cli/mod.rs
-  - [ ] Remove TUI channel fields and run_with_channels() from src/manager/mod.rs
-  - [ ] Update CLAUDE.md and .cm/PLAN.md documentation
+- [x] Remove TUI and make daemon mode default
+  - [x] Delete src/tui/ directory (mod.rs, layout.rs, widgets.rs)
+  - [x] Remove pub mod tui from src/lib.rs
+  - [x] Remove ratatui and crossterm from Cargo.toml
+  - [x] Remove --daemon flag and TUI imports from src/cli/mod.rs
+  - [x] Remove TUI channel fields and run_with_channels() from src/manager/mod.rs
+  - [x] Update CLAUDE.md and .cm/PLAN.md documentation
 
 ---
 
@@ -333,8 +333,8 @@ Status: **Not Started** (0/1)
 | Phase 32: Add Phase Selection by Number | Complete | 6/6 |
 | Phase 33: Add PLAN Agent Before IMPLEM | Complete | 7/7 |
 | Phase 34: Add /split Command + Extend /end | Complete | 8/8 |
-| Phase 35: Remove TUI Module | Not Started | 0/7 |
+| Phase 35: Remove TUI Module | Complete | 7/7 |
 | Phase 36: Remove Unused MANAGER.md | Not Started | 0/6 |
 | Phase 37: Add Phase Range Selection | Not Started | 0/4 |
 | Phase 38: Add Model Selection Flag | Not Started | 0/5 |
-| **Total** | | **45/67** |
+| **Total** | | **52/67** |

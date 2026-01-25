@@ -8,7 +8,6 @@ pub const RUN_COMMAND: &str = include_str!("../assets/run.md");
 pub const SPLIT_COMMAND: &str = include_str!("../assets/split.md");
 
 // Template files for cm init
-pub const MANAGER_TEMPLATE: &str = include_str!("../assets/templates/MANAGER.md");
 pub const IMPLEMENTER_TEMPLATE: &str = include_str!("../assets/templates/IMPLEMENTER.md");
 pub const REVIEWER_TEMPLATE: &str = include_str!("../assets/templates/REVIEWER.md");
 pub const FIX_TEMPLATE: &str = include_str!("../assets/templates/FIX.md");

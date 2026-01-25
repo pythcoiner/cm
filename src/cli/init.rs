@@ -10,7 +10,7 @@ use log::info;
 use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
-    IMPLEMENTER_TEMPLATE, MANAGER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
+    IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
     SPLIT_COMMAND, STRUCTURE_TEMPLATE,
 };
 
@@ -60,10 +60,6 @@ const COMMANDS: &[CommandFile] = &[
 
 /// All template files to write.
 const TEMPLATES: &[TemplateFile] = &[
-    TemplateFile {
-        path: "agents/MANAGER.md",
-        content: MANAGER_TEMPLATE,
-    },
     TemplateFile {
         path: "agents/IMPLEMENTER.md",
         content: IMPLEMENTER_TEMPLATE,
@@ -462,15 +458,15 @@ mod tests {
         // Create directory and a template file with different content
         let agents_dir = tmp.path().join(".cm/agents");
         fs::create_dir_all(&agents_dir).unwrap();
-        let manager_path = agents_dir.join("MANAGER.md");
-        let original_content = "original manager content";
-        fs::write(&manager_path, original_content).unwrap();
+        let implementer_path = agents_dir.join("IMPLEMENTER.md");
+        let original_content = "original implementer content";
+        fs::write(&implementer_path, original_content).unwrap();
 
         // Run init without force
         execute_init_in_dir(tmp.path(), false).unwrap();
 
-        // Check that MANAGER.md was not overwritten
-        let content = fs::read_to_string(&manager_path).unwrap();
+        // Check that IMPLEMENTER.md was not overwritten
+        let content = fs::read_to_string(&implementer_path).unwrap();
         assert_eq!(content, original_content);
     }
 
@@ -481,15 +477,15 @@ mod tests {
         // Create directory and a template file with different content
         let agents_dir = tmp.path().join(".cm/agents");
         fs::create_dir_all(&agents_dir).unwrap();
-        let manager_path = agents_dir.join("MANAGER.md");
-        fs::write(&manager_path, "original content").unwrap();
+        let implementer_path = agents_dir.join("IMPLEMENTER.md");
+        fs::write(&implementer_path, "original content").unwrap();
 
         // Run init with force
         execute_init_in_dir(tmp.path(), true).unwrap();
 
-        // Check that MANAGER.md was overwritten
-        let content = fs::read_to_string(&manager_path).unwrap();
-        assert_eq!(content, MANAGER_TEMPLATE);
+        // Check that IMPLEMENTER.md was overwritten
+        let content = fs::read_to_string(&implementer_path).unwrap();
+        assert_eq!(content, IMPLEMENTER_TEMPLATE);
     }
 
     #[test]
@@ -504,7 +500,6 @@ mod tests {
 
         // Verify templates exist
         let cm_dir = tmp.path().join(".cm");
-        assert!(cm_dir.join("agents/MANAGER.md").exists());
         assert!(cm_dir.join("agents/IMPLEMENTER.md").exists());
     }
 
