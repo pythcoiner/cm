@@ -346,7 +346,7 @@ Status: **Complete** (3/3)
 
 ## Phase 21: Agent Templates & Project Documentation
 
-Status: **In Progress** (3/4)
+Status: **Complete** (4/4)
 
 - [x] Create default template assets and update cm init
   - [x] Create assets/templates/ with 5 template files
@@ -358,10 +358,10 @@ Status: **In Progress** (3/4)
 - [x] Update /cm skill to customize templates
   - [x] Add step to customize ACTIONS.md with commands
   - [x] Add step to customize STRUCTURE.md
-- [ ] Test and verify template system
-  - [ ] Test cm init creates templates
-  - [ ] Test runtime auto-install of missing templates
-  - [ ] Test user customizations are preserved
+- [x] Test and verify template system
+  - [x] Test cm init creates templates
+  - [x] Test runtime auto-install of missing templates
+  - [x] Test user customizations are preserved
 
 ---
 
@@ -513,41 +513,6 @@ Status: **Complete** (7/7)
 
 ---
 
-## Phase 27: Per-Phase TRACE Logging
-
-Status: **Not Started** (0/6)
-
-- [ ] Add TRACE level to LogLevel enum
-  - [ ] Add Trace variant before Debug
-  - [ ] Update Display impl
-  - [ ] Add trace() convenience method
-  - [ ] Update level ordering tests
-- [ ] Create PhaseLogger struct
-  - [ ] Create src/log/phase_logger.rs
-  - [ ] Implement extract_phase_id() helper
-  - [ ] Implement log_prompt() method
-  - [ ] Implement log_response() method
-  - [ ] Export from log module
-- [ ] Integrate PhaseLogger into Manager
-  - [ ] Add phase_logger field to Manager
-  - [ ] Log prompts in execute_implem/review/fix
-  - [ ] Log responses in execute_implem/review/fix
-  - [ ] Log in run_review_cycle
-- [ ] Update --prune for per-phase logs
-  - [ ] Add prune_all() function
-  - [ ] Update execute_prune() in CLI
-- [ ] Add unit tests for PhaseLogger
-  - [ ] Test extract_phase_id
-  - [ ] Test directory creation
-  - [ ] Test log file creation and format
-  - [ ] Test multiple phases create separate files
-- [ ] Build and verify per-phase logging
-  - [ ] cargo build + clippy + test pass
-  - [ ] Verify PhaseLogger integration
-  - [ ] Verify TRACE level added
-
----
-
 ## Summary
 
 | Phase | Status | Progress |
@@ -575,11 +540,10 @@ Status: **Not Started** (0/6)
 | Phase 18: Regenerate MD After Skills | Complete | 6/6 |
 | Phase 19: Skills No Auto-Implement | Complete | 13/13 |
 | Phase 20: Simplify Skill Input | Complete | 12/12 |
-| Phase 21: Agent Templates & Project Documentation | In Progress | 10/14 |
+| Phase 21: Agent Templates & Project Documentation | Complete | 14/14 |
 | Phase 22: TUI Default Mode + Interactive Task Selection | Complete | 20/20 |
 | Phase 23: Detailed File Logging | Complete | 35/35 |
 | Phase 24: /end Skill | Complete | 20/20 |
 | Phase 25: Labeled Stderr Output | Complete | 11/11 |
 | Phase 26: Skills to Commands Migration | Complete | 27/27 |
-| Phase 27: Per-Phase TRACE Logging | Not Started | 0/28 |
-| **Total** | | **304/336** |
+| **Total** | | **308/308** |

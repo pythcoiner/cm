@@ -1101,7 +1101,7 @@
     {
       "id": "phase-21",
       "name": "Agent Templates & Project Documentation",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-21.task-1",
@@ -1224,7 +1224,7 @@
           "id": "phase-21.task-4",
           "name": "Test and verify template system",
           "type": "test",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-21.task-3"
           ],
@@ -1233,7 +1233,23 @@
             "prior_review_issues": []
           },
           "instructions": "Test the complete template system:\n\n1. cargo build && cargo clippy && cargo test\n\n2. Test cm init:\n   - Creates .cm/agents/ directory\n   - Creates MANAGER.md, IMPLEMENTER.md, REVIEWER.md\n   - Creates .cm/STRUCTURE.md and .cm/ACTIONS.md\n   - Respects --force flag\n\n3. Test runtime loading:\n   - Delete a template file, run cm, verify it's recreated\n   - Edit a template file, run cm, verify edits are used\n\n4. Verify all checks pass",
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt_number": 1,
+              "agent_id": "9c83a304-9abd-4d06-833c-76d6bfcaa00c",
+              "started_at": "2026-01-25T06:55:19.492279997Z",
+              "completed_at": "2026-01-25T06:58:13.737192990Z",
+              "status": "success",
+              "prompt": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Test and verify template system\n\n### Instructions\n\nTest the complete template system:\n\n1. cargo build && cargo clippy && cargo test\n\n2. Test cm init:\n   - Creates .cm/agents/ directory\n   - Creates MANAGER.md, IMPLEMENTER.md, REVIEWER.md\n   - Creates .cm/STRUCTURE.md and .cm/ACTIONS.md\n   - Respects --force flag\n\n3. Test runtime loading:\n   - Delete a template file, run cm, verify it's recreated\n   - Edit a template file, run cm, verify edits are used\n\n4. Verify all checks pass\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n",
+              "response": {
+                "status": "success",
+                "files_created": [],
+                "files_modified": [],
+                "commands_run": [],
+                "message": "Tested complete template system: cargo build/clippy/test pass, cm init creates all required files in .claude/commands/ and .cm/agents/, --force flag correctly overwrites, runtime loading recreates missing templates and uses edited templates"
+              }
+            }
+          ],
           "roadmap_item_id": "21.4"
         }
       ]
@@ -2417,126 +2433,6 @@
           "roadmap_item_id": "26.7"
         }
       ]
-    },
-    {
-      "id": "phase-27",
-      "name": "Per-Phase TRACE Logging",
-      "status": "pending",
-      "tasks": [
-        {
-          "id": "phase-27.task-1",
-          "name": "Add TRACE level to LogLevel enum",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [],
-          "context": {
-            "files_to_read": [
-              "src/log/file_logger.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Add TRACE log level to FileLogger:\n\n1. Add `Trace` variant to `LogLevel` enum (before Debug):\n   ```rust\n   pub enum LogLevel {\n       /// Full trace logging (prompts, responses, all details).\n       Trace,\n       Debug,\n       Info,\n       Warn,\n       Error,\n   }\n   ```\n\n2. Update `Display` impl to handle `Trace => \"TRACE\"`\n\n3. Add `trace()` convenience method to `FileLogger`\n\n4. Update test `test_log_level_ordering` to verify `Trace < Debug`\n\n5. Update test `test_log_level_display` to verify `Trace` displays as \"TRACE\"\n\n6. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
-          "roadmap_item_id": "27.1"
-        },
-        {
-          "id": "phase-27.task-2",
-          "name": "Create PhaseLogger struct",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [
-            "phase-27.task-1"
-          ],
-          "context": {
-            "files_to_read": [
-              "src/log/file_logger.rs",
-              "src/log/mod.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Create PhaseLogger for per-phase TRACE logging in a new file:\n\n1. Create `src/log/phase_logger.rs` with:\n   ```rust\n   pub struct PhaseLogger {\n       logs_dir: PathBuf,\n       files: Mutex<HashMap<String, File>>,\n   }\n   ```\n\n2. Implement `PhaseLogger::new(cm_dir: &Path)` that:\n   - Creates `.cm/logs/` directory if it doesn't exist\n   - Returns PhaseLogger instance\n\n3. Implement `extract_phase_id(task_id: &str) -> Option<&str>`:\n   - Parse task IDs like `phase-21.task-1` to extract `phase-21`\n   - Handle edge cases like `phase-0.5.task-1` -> `phase-0.5`\n   - Use `rfind(\".task-\")` to find split point\n\n4. Implement `log_prompt(&self, task_id: &str, agent_type: &str, prompt: &str)`:\n   - Get/create file for phase\n   - Write formatted prompt with separators and timestamp\n\n5. Implement `log_response(&self, task_id: &str, agent_type: &str, response: &str, duration_secs: u64, exit_code: Option<i32>)`:\n   - Write formatted response with separators, timestamp, duration, exit code\n\n6. Add unit tests for `extract_phase_id` with various task ID formats\n\n7. Export from `src/log/mod.rs`: `mod phase_logger; pub use phase_logger::PhaseLogger;`\n\n8. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
-          "roadmap_item_id": "27.2"
-        },
-        {
-          "id": "phase-27.task-3",
-          "name": "Integrate PhaseLogger into Manager",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [
-            "phase-27.task-2"
-          ],
-          "context": {
-            "files_to_read": [
-              "src/manager/mod.rs",
-              "src/log/phase_logger.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Integrate PhaseLogger into Manager to log full prompts and responses:\n\n1. Add `phase_logger: PhaseLogger` field to `Manager` struct\n\n2. Initialize in `Manager::new()`:\n   ```rust\n   let cm_dir = config.state_path.parent().unwrap_or(Path::new(\".\"));\n   let phase_logger = PhaseLogger::new(cm_dir)?;\n   ```\n\n3. In `execute_implem()`, after building prompt:\n   ```rust\n   self.phase_logger.log_prompt(&task.id, \"IMPLEM\", &prompt);\n   ```\n\n4. In `execute_implem()`, after getting response:\n   ```rust\n   self.phase_logger.log_response(&task.id, \"IMPLEM\", &output.stdout, output.duration.as_secs(), output.exit_code);\n   ```\n\n5. Add similar logging calls in:\n   - `execute_review()` with agent type \"REVIEW\"\n   - `execute_fix()` with agent type \"FIX\"\n   - `run_review_cycle()` with agent types \"AUTO_REVIEW\", \"AUTO_FIX\"\n\n6. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
-          "roadmap_item_id": "27.3"
-        },
-        {
-          "id": "phase-27.task-4",
-          "name": "Update --prune for per-phase logs",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [
-            "phase-27.task-2"
-          ],
-          "context": {
-            "files_to_read": [
-              "src/cli/mod.rs",
-              "src/log/phase_logger.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Update --prune CLI flag to handle per-phase log files:\n\n1. Add `prune_all(logs_dir: &Path)` function to PhaseLogger or file_logger.rs:\n   - Iterate over all `.log` files in `.cm/logs/`\n   - Apply same 24-hour pruning logic to each file\n   - Return combined PruneStats\n\n2. Update `execute_prune()` in `src/cli/mod.rs`:\n   - Prune main `cm.log` (existing behavior)\n   - Also prune all phase logs in `.cm/logs/`\n   - Report combined stats\n\n3. Ensure `cargo build` and `cargo clippy` pass",
-          "attempts": [],
-          "roadmap_item_id": "27.4"
-        },
-        {
-          "id": "phase-27.task-5",
-          "name": "Add unit tests for PhaseLogger",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [
-            "phase-27.task-3"
-          ],
-          "context": {
-            "files_to_read": [
-              "src/log/phase_logger.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Add comprehensive unit tests for PhaseLogger:\n\n1. Test `extract_phase_id`:\n   - `phase-21.task-1` -> `phase-21`\n   - `phase-0.5.task-1` -> `phase-0.5`\n   - `phase-1.task-2` -> `phase-1`\n   - `invalid` -> None\n\n2. Test directory creation:\n   - PhaseLogger::new creates `.cm/logs/` directory\n\n3. Test log file creation:\n   - log_prompt creates `phase-{N}.log` file\n   - Correct format with timestamp and separators\n\n4. Test multiple phases:\n   - Logging to different phases creates separate files\n\n5. Test content:\n   - Full prompt text appears in log file\n   - Full response text appears in log file\n   - Duration and exit code logged correctly\n\n6. Ensure `cargo test` passes",
-          "attempts": [],
-          "roadmap_item_id": "27.5"
-        },
-        {
-          "id": "phase-27.task-6",
-          "name": "Build and verify per-phase logging",
-          "type": "implement",
-          "status": "pending",
-          "depends_on": [
-            "phase-27.task-3",
-            "phase-27.task-4",
-            "phase-27.task-5"
-          ],
-          "context": {
-            "files_to_read": [
-              "src/log/phase_logger.rs",
-              "src/log/file_logger.rs",
-              "src/manager/mod.rs"
-            ],
-            "prior_review_issues": []
-          },
-          "instructions": "Final verification of per-phase TRACE logging:\n\n1. Run `cargo build` - must pass\n2. Run `cargo clippy` - must pass with no warnings\n3. Run `cargo test` - all tests must pass\n4. Verify PhaseLogger is integrated in Manager\n5. Verify TRACE level is added to LogLevel enum\n6. Verify --prune handles phase logs",
-          "attempts": [],
-          "roadmap_item_id": "27.6"
-        }
-      ]
     }
   ],
   "agent_history": [
@@ -3164,6 +3060,23 @@
       "agent_type": "review",
       "started_at": "2026-01-25T06:54:57.338076258Z",
       "completed_at": "2026-01-25T06:55:19.473133633Z",
+      "exit_status": 0
+    },
+    {
+      "id": "9c83a304-9abd-4d06-833c-76d6bfcaa00c",
+      "task_id": "phase-21.task-4",
+      "agent_type": "implem",
+      "started_at": "2026-01-25T06:55:19.492279997Z",
+      "completed_at": "2026-01-25T06:58:13.668801878Z",
+      "exit_status": 0,
+      "commit_hash": "ea8828da78a7d8fe92ebdfb6f814eba56288ebe1"
+    },
+    {
+      "id": "c263aef1-20c6-42c6-8b2c-1ef2f3ca64b9",
+      "task_id": "phase-21.task-4",
+      "agent_type": "review",
+      "started_at": "2026-01-25T06:58:14.454003680Z",
+      "completed_at": "2026-01-25T07:00:31.516323801Z",
       "exit_status": 0
     }
   ],
@@ -5314,6 +5227,70 @@
       "data": {
         "type": "task_complete",
         "status": "completed"
+      }
+    },
+    {
+      "id": "f060f093-2293-4a0e-b212-40ce61ece48b",
+      "timestamp": "2026-01-25T06:55:19.492272342Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "You are an IMPLEMENTATION agent. Your task is to implement the following:\n\n## Task: Test and verify template system\n\n### Instructions\n\nTest the complete template system:\n\n1. cargo build && cargo clippy && cargo test\n\n2. Test cm init:\n   - Creates .cm/agents/ directory\n   - Creates MANAGER.md, IMPLEMENTER.md, REVIEWER.md\n   - Creates .cm/STRUCTURE.md and .cm/ACTIONS.md\n   - Respects --force flag\n\n3. Test runtime loading:\n   - Delete a template file, run cm, verify it's recreated\n   - Edit a template file, run cm, verify edits are used\n\n4. Verify all checks pass\n\n### Output Format\n\nWhen you are done, you MUST end your response with a JSON code block in this exact format.\n\nIf you successfully completed the task:\n```json\n{\n  \"status\": \"success\",\n  \"summary\": \"Brief description of what you did\",\n  \"files_created\": [\"list\", \"of\", \"new\", \"files\"],\n  \"files_modified\": [\"list\", \"of\", \"modified\", \"files\"]\n}\n```\n\nIf you could NOT complete the task:\n```json\n{\n  \"status\": \"failed\",\n  \"error\": \"Detailed explanation of why you could not complete the task\"\n}\n```\n"
+      }
+    },
+    {
+      "id": "e4f25622-bb3a-4b29-b368-c9e732b414bc",
+      "timestamp": "2026-01-25T06:58:14.447731167Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "a91e1dd3-bceb-4562-8b74-09329faf6eb2",
+      "timestamp": "2026-01-25T06:58:14.454002027Z",
+      "action": "agent_spawn",
+      "task_id": "phase-21.task-4",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "You are a REVIEW agent. Review the following code changes made by an implementation agent.\n\n## Original Task: Test and verify template system\n\n### What was requested\n\nTest the complete template system:\n\n1. cargo build && cargo clippy && cargo test\n\n2. Test cm init:\n   - Creates .cm/agents/ directory\n   - Creates MANAGER.md, IMPLEMENTER.md, REVIEWER.md\n   - Creates .cm/STRUCTURE.md and .cm/ACTIONS.md\n   - Respects --force flag\n\n3. Test runtime loading:\n   - Delete a template file, run cm, verify it's recreated\n   - Edit a template file, run cm, verify edits are used\n\n4. Verify all checks pass\n\n### Code Changes (git diff)\n\n```diff\ndiff --git a/.cm/LOG.md b/.cm/LOG.md\nindex 61789cc..e5d1741 100644\n--- a/.cm/LOG.md\n+++ b/.cm/LOG.md\n@@ -3203,11 +3203,10 @@ Task completed with status: **completed**\n \n ### Agent Spawn\n \n-**Type:** Implem\n-**Task:** phase-21.task-3\n+**Type:** implem\n \n <details>\n-<summary>Prompt</summary>\n+<summary>Prompt Preview</summary>\n \n ```\n You are an IMPLEMENTATION agent. Your task is to implement the following:\n@@ -3224,56 +3223,71 @@ Update assets/cm.md to optionally customize templates:\n \n 2. Add step to customize STRUCTURE.md:\n    - If user describes project structure, update STRUCTURE.md\n-   - Leave template sections if user skips\n+   - Leave template sections if us\n \n-3. Handle edge case: if templates don't exist, create them\n+... [truncated, 728 more bytes]\n+```\n \n-4. Templates work as-is if user skips customization\n+</details>\n \n-### Files to Read for Context\n+[2026-01-25 06:54:57 UTC] **BUILD_RESULT**\n \n-Read the following files to understand the existing codebase:\n+### Build Result: PASS\n \n-- assets/cm.md\n \n-### Output Format\n \n-When you are done, you MUST end your response with a JSON code block in this exact format.\n+[2026-01-25 06:54:57 UTC] **AGENT_SPAWN** | Task: phase-21.task-3\n \n-If you successfully completed the task:\n-```json\n-{\n-  \"status\": \"success\",\n-  \"summary\": \"Brief description of what you did\",\n-  \"files_created\": [\"list\",\n\n... [truncated, 27783 more bytes]"
+      }
+    },
+    {
+      "id": "6fd55e95-0624-4266-a4bd-f72d37d1d0ad",
+      "timestamp": "2026-01-25T07:00:31.516392760Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "7f7b7c8f-cd6e-4129-ac88-f7dd23b03351",
+      "timestamp": "2026-01-25T07:00:31.516853210Z",
+      "action": "task_complete",
+      "task_id": "phase-21.task-4",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "4fa787a3-52cf-4100-8caa-52c916667583",
+      "timestamp": "2026-01-25T07:01:02.233061887Z",
+      "action": "build_result",
+      "data": {
+        "type": "build_result",
+        "success": true,
+        "errors": [],
+        "warnings": []
       }
     }
   ]
