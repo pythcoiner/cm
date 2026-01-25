@@ -161,6 +161,9 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
         println!("Created {}", file_path.display());
     }
 
+    // Ensure .cm/logs/ is in .gitignore
+    ensure_gitignore_entry(base_dir)?;
+
     // Clean up legacy skills directory if it exists
     cleanup_legacy_skills(base_dir)?;
 
@@ -173,6 +176,45 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("  /fix  - Bug fix wizard");
     println!("  /end  - Finalize feat/fix session");
     println!("  /run  - Run cm orchestration");
+
+    Ok(())
+}
+
+/// Ensure `.cm/logs/` is in the root .gitignore file.
+///
+/// Creates the .gitignore file if it doesn't exist.
+/// Appends the entry if not already present.
+fn ensure_gitignore_entry(base_dir: &Path) -> Result<(), CliError> {
+    let gitignore_path = base_dir.join(".gitignore");
+    let entry = ".cm/logs/";
+
+    // Read existing content if file exists
+    let content = if gitignore_path.exists() {
+        fs::read_to_string(&gitignore_path)?
+    } else {
+        String::new()
+    };
+
+    // Check if entry already exists (as a complete line)
+    let already_present = content
+        .lines()
+        .any(|line| line.trim() == entry);
+
+    if already_present {
+        return Ok(());
+    }
+
+    // Append the entry
+    let mut new_content = content;
+    if !new_content.is_empty() && !new_content.ends_with('\n') {
+        new_content.push('\n');
+    }
+    new_content.push_str(entry);
+    new_content.push('\n');
+
+    fs::write(&gitignore_path, new_content)?;
+    info!("Added '{}' to .gitignore", entry);
+    println!("Added '{}' to .gitignore", entry);
 
     Ok(())
 }
@@ -459,5 +501,41 @@ mod tests {
         let cm_dir = tmp.path().join(".cm");
         assert!(cm_dir.join("agents/MANAGER.md").exists());
         assert!(cm_dir.join("agents/IMPLEMENTER.md").exists());
+    }
+
+    #[test]
+    fn test_ensure_gitignore_creates_file() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let gitignore = tmp.path().join(".gitignore");
+        assert!(gitignore.exists());
+        let content = fs::read_to_string(&gitignore).unwrap();
+        assert!(content.contains(".cm/logs/"));
+    }
+
+    #[test]
+    fn test_ensure_gitignore_appends_to_existing() {
+        let tmp = TempDir::new().unwrap();
+        let gitignore = tmp.path().join(".gitignore");
+        fs::write(&gitignore, "node_modules/\n").unwrap();
+
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let content = fs::read_to_string(&gitignore).unwrap();
+        assert!(content.contains("node_modules/"));
+        assert!(content.contains(".cm/logs/"));
+    }
+
+    #[test]
+    fn test_ensure_gitignore_idempotent() {
+        let tmp = TempDir::new().unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+        execute_init_in_dir(tmp.path(), false).unwrap();
+
+        let gitignore = tmp.path().join(".gitignore");
+        let content = fs::read_to_string(&gitignore).unwrap();
+        // Should only appear once
+        assert_eq!(content.matches(".cm/logs/").count(), 1);
     }
 }
