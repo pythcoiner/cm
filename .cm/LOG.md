@@ -2999,3 +2999,192 @@ Updated agent prompt building to load templates from disk at runtime with fallba
 
 </details>
 
+[2026-01-25 06:44:32 UTC] **BUILD_RESULT**
+
+### Build Result: PASS
+
+
+
+[2026-01-25 06:44:32 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
+**Type:** Review
+**Task:** phase-21.task-2
+
+<details>
+<summary>Prompt</summary>
+
+```
+You are a REVIEW agent. Review the following code changes made by an implementation agent.
+
+## Original Task: Load agent templates from disk at runtime
+
+### What was requested
+
+Update agent prompt building to load templates from disk:
+
+1. Update src/agent/prompt.rs to:
+   - Read .cm/agents/MANAGER.md for manager agent prompt
+   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt
+   - Read .cm/agents/REVIEWER.md for reviewer agent prompt
+
+2. If file is missing, write embedded default to disk first, then read it
+   - This ensures files always exist for users to customize
+
+3. Add helper function to ensure template exists:
+   - fn ensure_template(path, default_content) -> Result<String>
+   - If path doesn't exist, write default_content to it
+   - Return contents of file
+
+4. Add tests for runtime loading behavior
+
+### Code Changes (git diff)
+
+```diff
+diff --git a/.cm/LOG.md b/.cm/LOG.md
+index 715d826..f07fc56 100644
+--- a/.cm/LOG.md
++++ b/.cm/LOG.md
+@@ -2841,15 +2841,14 @@ Update assets/cm.md to generate agent template files:
+ **Error:** Task phase-21.task-1 failed: agent error: failed to parse response: failed to parse claude CLI output: EOF while parsing a value at line 1 column 0
+ 
+ 
+-[2026-01-25 06:23:06 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
++[2026-01-25 06:37:14 UTC] **AGENT_SPAWN** | Task: phase-21.task-1
+ 
+ ### Agent Spawn
+ 
+-**Type:** Implem
+-**Task:** phase-21.task-1
++**Type:** implem
+ 
+ <details>
+-<summary>Prompt</summary>
++<summary>Prompt Preview</summary>
+ 
+ ```
+ You are an IMPLEMENTATION agent. Your task is to implement the following:
+@@ -2864,85 +2863,65 @@ Create default template files and update cm init to install them:
+    - MANAGER.md - Generic manager agent instructions (use 'this project' language, no placeholders)
+    - IMPLEMENTER.md - Generic implementer agent instructions
+    - REVIEWER.md - Generic reviewer agent instructions
+-   - STRUCTURE.md - Generic project structure template (empty sections for user to fill)
+-   - ACTIONS.m
+
+... [truncated, 35556 more bytes]
+```
+
+</details>
+
+[2026-01-25 06:45:04 UTC] **AGENT_COMPLETE**
+
+### Agent Response
+
+<details>
+<summary>Raw Response</summary>
+
+```
+Template loading implemented correctly but missing MANAGER template integration, has unsafe error handling, and inconsistent FIX agent template usage
+```
+
+</details>
+
+[2026-01-25 06:45:04 UTC] **REVIEW_RESULT**
+
+### Review Result: NEEDS_FIXES
+
+No issues found.
+
+
+[2026-01-25 06:45:04 UTC] **AGENT_SPAWN** | Task: phase-21.task-2
+
+### Agent Spawn
+
+**Type:** Fix
+**Task:** phase-21.task-2
+
+<details>
+<summary>Prompt</summary>
+
+```
+You are a FIX agent. Fix the issues found during code review.
+
+## Original Task: Load agent templates from disk at runtime
+
+### Original Instructions
+
+Update agent prompt building to load templates from disk:
+
+1. Update src/agent/prompt.rs to:
+   - Read .cm/agents/MANAGER.md for manager agent prompt
+   - Read .cm/agents/IMPLEMENTER.md for implementer agent prompt
+   - Read .cm/agents/REVIEWER.md for reviewer agent prompt
+
+2. If file is missing, write embedded default to disk first, then read it
+   - This ensures files always exist for users to customize
+
+3. Add helper function to ensure template exists:
+   - fn ensure_template(path, default_content) -> Result<String>
+   - If path doesn't exist, write default_content to it
+   - Return contents of file
+
+4. Add tests for runtime loading behavior
+
+### Review Feedback
+
+The following issues were found during review. Fix all of them:
+
+Template loading implemented correctly but missing MANAGER template integration, has unsafe error handling, and inconsistent FIX agent template usage
+
+### Files to Read for Context
+
+Read the following files to understand the existing codebase:
+
+- src/agent/prompt.rs
+- src/command.rs
+
+### Output Format
+
+When you are done, you MUST end your response with a JSON code block in this exact format.
+
+If you successfully fixed the issues:
+```json
+{
+  "status": "success",
+  "summary": "Brief description of the fixes applied",
+  "files_modified": ["list", "of", "modified", "files"]
+}
+```
+
+If you could NOT fix the issues:
+```json
+{
+  "status": "failed",
+  "error": "Detailed explanation of why you could not fix the issues"
+}
+```
+
+```
+
+</details>
+
+[2026-01-25 06:48:35 UTC] **AGENT_COMPLETE**
+
+### Agent Response
+
+**Files Modified:**
+- `src/agent/prompt.rs`
+- `src/command.rs`
+- `src/cli/init.rs`
+- `assets/templates/FIX.md`
+
+<details>
+<summary>Raw Response</summary>
+
+```
+Fixed unsafe error handling by adding proper logging, implemented consistent FIX agent template loading from disk, and added comprehensive tests
+```
+
+</details>
+

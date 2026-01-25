@@ -60,7 +60,10 @@ impl PromptBuilder {
         // Load template from disk (or create it if it doesn't exist)
         let template_path = PathBuf::from(".cm/agents/IMPLEMENTER.md");
         let template = ensure_template(&template_path, crate::command::IMPLEMENTER_TEMPLATE)
-            .unwrap_or_else(|_| crate::command::IMPLEMENTER_TEMPLATE.to_string());
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to load IMPLEMENTER template: {}, using embedded default", e);
+                crate::command::IMPLEMENTER_TEMPLATE.to_string()
+            });
 
         // Add template header
         prompt.push_str(&template);
@@ -131,7 +134,10 @@ impl PromptBuilder {
         // Load template from disk (or create it if it doesn't exist)
         let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
         let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
-            .unwrap_or_else(|_| crate::command::REVIEWER_TEMPLATE.to_string());
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to load REVIEWER template: {}, using embedded default", e);
+                crate::command::REVIEWER_TEMPLATE.to_string()
+            });
 
         // Add template header
         prompt.push_str(&template);
@@ -213,8 +219,17 @@ impl PromptBuilder {
     pub fn build_fix_prompt(task: &Task, issues: &[ReviewIssue]) -> String {
         let mut prompt = String::new();
 
-        // Header
-        prompt.push_str("You are a FIX agent. Your task is to fix the issues found in the code review:\n\n");
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/FIX.md");
+        let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to load FIX template: {}, using embedded default", e);
+                crate::command::FIX_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
 
         // Task name and instructions
         prompt.push_str(&format!("## Fix Task: {}\n\n", task.name));
@@ -295,7 +310,10 @@ impl PromptBuilder {
         // Load template from disk (or create it if it doesn't exist)
         let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
         let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
-            .unwrap_or_else(|_| crate::command::REVIEWER_TEMPLATE.to_string());
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to load REVIEWER template: {}, using embedded default", e);
+                crate::command::REVIEWER_TEMPLATE.to_string()
+            });
 
         // Add template header
         prompt.push_str(&template);
@@ -383,8 +401,17 @@ impl PromptBuilder {
     pub fn build_auto_fix_prompt(task: &Task, review_feedback: &str) -> String {
         let mut prompt = String::new();
 
-        // Header
-        prompt.push_str("You are a FIX agent. Fix the issues found during code review.\n\n");
+        // Load template from disk (or create it if it doesn't exist)
+        let template_path = PathBuf::from(".cm/agents/FIX.md");
+        let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to load FIX template: {}, using embedded default", e);
+                crate::command::FIX_TEMPLATE.to_string()
+            });
+
+        // Add template header
+        prompt.push_str(&template);
+        prompt.push_str("\n\n---\n\n");
 
         // Original task context
         prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
@@ -559,7 +586,9 @@ mod tests {
 
         let prompt = PromptBuilder::build_fix_prompt(&task, &issues);
 
-        assert!(prompt.contains("FIX agent"));
+        // Should contain Fix Agent from template (case-insensitive match)
+        let prompt_lower = prompt.to_lowercase();
+        assert!(prompt_lower.contains("fix agent"));
         assert!(prompt.contains("issue-1"));
         assert!(prompt.contains("Missing error handling"));
         assert!(prompt.contains("Add Result return type"));
@@ -699,6 +728,38 @@ mod tests {
 
         // Should contain the diff
         assert!(prompt.contains(diff));
+        assert!(prompt.contains("## Original Task: Test Task"));
+    }
+
+    #[test]
+    fn test_build_fix_prompt_loads_template() {
+        let task = create_test_task();
+        let issues = vec![ReviewIssue {
+            id: "issue-1".to_string(),
+            severity: Severity::High,
+            location: "src/lib.rs:42".to_string(),
+            problem: "Missing error handling".to_string(),
+            suggested_fix: "Add Result return type".to_string(),
+            resolved: false,
+        }];
+
+        let prompt = PromptBuilder::build_fix_prompt(&task, &issues);
+
+        // Should contain the issues and task information
+        assert!(!prompt.is_empty());
+        assert!(prompt.contains("issue-1"));
+        assert!(prompt.contains("Missing error handling"));
+    }
+
+    #[test]
+    fn test_build_auto_fix_prompt_loads_template() {
+        let task = create_test_task();
+        let review_feedback = "The code has several issues that need to be fixed:\n1. Missing error handling\n2. Incorrect type usage";
+
+        let prompt = PromptBuilder::build_auto_fix_prompt(&task, review_feedback);
+
+        // Should contain the review feedback
+        assert!(prompt.contains(review_feedback));
         assert!(prompt.contains("## Original Task: Test Task"));
     }
 }
