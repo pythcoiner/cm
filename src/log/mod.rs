@@ -820,7 +820,7 @@ mod tests {
                     code_style_excerpt: None,
                     prior_review_issues: vec![],
                 },
-                instructions: "Do something".to_string(),
+                plan_file: ".cm/plans/plan-log-task.md".to_string(),
                 attempts: vec![],
                 roadmap_item_id: None,
                 implem_completed_at: None,

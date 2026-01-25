@@ -162,15 +162,15 @@ Status: **Complete** (1/1)
 
 ## Phase 28: Remove LOG.md Generation
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Remove LOG.md generation entirely
-  - [ ] Delete src/generate/log_md.rs
-  - [ ] Update src/generate/mod.rs
-  - [ ] Update src/cli/mod.rs regenerate command
-  - [ ] Update tests/integration.rs
-  - [ ] Update documentation (CLAUDE.md, README.md, assets/*.md)
-  - [ ] Delete .cm/LOG.md
+- [x] Remove LOG.md generation entirely
+  - [x] Delete src/generate/log_md.rs
+  - [x] Update src/generate/mod.rs
+  - [x] Update src/cli/mod.rs regenerate command
+  - [x] Update tests/integration.rs
+  - [x] Update documentation (CLAUDE.md, README.md, assets/*.md)
+  - [x] Delete .cm/LOG.md
 
 ---
 
@@ -234,8 +234,8 @@ Status: **Not Started** (0/1)
 | Phase 23: Detailed File Logging | Not Started | 0/0 |
 | Phase 26: Skills to Commands Migration | Not Started | 0/0 |
 | Phase 27: Add /run Command | Complete | 4/4 |
-| Phase 28: Remove LOG.md Generation | Not Started | 0/7 |
+| Phase 28: Remove LOG.md Generation | Complete | 7/7 |
 | Phase 29: Add --reset Flag | Not Started | 0/5 |
 | Phase 30: Add /cm Prerequisites Check | Not Started | 0/4 |
 | Phase 31: Add .cm/*.log to .gitignore | Not Started | 0/4 |
-| **Total** | | **4/24** |
+| **Total** | | **11/24** |

@@ -197,6 +197,9 @@ Wait for the user's response before proceeding.
 > **Severity:** [severity]
 > **Task ID:** [generated-task-id]
 >
+> **Plan file to create:** `.cm/plans/plan-[task-id].md`
+> (containing detailed fix instructions)
+>
 > **Task definition:**
 > ```json
 > {
@@ -209,7 +212,7 @@ Wait for the user's response before proceeding.
 >     "files_to_read": ["affected/files.rs"],
 >     "prior_review_issues": ["[bug description]"]
 >   },
->   "instructions": "[detailed fix instructions]"
+>   "plan_file": ".cm/plans/plan-[task-id].md"
 > }
 > ```
 >
@@ -257,6 +260,39 @@ When creating a new phase for a fix, use this JSON template. The `plan` field co
 
 ## Fix Task Template
 
+**IMPORTANT:** For each fix phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed fix instructions. All tasks in the phase reference this plan file via the `plan_file` field.
+
+Create plan file at `.cm/plans/plan-X.md`:
+```markdown
+Fix [bug summary]:
+
+## Bug Details
+- Observed: [behavior]
+- Expected: [behavior]
+- Location: [file:line or function]
+
+## Root Cause
+[Explanation of why this bug occurs]
+
+## Fix Steps
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## Testing
+1. Add unit test for the bug case:
+   - Test input: [input]
+   - Expected output: [output]
+2. Verify existing tests still pass
+3. Run `cargo build` and `cargo clippy`
+
+## Verification
+- [ ] Bug no longer reproduces
+- [ ] No regressions in related functionality
+- [ ] All tests pass
+```
+
+Task JSON:
 ```json
 {
   "id": "phase-X.fix-[name]",
@@ -274,7 +310,7 @@ When creating a new phase for a fix, use this JSON template. The `plan` field co
       "Expected: [behavior]"
     ]
   },
-  "instructions": "Fix [bug summary]:\n\n## Bug Details\n- Observed: [behavior]\n- Expected: [behavior]\n- Location: [file:line or function]\n\n## Root Cause\n[Explanation of why this bug occurs]\n\n## Fix Steps\n1. [Step 1]\n2. [Step 2]\n3. [Step 3]\n\n## Testing\n1. Add unit test for the bug case:\n   - Test input: [input]\n   - Expected output: [output]\n2. Verify existing tests still pass\n3. Run `cargo build` and `cargo clippy`\n\n## Verification\n- [ ] Bug no longer reproduces\n- [ ] No regressions in related functionality\n- [ ] All tests pass"
+  "plan_file": ".cm/plans/plan-X.md"
 }
 ```
 

@@ -137,8 +137,9 @@ pub struct Task {
     pub depends_on: Vec<String>,
     /// Context information for the task.
     pub context: TaskContext,
-    /// Detailed instructions for the agent.
-    pub instructions: String,
+    /// Path to the plan file containing detailed instructions.
+    /// Relative to project root (e.g., ".cm/plans/plan-phase-1.task-1.md").
+    pub plan_file: String,
     /// History of execution attempts.
     #[serde(default)]
     pub attempts: Vec<TaskAttempt>,
@@ -452,7 +453,7 @@ mod tests {
                         code_style_excerpt: Some("Use thiserror".to_string()),
                         prior_review_issues: vec![],
                     },
-                    instructions: "Create the module".to_string(),
+                    plan_file: ".cm/plans/plan-phase-1.task-1.md".to_string(),
                     attempts: vec![],
                     roadmap_item_id: None,
                     implem_completed_at: None,
@@ -521,7 +522,7 @@ mod tests {
             "type": "implement",
             "status": "pending",
             "context": {},
-            "instructions": "Do something"
+            "plan_file": ".cm/plans/plan-1.md"
         }"#;
 
         let task: Task = serde_json::from_str(json).unwrap();
@@ -529,6 +530,7 @@ mod tests {
         assert!(task.context.files_to_read.is_empty());
         assert!(task.context.prior_review_issues.is_empty());
         assert!(task.attempts.is_empty());
+        assert_eq!(task.plan_file, ".cm/plans/plan-1.md");
     }
 
     #[test]

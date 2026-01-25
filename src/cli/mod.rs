@@ -887,6 +887,7 @@ mod tests {
     };
 
     fn create_test_state() -> TasksState {
+        // Note: plan_file paths are placeholders - these tests don't read plan files
         TasksState {
             version: "1.0.0".to_string(),
             project: Project {
@@ -917,7 +918,7 @@ mod tests {
                             code_style_excerpt: None,
                             prior_review_issues: vec![],
                         },
-                        instructions: "Do task 1".to_string(),
+                        plan_file: ".cm/plans/plan-1.md".to_string(),
                         attempts: vec![],
                         roadmap_item_id: None,
                         implem_completed_at: None,
@@ -945,7 +946,7 @@ mod tests {
                                 code_style_excerpt: None,
                                 prior_review_issues: vec![],
                             },
-                            instructions: "Do task 2".to_string(),
+                            plan_file: ".cm/plans/plan-2.md".to_string(),
                             attempts: vec![],
                             roadmap_item_id: None,
                             implem_completed_at: None,
@@ -963,7 +964,7 @@ mod tests {
                                 code_style_excerpt: None,
                                 prior_review_issues: vec![],
                             },
-                            instructions: "Do task 3".to_string(),
+                            plan_file: ".cm/plans/plan-2.md".to_string(),
                             attempts: vec![],
                             roadmap_item_id: None,
                             implem_completed_at: None,
@@ -981,7 +982,7 @@ mod tests {
                                 code_style_excerpt: None,
                                 prior_review_issues: vec![],
                             },
-                            instructions: "Do task 4".to_string(),
+                            plan_file: ".cm/plans/plan-2.md".to_string(),
                             attempts: vec![],
                             roadmap_item_id: None,
                             implem_completed_at: None,

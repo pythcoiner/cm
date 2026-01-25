@@ -4,6 +4,7 @@
 //! The generation is deterministic: the same state always produces the same output.
 
 use crate::state::{Phase, PhaseStatus, Task, TaskStatus, TasksState};
+use std::fs;
 
 /// Generate TASKS.md content from a tasks state.
 ///
@@ -85,8 +86,10 @@ fn format_task(task: &Task) -> String {
         TaskStatus::Deferred => "[!]",
     };
 
-    // Get first line of instructions as summary
-    let summary = task.instructions.lines().next().unwrap_or(&task.instructions);
+    // Load plan from file and get first line as summary
+    let plan_content = fs::read_to_string(&task.plan_file)
+        .unwrap_or_else(|_| "(plan file missing)".to_string());
+    let summary = plan_content.lines().next().unwrap_or(&plan_content);
 
     format!(
         "- {} **{}**: {} - {}\n",
@@ -153,8 +156,17 @@ fn truncate(s: &str, max_len: usize) -> String {
 mod tests {
     use super::*;
     use crate::state::{Project, TaskContext, TaskType};
+    use std::path::Path;
 
     fn create_test_task(id: &str, name: &str, status: TaskStatus) -> Task {
+        // Create plan file for test
+        let plan_file = format!(".cm/plans/plan-test-{}.md", id);
+        let plan_dir = Path::new(".cm/plans");
+        if !plan_dir.exists() {
+            fs::create_dir_all(plan_dir).ok();
+        }
+        fs::write(&plan_file, "Do something important").ok();
+
         Task {
             id: id.to_string(),
             name: name.to_string(),
@@ -166,7 +178,7 @@ mod tests {
                 code_style_excerpt: None,
                 prior_review_issues: vec![],
             },
-            instructions: "Do something important".to_string(),
+            plan_file,
             attempts: vec![],
             roadmap_item_id: None,
             implem_completed_at: None,

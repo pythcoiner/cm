@@ -484,8 +484,18 @@ fn run_event_loop_with_channels(
 mod tests {
     use super::*;
     use crate::state::{Phase, PhaseStatus, Project, Task, TaskContext, TaskStatus, TaskType};
+    use std::fs;
+    use std::path::Path;
 
     fn create_test_state() -> TasksState {
+        // Create plan file for test
+        let plan_file = ".cm/plans/plan-tui-task-1.md";
+        let plan_dir = Path::new(".cm/plans");
+        if !plan_dir.exists() {
+            fs::create_dir_all(plan_dir).ok();
+        }
+        fs::write(plan_file, "Do task 1").ok();
+
         TasksState {
             version: "1.0.0".to_string(),
             project: Project {
@@ -513,7 +523,7 @@ mod tests {
                         code_style_excerpt: None,
                         prior_review_issues: vec![],
                     },
-                    instructions: "Do task 1".to_string(),
+                    plan_file: plan_file.to_string(),
                     attempts: vec![],
                     roadmap_item_id: None,
                     implem_completed_at: None,

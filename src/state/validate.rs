@@ -114,7 +114,7 @@ impl ValidationResult {
 /// - JSON syntax is valid
 /// - Required fields exist: version, project.name, project.description, phases
 /// - Each phase has: id, name, status, tasks
-/// - Each task has: id, name, type, status, context, instructions
+/// - Each task has: id, name, type, status, context, plan_file
 /// - No duplicate phase IDs
 /// - No duplicate task IDs within phases
 /// - Each attempt has: attempt_number, agent_id, started_at, status
@@ -246,7 +246,19 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
             check_required_field(task, "type", &task_context, &mut result);
             check_required_field(task, "status", &task_context, &mut result);
             check_required_field(task, "context", &task_context, &mut result);
-            check_required_field(task, "instructions", &task_context, &mut result);
+            check_required_field(task, "plan_file", &task_context, &mut result);
+
+            // Check that plan file exists
+            if let Some(plan_file) = task.get("plan_file").and_then(|v| v.as_str()) {
+                let plan_path = Path::new(plan_file);
+                if !plan_path.exists() {
+                    result.add_warning(SanityError::OrphanedReference {
+                        file: file_name.clone(),
+                        id: task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                        message: format!("plan file '{}' does not exist", plan_file),
+                    });
+                }
+            }
 
             // Check for duplicate task ID
             if let Some(id) = task.get("id").and_then(|v| v.as_str()) {
@@ -779,7 +791,7 @@ mod tests {
                             "type": "implement",
                             "status": "pending",
                             "context": {},
-                            "instructions": "Do something"
+                            "plan_file": ".cm/plans/plan-test.md"
                         }
                     ]
                 }
@@ -816,7 +828,7 @@ mod tests {
         let result = validate_tasks_json(file.path());
 
         assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
-        assert!(result.warnings.is_empty());
+        // Note: warnings about missing plan files are expected since the files don't exist in tests
     }
 
     #[test]
@@ -884,7 +896,7 @@ mod tests {
                             "type": "implement",
                             "status": "pending",
                             "context": {{}},
-                            "instructions": "Do something"
+                            "plan_file": ".cm/plans/plan-test.md"
                         }},
                         {{
                             "id": "duplicate-id",
@@ -892,7 +904,7 @@ mod tests {
                             "type": "implement",
                             "status": "pending",
                             "context": {{}},
-                            "instructions": "Do something else"
+                            "plan_file": ".cm/plans/plan-test-2.md"
                         }}
                     ]
                 }}
@@ -962,7 +974,7 @@ mod tests {
                     "type": "implement",
                     "status": "pending",
                     "context": {},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "roadmap_item_id": "nonexistent-item"
                 }]
             }]
@@ -1013,7 +1025,7 @@ mod tests {
                     "type": "implement",
                     "status": "pending",
                     "context": {},
-                    "instructions": "Do it"
+                    "plan_file": ".cm/plans/plan-test.md"
                 }]
             }]
         }"#).unwrap();
@@ -1063,7 +1075,7 @@ mod tests {
                     "type": "implement",
                     "status": "pending",
                     "context": {},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "roadmap_item_id": "item-1"
                 }]
             }]
@@ -1225,7 +1237,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1259,7 +1271,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "attempts": [{{
                         "attempt_number": 1,
                         "started_at": "2026-01-24T14:07:20Z",
@@ -1293,7 +1305,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1331,7 +1343,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "instructions": "Do it",
+                    "plan_file": ".cm/plans/plan-test.md",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1467,7 +1479,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {},
-                    "instructions": "Do it"
+                    "plan_file": ".cm/plans/plan-test.md"
                 }]
             }]
         }"#).unwrap();

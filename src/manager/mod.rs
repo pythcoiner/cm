@@ -1402,10 +1402,19 @@ impl Manager {
             .unwrap_or(0);
 
         let task_id = format!("{}.build-fix-{}", phase_id, fix_count + 1);
-        let instructions = format!(
+        let plan_content = format!(
             "The build failed after all tasks in this phase completed. Fix the build errors.\n\nBuild errors:\n{}",
             build_errors
         );
+
+        // Create plan file for this task (use phase number for simple naming)
+        let phase_num = phase_id.strip_prefix("phase-").unwrap_or(phase_id);
+        let plan_file = format!(".cm/plans/plan-{}.md", phase_num);
+        let plan_dir = std::path::Path::new(".cm/plans");
+        if !plan_dir.exists() {
+            std::fs::create_dir_all(plan_dir).map_err(StateError::from)?;
+        }
+        std::fs::write(&plan_file, &plan_content).map_err(StateError::from)?;
 
         let task = Task {
             id: task_id.clone(),
@@ -1418,7 +1427,7 @@ impl Manager {
                 code_style_excerpt: None,
                 prior_review_issues: vec![],
             },
-            instructions,
+            plan_file,
             attempts: vec![],
             roadmap_item_id: None,
             implem_completed_at: None,

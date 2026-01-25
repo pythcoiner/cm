@@ -303,8 +303,25 @@ When creating a new phase, use this JSON template. The `plan` field contains the
 
 ## Task Templates
 
+**IMPORTANT:** For each phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed instructions for all tasks in that phase. All tasks in the phase reference this same plan file via the `plan_file` field.
+
 ### Implementation Task Template
 
+Create plan file at `.cm/plans/plan-X.md`:
+```markdown
+Implement [component] for [feature]:
+
+1. Create [file path]
+2. Implement [function/struct] that:
+   - [Requirement 1]
+   - [Requirement 2]
+3. Add error handling for:
+   - [Error case 1]
+   - [Error case 2]
+4. Ensure `cargo build` and `cargo clippy` pass
+```
+
+Task JSON:
 ```json
 {
   "id": "phase-X.feat-[name].impl-[n]",
@@ -316,15 +333,25 @@ When creating a new phase, use this JSON template. The `plan` field contains the
     "files_to_read": [],
     "code_style_excerpt": null
   },
-  "instructions": "Implement [component] for [feature]:\n\n1. Create [file path]\n2.
-Implement [function/struct] that:\n   - [Requirement 1]\n   - [Requirement 2]\n3.
-Add error handling for:\n   - [Error case 1]\n   - [Error case 2]\n4. Ensure `cargo
-build` and `cargo clippy` pass"
+  "plan_file": ".cm/plans/plan-X.md"
 }
 ```
 
 ### Test Task Template
 
+Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+```markdown
+Add tests for [component]:
+
+1. Add unit tests in [file]:
+   - Test [scenario 1]
+   - Test [scenario 2]
+   - Test error handling for [case]
+2. Add integration tests if needed
+3. Ensure `cargo test` passes with all new tests
+```
+
+Task JSON:
 ```json
 {
   "id": "phase-X.feat-[name].test-[n]",
@@ -335,14 +362,24 @@ build` and `cargo clippy` pass"
   "context": {
     "files_to_read": ["src/component.rs"]
   },
-  "instructions": "Add tests for [component]:\n\n1. Add unit tests in [file]:\n   -
-Test [scenario 1]\n   - Test [scenario 2]\n   - Test error handling for [case]\n2.
-Add integration tests if needed\n3. Ensure `cargo test` passes with all new tests"
+  "plan_file": ".cm/plans/plan-X.md"
 }
 ```
 
 ### Review Task Template
 
+Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+```markdown
+Review [feature] implementation:
+
+1. Check code quality and style consistency
+2. Verify all requirements are met
+3. Check error handling completeness
+4. Review test coverage
+5. Document any issues found for fixing
+```
+
+Task JSON:
 ```json
 {
   "id": "phase-X.feat-[name].review",
@@ -353,9 +390,7 @@ Add integration tests if needed\n3. Ensure `cargo test` passes with all new test
   "context": {
     "files_to_read": ["src/feature/"]
   },
-  "instructions": "Review [feature] implementation:\n\n1. Check code quality and
-style consistency\n2. Verify all requirements are met\n3. Check error handling
-completeness\n4. Review test coverage\n5. Document any issues found for fixing"
+  "plan_file": ".cm/plans/plan-X.md"
 }
 ```
 

@@ -168,37 +168,37 @@
         {
           "id": "phase-28-item-1",
           "name": "Remove LOG.md generation entirely",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-28-item-1.sub-0",
               "name": "Delete src/generate/log_md.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-28-item-1.sub-1",
               "name": "Update src/generate/mod.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-28-item-1.sub-2",
               "name": "Update src/cli/mod.rs regenerate command",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-28-item-1.sub-3",
               "name": "Update tests/integration.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-28-item-1.sub-4",
               "name": "Update documentation (CLAUDE.md, README.md, assets/*.md)",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-28-item-1.sub-5",
               "name": "Delete .cm/LOG.md",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

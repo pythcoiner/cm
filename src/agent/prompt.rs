@@ -9,6 +9,24 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+/// Load task plan content from the plan file.
+///
+/// The plan file path is relative to the project root (current working directory).
+///
+/// # Arguments
+///
+/// * `task` - The task containing the plan_file path
+///
+/// # Returns
+///
+/// The contents of the plan file, or an error message if it couldn't be read.
+fn load_task_plan(task: &Task) -> String {
+    fs::read_to_string(&task.plan_file).unwrap_or_else(|e| {
+        log::error!("Failed to load plan file '{}': {}", task.plan_file, e);
+        format!("(Error loading plan file '{}': {})", task.plan_file, e)
+    })
+}
+
 /// Ensures an agent template file exists on disk.
 ///
 /// If the file doesn't exist, writes the default content to it first.
@@ -110,10 +128,11 @@ impl PromptBuilder {
         prompt.push_str(&template);
         prompt.push_str("\n\n---\n\n");
 
-        // Task name and instructions
+        // Task name and instructions (loaded from plan file)
         prompt.push_str(&format!("## Task: {}\n\n", task.name));
         prompt.push_str("### Instructions\n\n");
-        prompt.push_str(&task.instructions);
+        let plan_content = load_task_plan(task);
+        prompt.push_str(&plan_content);
         prompt.push_str("\n\n");
 
         // Files to read for context
@@ -184,10 +203,11 @@ impl PromptBuilder {
         prompt.push_str(&template);
         prompt.push_str("\n\n---\n\n");
 
-        // Task name and instructions
+        // Task name and instructions (loaded from plan file)
         prompt.push_str(&format!("## Review Task: {}\n\n", task.name));
         prompt.push_str("### Review Instructions\n\n");
-        prompt.push_str(&task.instructions);
+        let plan_content = load_task_plan(task);
+        prompt.push_str(&plan_content);
         prompt.push_str("\n\n");
 
         // Code to review
@@ -272,10 +292,11 @@ impl PromptBuilder {
         prompt.push_str(&template);
         prompt.push_str("\n\n---\n\n");
 
-        // Task name and instructions
+        // Task name and instructions (loaded from plan file)
         prompt.push_str(&format!("## Fix Task: {}\n\n", task.name));
         prompt.push_str("### Fix Instructions\n\n");
-        prompt.push_str(&task.instructions);
+        let plan_content = load_task_plan(task);
+        prompt.push_str(&plan_content);
         prompt.push_str("\n\n");
 
         // Issues to fix
@@ -360,10 +381,11 @@ impl PromptBuilder {
         prompt.push_str(&template);
         prompt.push_str("\n\n---\n\n");
 
-        // Original task context
+        // Original task context (loaded from plan file)
         prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
         prompt.push_str("### What was requested\n\n");
-        prompt.push_str(&task.instructions);
+        let plan_content = load_task_plan(task);
+        prompt.push_str(&plan_content);
         prompt.push_str("\n\n");
 
         // Code changes to review
@@ -454,10 +476,11 @@ impl PromptBuilder {
         prompt.push_str(&template);
         prompt.push_str("\n\n---\n\n");
 
-        // Original task context
+        // Original task context (loaded from plan file)
         prompt.push_str(&format!("## Original Task: {}\n\n", task.name));
         prompt.push_str("### Original Instructions\n\n");
-        prompt.push_str(&task.instructions);
+        let plan_content = load_task_plan(task);
+        prompt.push_str(&plan_content);
         prompt.push_str("\n\n");
 
         // Review feedback
@@ -545,7 +568,7 @@ impl PromptBuilder {
             prompt.push_str("\n\n");
         }
 
-        // List all tasks with their instructions
+        // List all tasks with their instructions (loaded from plan files)
         prompt.push_str("### Tasks to Implement\n\n");
         for (i, task) in tasks.iter().enumerate() {
             prompt.push_str(&format!(
@@ -554,7 +577,8 @@ impl PromptBuilder {
                 task.name,
                 task.id
             ));
-            prompt.push_str(&format!("**Instructions:**\n{}\n\n", task.instructions));
+            let plan_content = load_task_plan(task);
+            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
 
             // Include task-specific context files
             if !task.context.files_to_read.is_empty() {
@@ -647,18 +671,18 @@ impl PromptBuilder {
             prompt.push_str("\n\n");
         }
 
-        // List all tasks with their instructions for context
+        // List all tasks with their full instructions (loaded from plan files)
         prompt.push_str("### Tasks in This Phase\n\n");
         for (i, task) in phase.tasks.iter().enumerate() {
             prompt.push_str(&format!(
-                "{}. **{}** ({}): {}\n",
+                "#### Task {}: {} ({})\n\n",
                 i + 1,
                 task.name,
-                task.id,
-                task.instructions.lines().next().unwrap_or(&task.instructions)
+                task.id
             ));
+            let plan_content = load_task_plan(task);
+            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
         }
-        prompt.push('\n');
 
         // Code changes to review
         prompt.push_str("### Code Changes (git diff)\n\n");
@@ -745,18 +769,18 @@ impl PromptBuilder {
             prompt.push_str("\n\n");
         }
 
-        // List all tasks with their instructions for context
+        // List all tasks with their full instructions (loaded from plan files)
         prompt.push_str("### Tasks in This Phase\n\n");
         for (i, task) in phase.tasks.iter().enumerate() {
             prompt.push_str(&format!(
-                "{}. **{}** ({}): {}\n",
+                "#### Task {}: {} ({})\n\n",
                 i + 1,
                 task.name,
-                task.id,
-                task.instructions.lines().next().unwrap_or(&task.instructions)
+                task.id
             ));
+            let plan_content = load_task_plan(task);
+            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
         }
-        prompt.push('\n');
 
         // Review feedback
         prompt.push_str("### Review Feedback\n\n");
@@ -825,6 +849,18 @@ mod tests {
     use std::fs;
 
     fn create_test_task() -> Task {
+        // Create a unique temporary plan file for testing (avoid race conditions)
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let unique_id = COUNTER.fetch_add(1, Ordering::SeqCst);
+
+        // Use system temp directory to avoid polluting project directory
+        let temp_dir = std::env::temp_dir().join("cm-tests");
+        fs::create_dir_all(&temp_dir).expect("Failed to create temp directory for test");
+        let plan_file = temp_dir.join(format!("plan-{}.md", unique_id));
+        fs::write(&plan_file, "Implement the foo function that does bar")
+            .expect("Failed to write plan file for test");
+
         Task {
             id: "test-task".to_string(),
             name: "Test Task".to_string(),
@@ -836,7 +872,7 @@ mod tests {
                 code_style_excerpt: Some("Use thiserror for errors".to_string()),
                 prior_review_issues: vec![],
             },
-            instructions: "Implement the foo function that does bar".to_string(),
+            plan_file: plan_file.to_string_lossy().to_string(),
             attempts: vec![],
             roadmap_item_id: None,
             implem_completed_at: None,
