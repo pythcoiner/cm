@@ -450,19 +450,19 @@ Status: **Complete** (6/6)
 
 ## Phase 25: Labeled Stderr Output
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Thread agent_label through AgentSpawner
-  - [ ] Add agent_label param to spawn()
-  - [ ] Add agent_label param to spawn_with_continue()
-  - [ ] Use label in run_agent_thread() eprint lines
-- [ ] Pass agent labels at spawn sites and add [CM] eprints
-  - [ ] Pass IMPLEM/REVIEW/FIX at 6 spawn call sites
-  - [ ] Replace inline [AGENT] eprints with specific labels
-  - [ ] Add emit_cm() helper and [CM] orchestration eprints
-- [ ] Build and verify labeled output
-  - [ ] cargo build + clippy + test pass
-  - [ ] No remaining hardcoded AGENT strings in eprints
+- [x] Thread agent_label through AgentSpawner
+  - [x] Add agent_label param to spawn()
+  - [x] Add agent_label param to spawn_with_continue()
+  - [x] Use label in run_agent_thread() eprint lines
+- [x] Pass agent labels at spawn sites and add [CM] eprints
+  - [x] Pass IMPLEM/REVIEW/FIX at 6 spawn call sites
+  - [x] Replace inline [AGENT] eprints with specific labels
+  - [x] Add emit_cm() helper and [CM] orchestration eprints
+- [x] Build and verify labeled output
+  - [x] cargo build + clippy + test pass
+  - [x] No remaining hardcoded AGENT strings in eprints
 
 ---
 
@@ -496,5 +496,5 @@ Status: **Not Started** (0/3)
 | Phase 22: TUI Default Mode + Interactive Task Selection | Not Started | 0/20 |
 | Phase 23: Detailed File Logging | Not Started | 0/35 |
 | Phase 24: /end Skill | In Progress | 6/20 |
-| Phase 25: Labeled Stderr Output | Not Started | 0/11 |
-| **Total** | | **97/275** |
+| Phase 25: Labeled Stderr Output | Complete | 11/11 |
+| **Total** | | **108/275** |

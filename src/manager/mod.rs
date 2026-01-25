@@ -206,6 +206,12 @@ pub struct Manager {
     shutdown_flag: Arc<AtomicBool>,
 }
 
+/// Emit a timestamped [CM] message to stderr for orchestration visibility.
+fn emit_cm(msg: &str) {
+    let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+    eprintln!("[{} CM] {}", now, msg);
+}
+
 impl Manager {
     /// Create a new Manager with the given configuration.
     ///
@@ -302,6 +308,7 @@ impl Manager {
     /// - Shutdown was requested
     pub fn run(&mut self) -> Result<(), ManagerError> {
         info!("Starting manager run loop");
+        emit_cm("Starting run loop");
         self.flog(LogLevel::Info, "manager", "Execution loop started");
         self.manager_state = ManagerState::Executing;
 
@@ -320,23 +327,27 @@ impl Manager {
                 Some(task) => task.id.clone(),
                 None => {
                     info!("No more runnable tasks, exiting loop");
+                    emit_cm("No more runnable tasks");
                     self.flog(LogLevel::Info, "manager", "No more runnable tasks");
                     break;
                 }
             };
 
             info!("Selected task for execution: {}", task_id);
+            emit_cm(&format!("Selected task: {}", task_id));
             self.flog(LogLevel::Info, "task", &format!("Task selected: {}", task_id));
 
             // Execute the task
             match self.execute_task(&task_id) {
                 Ok(()) => {
                     info!("Task {} completed successfully", task_id);
+                    emit_cm(&format!("Task {} completed", task_id));
                     self.flog(LogLevel::Info, "task", &format!("Task {} completed", task_id));
                 }
                 Err(e) => {
                     let error_msg = format!("Task {} failed: {}", task_id, e);
                     error!("{}", error_msg);
+                    emit_cm(&format!("Task {} failed: {}", task_id, e));
                     self.flog(LogLevel::Error, "task", &error_msg);
                     self.log_manager.log_error(&error_msg)?;
                     self.state
@@ -362,6 +373,7 @@ impl Manager {
 
         self.manager_state = ManagerState::Idle;
         info!("Manager run loop completed");
+        emit_cm("Run loop completed");
         self.flog(LogLevel::Info, "manager", "Execution loop completed");
         Ok(())
     }
@@ -387,6 +399,7 @@ impl Manager {
         cmd_rx: Receiver<TuiCommand>,
     ) -> Result<(), ManagerError> {
         info!("Starting manager run loop with TUI channels");
+        emit_cm("Starting run loop (TUI)");
         self.manager_state = ManagerState::Executing;
 
         // Send initial state to TUI
@@ -434,11 +447,13 @@ impl Manager {
                 Some(task) => task.id.clone(),
                 None => {
                     info!("No more runnable tasks, exiting loop");
+                    emit_cm("No more runnable tasks");
                     break;
                 }
             };
 
             info!("Selected task for execution: {}", task_id);
+            emit_cm(&format!("Selected task: {}", task_id));
 
             // Send TaskStarted event
             let _ = event_tx.send(ManagerEvent::TaskStarted {
@@ -449,6 +464,7 @@ impl Manager {
             match self.execute_task(&task_id) {
                 Ok(()) => {
                     info!("Task {} completed successfully", task_id);
+                    emit_cm(&format!("Task {} completed", task_id));
                     let _ = event_tx.send(ManagerEvent::TaskCompleted {
                         task_id: task_id.clone(),
                     });
@@ -456,6 +472,7 @@ impl Manager {
                 Err(e) => {
                     let error_msg = format!("Task {} failed: {}", task_id, e);
                     error!("{}", error_msg);
+                    emit_cm(&format!("Task {} failed: {}", task_id, e));
                     let _ = event_tx.send(ManagerEvent::Error(error_msg.clone()));
                     self.log_manager.log_error(&error_msg)?;
                     self.state
@@ -483,6 +500,7 @@ impl Manager {
 
         self.manager_state = ManagerState::Idle;
         info!("Manager run loop completed");
+        emit_cm("Run loop completed");
         Ok(())
     }
 
@@ -729,7 +747,7 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.flog(LogLevel::Info, "agent", &format!("Agent spawned for IMPLEM task {}", task.id));
-        let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
+        let handle = self.agent_spawner.spawn(&prompt, &task.id, "IMPLEM")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for IMPLEM task {}", task.id));
 
@@ -739,13 +757,13 @@ impl Manager {
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 // Log the parse failure and raw response
-                eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("[{} IMPLEM] {} parse failed: {}", now, task.id, msg);
+                eprintln!("[{} IMPLEM] {} raw response ({} chars):", now, task.id, output.stdout.len());
                 eprintln!("{}", &output.stdout);
 
                 // Try to extract session_id for retry
                 if let Some(session_id) = &output.session_id {
-                    eprintln!("[{} AGENT] {} retrying with --continue...", now, task.id);
+                    eprintln!("[{} IMPLEM] {} retrying with --continue...", now, task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide a summary of your changes. \
@@ -753,17 +771,17 @@ impl Manager {
 
                     let retry_handle = self
                         .agent_spawner
-                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                        .spawn_with_continue(session_id, retry_prompt, &task.id, "IMPLEM")?;
                     let retry_output = retry_handle.wait()?;
 
                     // Try parsing again, fail if still bad
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
                         let now2 = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                        eprintln!("[{} AGENT] {} retry also failed: {}", now2, task.id, e);
+                        eprintln!("[{} IMPLEM] {} retry also failed: {}", now2, task.id, e);
                         e
                     })?
                 } else {
-                    eprintln!("[{} AGENT] {} no session_id available, cannot retry", now, task.id);
+                    eprintln!("[{} IMPLEM] {} no session_id available, cannot retry", now, task.id);
                     return Err(AgentError::ParseError(msg).into());
                 }
             }
@@ -819,6 +837,7 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for task {}", task.id);
+                emit_cm(&format!("Build PASSED for {}", task.id));
                 self.flog(LogLevel::Info, "build", &format!("Build PASSED for task {}", task.id));
                 let build_output = crate::build::BuildOutput {
                     success: true,
@@ -846,6 +865,7 @@ impl Manager {
             }
             Err(e) => {
                 warn!("Build verification failed for task {}: {}", task.id, e);
+                emit_cm(&format!("Build FAILED for {}", task.id));
                 self.flog(LogLevel::Warn, "build", &format!("Build FAILED for task {}: {}", task.id, e));
 
                 // Log the build failure
@@ -927,7 +947,7 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.flog(LogLevel::Info, "agent", &format!("Agent spawned for REVIEW task {}", task.id));
-        let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
+        let handle = self.agent_spawner.spawn(&prompt, &task.id, "REVIEW")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for REVIEW task {}", task.id));
 
@@ -936,28 +956,28 @@ impl Manager {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("[{} REVIEW] {} parse failed: {}", now, task.id, msg);
+                eprintln!("[{} REVIEW] {} raw response ({} chars):", now, task.id, output.stdout.len());
                 eprintln!("{}", &output.stdout);
 
                 if let Some(session_id) = &output.session_id {
-                    eprintln!("[{} AGENT] {} retrying with --continue...", now, task.id);
+                    eprintln!("[{} REVIEW] {} retrying with --continue...", now, task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide your review verdict and any issues found.";
 
                     let retry_handle = self
                         .agent_spawner
-                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                        .spawn_with_continue(session_id, retry_prompt, &task.id, "REVIEW")?;
                     let retry_output = retry_handle.wait()?;
 
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
                         let now2 = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                        eprintln!("[{} AGENT] {} retry also failed: {}", now2, task.id, e);
+                        eprintln!("[{} REVIEW] {} retry also failed: {}", now2, task.id, e);
                         e
                     })?
                 } else {
-                    eprintln!("[{} AGENT] {} no session_id available, cannot retry", now, task.id);
+                    eprintln!("[{} REVIEW] {} no session_id available, cannot retry", now, task.id);
                     return Err(AgentError::ParseError(msg).into());
                 }
             }
@@ -1006,6 +1026,7 @@ impl Manager {
         match verdict {
             Verdict::Approved => {
                 info!("Review approved for task {}", task.id);
+                emit_cm(&format!("Review APPROVED for {}", task.id));
                 self.flog(LogLevel::Info, "task", &format!("Review APPROVED for task {}", task.id));
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Success, &prompt, Some(response))?;
                 self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
@@ -1017,6 +1038,7 @@ impl Manager {
             }
             Verdict::NeedsFixes => {
                 warn!("Review found issues for task {}", task.id);
+                emit_cm(&format!("Review NEEDS_FIXES for {}", task.id));
                 self.flog(LogLevel::Warn, "task", &format!("Review NEEDS_FIXES for task {}", task.id));
                 self.record_attempt(&task.id, &agent_id, started_at, AttemptStatus::Failed, &prompt, Some(response))?;
                 // Keep task pending for another cycle
@@ -1071,7 +1093,7 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.flog(LogLevel::Info, "agent", &format!("Agent spawned for FIX task {}", task.id));
-        let handle = self.agent_spawner.spawn(&prompt, &task.id)?;
+        let handle = self.agent_spawner.spawn(&prompt, &task.id, "FIX")?;
         let output = handle.wait()?;
         self.flog(LogLevel::Info, "agent", &format!("Agent completed for FIX task {}", task.id));
 
@@ -1080,28 +1102,28 @@ impl Manager {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                eprintln!("[{} AGENT] {} parse failed: {}", now, task.id, msg);
-                eprintln!("[{} AGENT] {} raw response ({} chars):", now, task.id, output.stdout.len());
+                eprintln!("[{} FIX] {} parse failed: {}", now, task.id, msg);
+                eprintln!("[{} FIX] {} raw response ({} chars):", now, task.id, output.stdout.len());
                 eprintln!("{}", &output.stdout);
 
                 if let Some(session_id) = &output.session_id {
-                    eprintln!("[{} AGENT] {} retrying with --continue...", now, task.id);
+                    eprintln!("[{} FIX] {} retrying with --continue...", now, task.id);
 
                     let retry_prompt = "Your previous response could not be parsed correctly. \
                         Please provide a summary of the fixes you made.";
 
                     let retry_handle = self
                         .agent_spawner
-                        .spawn_with_continue(session_id, retry_prompt, &task.id)?;
+                        .spawn_with_continue(session_id, retry_prompt, &task.id, "FIX")?;
                     let retry_output = retry_handle.wait()?;
 
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
                         let now2 = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                        eprintln!("[{} AGENT] {} retry also failed: {}", now2, task.id, e);
+                        eprintln!("[{} FIX] {} retry also failed: {}", now2, task.id, e);
                         e
                     })?
                 } else {
-                    eprintln!("[{} AGENT] {} no session_id available, cannot retry", now, task.id);
+                    eprintln!("[{} FIX] {} no session_id available, cannot retry", now, task.id);
                     return Err(AgentError::ParseError(msg).into());
                 }
             }
@@ -1157,6 +1179,7 @@ impl Manager {
         match build_result {
             Ok(()) => {
                 info!("Build verification passed for fix task {}", task.id);
+                emit_cm(&format!("Build PASSED for FIX {}", task.id));
                 self.flog(LogLevel::Info, "build", &format!("Build PASSED for FIX task {}", task.id));
                 let build_output = crate::build::BuildOutput {
                     success: true,
@@ -1184,6 +1207,7 @@ impl Manager {
             }
             Err(e) => {
                 warn!("Build verification failed for fix task {}: {}", task.id, e);
+                emit_cm(&format!("Build FAILED for FIX {}", task.id));
                 self.flog(LogLevel::Warn, "build", &format!("Build FAILED for FIX task {}: {}", task.id, e));
 
                 // Log the build failure

@@ -92,12 +92,13 @@ impl AgentSpawner {
     ///
     /// * `prompt` - The prompt to send to the agent
     /// * `task_id` - The ID of the task this agent is executing
+    /// * `agent_label` - The label to use in progress logs
     ///
     /// # Errors
     ///
     /// Returns `AgentError::CliNotFound` if the claude CLI is not found.
     /// Returns `AgentError::SpawnFailed` if the process cannot be started.
-    pub fn spawn(&self, prompt: &str, task_id: &str) -> Result<AgentHandle, AgentError> {
+    pub fn spawn(&self, prompt: &str, task_id: &str, agent_label: &str) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
         let timeout = self.timeout;
@@ -105,6 +106,7 @@ impl AgentSpawner {
         let prompt_owned = prompt.to_string();
         let model_owned = self.model.clone();
         let stop_flag_clone = stop_flag.clone();
+        let agent_label_owned = agent_label.to_string();
 
         // Spawn the child process
         let mut child = Command::new("claude")
@@ -131,7 +133,7 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread)
+            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
         });
 
         Ok(AgentHandle {
@@ -152,11 +154,13 @@ impl AgentSpawner {
     /// * `session_id` - The session ID from the previous agent run
     /// * `prompt` - The follow-up prompt (e.g., asking for proper format)
     /// * `task_id` - The ID of the task this agent is executing
+    /// * `agent_label` - The label to use in progress logs
     pub fn spawn_with_continue(
         &self,
         session_id: &str,
         prompt: &str,
         task_id: &str,
+        agent_label: &str,
     ) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
@@ -165,6 +169,7 @@ impl AgentSpawner {
         let prompt_owned = prompt.to_string();
         let session_id_owned = session_id.to_string();
         let stop_flag_clone = stop_flag.clone();
+        let agent_label_owned = agent_label.to_string();
 
         // Spawn the child process with --continue flag
         let mut child = Command::new("claude")
@@ -191,7 +196,7 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread)
+            run_agent_thread(&mut child, timeout, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
         });
 
         Ok(AgentHandle {
@@ -277,6 +282,7 @@ fn run_agent_thread(
     timeout: Duration,
     stop_flag: Arc<AtomicBool>,
     task_id: &str,
+    agent_label: &str,
 ) -> Result<AgentOutput, AgentError> {
     let start = Instant::now();
     let check_interval = Duration::from_millis(100);
@@ -324,7 +330,7 @@ fn run_agent_thread(
         let elapsed_secs = start.elapsed().as_secs();
         if elapsed_secs > last_progress_secs {
             let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-            eprint!("\r[{} AGENT] {} running for {}s...", now, task_id, elapsed_secs);
+            eprint!("\r[{} {}] {} running for {}s...", now, agent_label, task_id, elapsed_secs);
             std::io::stderr().flush().ok();
             last_progress_secs = elapsed_secs;
         }
@@ -337,8 +343,9 @@ fn run_agent_thread(
                 // Clear progress line and print completion
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 eprintln!(
-                    "\r[{} AGENT] {} completed in {}s              ",
+                    "\r[{} {}] {} completed in {}s              ",
                     now,
+                    agent_label,
                     task_id,
                     duration.as_secs()
                 );

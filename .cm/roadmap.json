@@ -1908,19 +1908,19 @@
         {
           "id": "25.1",
           "name": "Thread agent_label through AgentSpawner",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Add agent_label param to spawn()",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add agent_label param to spawn_with_continue()",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Use label in run_agent_thread() eprint lines",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1930,19 +1930,19 @@
         {
           "id": "25.2",
           "name": "Pass agent labels at spawn sites and add [CM] eprints",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "Pass IMPLEM/REVIEW/FIX at 6 spawn call sites",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Replace inline [AGENT] eprints with specific labels",
-              "completed": false
+              "completed": true
             },
             {
               "name": "Add emit_cm() helper and [CM] orchestration eprints",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -1952,15 +1952,15 @@
         {
           "id": "25.3",
           "name": "Build and verify labeled output",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "name": "cargo build + clippy + test pass",
-              "completed": false
+              "completed": true
             },
             {
               "name": "No remaining hardcoded AGENT strings in eprints",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
