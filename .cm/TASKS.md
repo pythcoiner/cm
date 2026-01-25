@@ -191,42 +191,82 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ## phase-31: Add .cm/logs/ to .gitignore
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-31.feat-gitignore.impl-1**: Add .cm/logs/ to root .gitignore during cm init - # Plan: Add .cm/logs/ to .gitignore during cm init
+- [x] **phase-31.feat-gitignore.impl-1**: Add .cm/logs/ to root .gitignore during cm init - # Plan: Add .cm/logs/ to .gitignore during cm init
 
 ---
 
 ## phase-32: Add Phase Selection by Number
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-32.feat-phase-select.impl-1**: Add [p]hase <#...> option to run specific phases by number - # Plan: Add Phase Selection by Number
+- [x] **phase-32.feat-phase-select.impl-1**: Add [p]hase <#...> option to run specific phases by number - # Plan: Add Phase Selection by Number
 
 ---
 
 ## phase-33: Add PLAN Agent Before IMPLEM
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-33.feat-plan-agent.impl-1**: Add PLAN agent step before IMPLEM with conditional detailed planning - # Plan: Add PLAN Agent Before IMPLEM
+- [x] **phase-33.feat-plan-agent.impl-1**: Add PLAN agent step before IMPLEM with conditional detailed planning - # Plan: Add PLAN Agent Before IMPLEM
 
 ---
 
 ## phase-34: Add /split Command + Extend /end
 
-**Status:** Pending (0/2)
+**Status:** Complete (2/2)
 
 ### Tasks
 
-- [ ] **phase-34.feat-split-command.impl-1**: Add /split command to refine PLAN.md into detailed phases - # Plan: Add /split Command + Extend /end for /cm Sessions
-- [ ] **phase-34.feat-end-cm-session.impl-2**: Extend /end to support /cm session finalization - # Plan: Add /split Command + Extend /end for /cm Sessions
+- [x] **phase-34.feat-split-command.impl-1**: Add /split command to refine PLAN.md into detailed phases - # Plan: Add /split Command + Extend /end for /cm Sessions
+- [x] **phase-34.feat-end-cm-session.impl-2**: Extend /end to support /cm session finalization - # Plan: Add /split Command + Extend /end for /cm Sessions
+
+---
+
+## phase-35: Remove TUI Module
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-35.feat-remove-tui.impl-1**: Remove TUI and make daemon mode default - # Plan: Remove TUI and Make Daemon Mode Default
+
+---
+
+## phase-36: Remove Unused MANAGER.md
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-36.feat-remove-manager.impl-1**: Remove unused MANAGER.md template and related code - # Plan: Remove Unused MANAGER.md
+
+---
+
+## phase-37: Add Phase Range Selection
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-37.feat-phase-range.impl-1**: Add range-based phase selection (e.g., p 3-6) - # Plan: Add Range-Based Phase Selection
+
+---
+
+## phase-38: Add Model Selection Flag
+
+**Status:** Pending (0/1)
+
+### Tasks
+
+- [ ] **phase-38.feat-model-flag.impl-1**: Add --model flag with sonnet/opus shorthand - # Plan: Add Shorthand Model Selection (sonnet/opus)
 
 ---
 
@@ -259,8 +299,12 @@ This document shows phase plans and task status. Generated from tasks.json.
 | phase-28: Remove LOG.md Generation | Complete | 1 | 1 |
 | phase-29: Add --reset Flag | Complete | 1 | 1 |
 | phase-30: Add /cm Prerequisites Check | Complete | 1 | 1 |
-| phase-31: Add .cm/logs/ to .gitignore | Pending | 1 | 0 |
-| phase-32: Add Phase Selection by Number | Pending | 1 | 0 |
-| phase-33: Add PLAN Agent Before IMPLEM | Pending | 1 | 0 |
-| phase-34: Add /split Command + Extend... | Pending | 2 | 0 |
-| **Total** | | **9** | **4** |
+| phase-31: Add .cm/logs/ to .gitignore | Complete | 1 | 1 |
+| phase-32: Add Phase Selection by Number | Complete | 1 | 1 |
+| phase-33: Add PLAN Agent Before IMPLEM | Complete | 1 | 1 |
+| phase-34: Add /split Command + Extend... | Complete | 2 | 2 |
+| phase-35: Remove TUI Module | Pending | 1 | 0 |
+| phase-36: Remove Unused MANAGER.md | Pending | 1 | 0 |
+| phase-37: Add Phase Range Selection | Pending | 1 | 0 |
+| phase-38: Add Model Selection Flag | Pending | 1 | 0 |
+| **Total** | | **13** | **9** |

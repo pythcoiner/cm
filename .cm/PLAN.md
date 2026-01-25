@@ -290,6 +290,76 @@ After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --r
 - Constants: `*_SKILL` → `*_COMMAND`
 - Struct: `SkillFile` → `CommandFile`
 
+### Phase 35: Remove TUI Module
+
+**Goal:** Remove Terminal UI and make daemon mode the default (and only) execution mode
+
+**Deliverables:**
+- Delete `src/tui/` directory (mod.rs, layout.rs, widgets.rs)
+- Remove ratatui and crossterm dependencies from Cargo.toml
+- Remove `--daemon` flag from CLI
+- Simplify `execute_run()` to always use `run_interactive()`
+- Remove TUI-related code from Manager (channels, `run_with_channels()`)
+- Update documentation
+
+**Rationale:**
+- Simplifies codebase by ~950 lines
+- Removes terminal UI library dependencies
+- Interactive stdin/stdout prompts provide sufficient user interaction
+- Daemon mode already fully implemented via `run_interactive()`
+
+### Phase 36: Remove Unused MANAGER.md
+
+**Goal:** Remove dead code - the MANAGER.md template and `build_manager_prompt()` function that are never used
+
+**Deliverables:**
+- Delete `assets/templates/MANAGER.md`
+- Remove `MANAGER_TEMPLATE` constant from `src/command.rs`
+- Remove template from `TEMPLATES` array in `src/cli/init.rs`
+- Remove `build_manager_prompt()` function from `src/agent/prompt.rs`
+- Update `assets/cm.md` documentation
+
+**Rationale:**
+- `build_manager_prompt()` is defined but never called in production code
+- Actual orchestration is handled by Rust `Manager` struct, not an AI agent
+- Dead code removal improves maintainability
+
+### Phase 37: Add Phase Range Selection
+
+**Goal:** Enhance the `p` command to support range syntax like `p 3-6`
+
+**Deliverables:**
+- Modify parsing in `prompt_task_selection()` to detect range syntax
+- Expand ranges like `3-6` into individual phase IDs (phase-3, phase-4, phase-5, phase-6)
+- Support mixed input like `p 1 3-5 8`
+
+**Implementation:**
+- Replace `.map()` with `.flat_map()` in phase parsing
+- Check each token for `-` to detect ranges
+- Parse start/end and generate inclusive range of phase IDs
+
+### Phase 38: Add Model Selection Flag
+
+**Goal:** Add `--model` flag with `sonnet`/`opus` shorthand values
+
+**Claude CLI Reference:**
+```
+--model <model>  Model for the current session. Provide an alias for the
+                 latest model (e.g. 'sonnet' or 'opus') or a model's full
+                 name (e.g. 'claude-sonnet-4-5-20250929').
+```
+
+**Deliverables:**
+- Add `ModelChoice` enum with `#[derive(ValueEnum)]` for clap validation
+- Change `--model` flag from `Option<String>` to `Option<ModelChoice>`
+- Map enum to simple strings (`sonnet`, `opus`) passed directly to claude CLI
+- Update default model from hardcoded version to `sonnet`
+
+**Rationale:**
+- Simpler UX: `cm --model opus` instead of `cm --model claude-opus-4-5-20250929`
+- No hardcoded model versions - claude CLI resolves aliases to latest
+- Clap auto-validates input and shows allowed values in help
+
 ## Technical Decisions
 
 ### Error Handling
@@ -312,9 +382,9 @@ After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --r
 
 ### Threading
 
-**Context:** TUI needs main thread, manager needs to run concurrently
+**Context:** Manager needs simple synchronous execution
 **Decision:** Use std::thread and std::sync::mpsc, no async
-**Rationale:** Simpler mental model, TUI requires main thread
+**Rationale:** Simpler mental model, no need for async runtime
 
 ## Out of Scope
 
@@ -327,5 +397,4 @@ After skills modify JSON files (tasks.json, roadmap.json), they must run `cm --r
 
 - [clap documentation](https://docs.rs/clap)
 - [serde documentation](https://serde.rs)
-- [ratatui documentation](https://docs.rs/ratatui)
 - [Claude CLI](https://github.com/anthropics/claude-code)

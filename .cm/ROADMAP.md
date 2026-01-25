@@ -237,16 +237,66 @@ Status: **Complete** (1/1)
 
 ## Phase 34: Add /split Command + Extend /end
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] Add /split command to refine PLAN.md into detailed phases
-  - [ ] Create assets/split.md with split wizard
-  - [ ] Add SPLIT_COMMAND constant to src/command.rs
-  - [ ] Update src/cli/init.rs to deploy split.md
-- [ ] Extend /end to support /cm session finalization
-  - [ ] Add session type detection to assets/end.md
-  - [ ] Add PLAN.md parsing and JSON generation flow
-  - [ ] Generate tasks.json and roadmap.json from PLAN.md
+- [x] Add /split command to refine PLAN.md into detailed phases
+  - [x] Create assets/split.md with split wizard
+  - [x] Add SPLIT_COMMAND constant to src/command.rs
+  - [x] Update src/cli/init.rs to deploy split.md
+- [x] Extend /end to support /cm session finalization
+  - [x] Add session type detection to assets/end.md
+  - [x] Add PLAN.md parsing and JSON generation flow
+  - [x] Generate tasks.json and roadmap.json from PLAN.md
+
+---
+
+## Phase 35: Remove TUI Module
+
+Status: **Not Started** (0/1)
+
+- [ ] Remove TUI and make daemon mode default
+  - [ ] Delete src/tui/ directory (mod.rs, layout.rs, widgets.rs)
+  - [ ] Remove pub mod tui from src/lib.rs
+  - [ ] Remove ratatui and crossterm from Cargo.toml
+  - [ ] Remove --daemon flag and TUI imports from src/cli/mod.rs
+  - [ ] Remove TUI channel fields and run_with_channels() from src/manager/mod.rs
+  - [ ] Update CLAUDE.md and .cm/PLAN.md documentation
+
+---
+
+## Phase 36: Remove Unused MANAGER.md
+
+Status: **Not Started** (0/1)
+
+- [ ] Remove unused MANAGER.md template and related code
+  - [ ] Delete assets/templates/MANAGER.md
+  - [ ] Remove MANAGER_TEMPLATE from src/command.rs
+  - [ ] Remove agents/MANAGER.md from TEMPLATES array in src/cli/init.rs
+  - [ ] Remove build_manager_prompt() from src/agent/prompt.rs
+  - [ ] Update assets/cm.md documentation
+
+---
+
+## Phase 37: Add Phase Range Selection
+
+Status: **Not Started** (0/1)
+
+- [ ] Add range-based phase selection (e.g., p 3-6)
+  - [ ] Modify parsing in prompt_task_selection() to handle ranges
+  - [ ] Use flat_map to expand ranges like 3-6 into phase-3, phase-4, phase-5, phase-6
+  - [ ] Support mixed input like p 1 3-5 8
+
+---
+
+## Phase 38: Add Model Selection Flag
+
+Status: **Not Started** (0/1)
+
+- [ ] Add --model flag with sonnet/opus shorthand
+  - [ ] Add ModelChoice enum with ValueEnum derive
+  - [ ] Change model field to Option<ModelChoice> in Cli struct
+  - [ ] Map enum to strings in build_manager_config()
+  - [ ] Update default model to 'sonnet' in ManagerConfig
 
 ---
 
@@ -282,5 +332,9 @@ Status: **Not Started** (0/2)
 | Phase 31: Add .cm/logs/ to .gitignore | Complete | 4/4 |
 | Phase 32: Add Phase Selection by Number | Complete | 6/6 |
 | Phase 33: Add PLAN Agent Before IMPLEM | Complete | 7/7 |
-| Phase 34: Add /split Command + Extend /end | Not Started | 0/8 |
-| **Total** | | **37/45** |
+| Phase 34: Add /split Command + Extend /end | Complete | 8/8 |
+| Phase 35: Remove TUI Module | Not Started | 0/7 |
+| Phase 36: Remove Unused MANAGER.md | Not Started | 0/6 |
+| Phase 37: Add Phase Range Selection | Not Started | 0/4 |
+| Phase 38: Add Model Selection Flag | Not Started | 0/5 |
+| **Total** | | **45/67** |

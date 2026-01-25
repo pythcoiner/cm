@@ -405,22 +405,22 @@
         {
           "id": "phase-34-item-1",
           "name": "Add /split command to refine PLAN.md into detailed phases",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-34-item-1.sub-0",
               "name": "Create assets/split.md with split wizard",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-34-item-1.sub-1",
               "name": "Add SPLIT_COMMAND constant to src/command.rs",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-34-item-1.sub-2",
               "name": "Update src/cli/init.rs to deploy split.md",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -430,26 +430,184 @@
         {
           "id": "phase-34-item-2",
           "name": "Extend /end to support /cm session finalization",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-34-item-2.sub-0",
               "name": "Add session type detection to assets/end.md",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-34-item-2.sub-1",
               "name": "Add PLAN.md parsing and JSON generation flow",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-34-item-2.sub-2",
               "name": "Generate tasks.json and roadmap.json from PLAN.md",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
             "phase-34.feat-end-cm-session.impl-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-35",
+      "number": "35",
+      "name": "Remove TUI Module",
+      "items": [
+        {
+          "id": "phase-35-item-1",
+          "name": "Remove TUI and make daemon mode default",
+          "completed": false,
+          "sub_items": [
+            {
+              "id": "phase-35-item-1.sub-0",
+              "name": "Delete src/tui/ directory (mod.rs, layout.rs, widgets.rs)",
+              "completed": false
+            },
+            {
+              "id": "phase-35-item-1.sub-1",
+              "name": "Remove pub mod tui from src/lib.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-35-item-1.sub-2",
+              "name": "Remove ratatui and crossterm from Cargo.toml",
+              "completed": false
+            },
+            {
+              "id": "phase-35-item-1.sub-3",
+              "name": "Remove --daemon flag and TUI imports from src/cli/mod.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-35-item-1.sub-4",
+              "name": "Remove TUI channel fields and run_with_channels() from src/manager/mod.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-35-item-1.sub-5",
+              "name": "Update CLAUDE.md and .cm/PLAN.md documentation",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-35.feat-remove-tui.impl-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-36",
+      "number": "36",
+      "name": "Remove Unused MANAGER.md",
+      "items": [
+        {
+          "id": "phase-36-item-1",
+          "name": "Remove unused MANAGER.md template and related code",
+          "completed": false,
+          "sub_items": [
+            {
+              "id": "phase-36-item-1.sub-0",
+              "name": "Delete assets/templates/MANAGER.md",
+              "completed": false
+            },
+            {
+              "id": "phase-36-item-1.sub-1",
+              "name": "Remove MANAGER_TEMPLATE from src/command.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-36-item-1.sub-2",
+              "name": "Remove agents/MANAGER.md from TEMPLATES array in src/cli/init.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-36-item-1.sub-3",
+              "name": "Remove build_manager_prompt() from src/agent/prompt.rs",
+              "completed": false
+            },
+            {
+              "id": "phase-36-item-1.sub-4",
+              "name": "Update assets/cm.md documentation",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-36.feat-remove-manager.impl-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-37",
+      "number": "37",
+      "name": "Add Phase Range Selection",
+      "items": [
+        {
+          "id": "phase-37-item-1",
+          "name": "Add range-based phase selection (e.g., p 3-6)",
+          "completed": false,
+          "sub_items": [
+            {
+              "id": "phase-37-item-1.sub-0",
+              "name": "Modify parsing in prompt_task_selection() to handle ranges",
+              "completed": false
+            },
+            {
+              "id": "phase-37-item-1.sub-1",
+              "name": "Use flat_map to expand ranges like 3-6 into phase-3, phase-4, phase-5, phase-6",
+              "completed": false
+            },
+            {
+              "id": "phase-37-item-1.sub-2",
+              "name": "Support mixed input like p 1 3-5 8",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-37.feat-phase-range.impl-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-38",
+      "number": "38",
+      "name": "Add Model Selection Flag",
+      "items": [
+        {
+          "id": "phase-38-item-1",
+          "name": "Add --model flag with sonnet/opus shorthand",
+          "completed": false,
+          "sub_items": [
+            {
+              "id": "phase-38-item-1.sub-0",
+              "name": "Add ModelChoice enum with ValueEnum derive",
+              "completed": false
+            },
+            {
+              "id": "phase-38-item-1.sub-1",
+              "name": "Change model field to Option<ModelChoice> in Cli struct",
+              "completed": false
+            },
+            {
+              "id": "phase-38-item-1.sub-2",
+              "name": "Map enum to strings in build_manager_config()",
+              "completed": false
+            },
+            {
+              "id": "phase-38-item-1.sub-3",
+              "name": "Update default model to 'sonnet' in ManagerConfig",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-38.feat-model-flag.impl-1"
           ]
         }
       ]
