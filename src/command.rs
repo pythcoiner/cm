@@ -18,3 +18,4 @@ pub const PLAN_TEMPLATE: &str = include_str!("../assets/templates/PLAN.md");
 pub const TASK_PLAN_TEMPLATE: &str = include_str!("../assets/templates/TASK_PLAN_TEMPLATE.md");
 pub const PLANNER_TEMPLATE: &str = include_str!("../assets/templates/PLANNER.md");
 pub const SCHEMA_TEMPLATE: &str = include_str!("../assets/templates/SCHEMA.md");
+pub const CONFIG_TEMPLATE: &str = include_str!("../assets/templates/config.toml");
