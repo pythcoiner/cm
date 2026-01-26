@@ -11,7 +11,7 @@ use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
     IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
-    SPLIT_COMMAND, STRUCTURE_TEMPLATE,
+    SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE,
 };
 
 /// Command file definition.
@@ -83,6 +83,10 @@ const TEMPLATES: &[TemplateFile] = &[
     TemplateFile {
         path: "agents/PLAN.md",
         content: PLAN_TEMPLATE,
+    },
+    TemplateFile {
+        path: "SCHEMA.md",
+        content: SCHEMA_TEMPLATE,
     },
 ];
 

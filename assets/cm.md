@@ -481,7 +481,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
             "files_to_read": ["src/relevant/file.rs"],
             "code_style_excerpt": "Relevant style guidelines if any"
           },
-          "instructions": "Detailed instructions for the agent explaining exactly what to implement, including:\n- Specific requirements\n- Expected behavior\n- Edge cases to handle\n- Files to create or modify"
+          "plan_file": ".cm/plans/plan-1.md"
         }
       ]
     }
@@ -493,6 +493,8 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 ```
 
 #### Field Definitions
+
+> **Note:** See `.cm/SCHEMA.md` for the complete authoritative schema reference.
 
 **TasksState (root)**
 | Field | Type | Required | Description |
@@ -535,7 +537,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 | status | TaskStatus | Yes | "pending", "in_progress", "completed", or "deferred" |
 | depends_on | string[] | No | IDs of tasks this depends on |
 | context | TaskContext | Yes | Context for the agent |
-| instructions | string | Yes | Detailed instructions |
+| plan_file | string | Yes | Path to plan file (e.g., ".cm/plans/plan-1.md") |
 | attempts | TaskAttempt[] | No | Execution history |
 | roadmap_item_id | string | No | ID of linked roadmap item (for roadmap sync) |
 
@@ -556,6 +558,15 @@ Use the format `phase-{n}.task-{m}` for task IDs:
 For review/fix cycles, extend with a suffix:
 - `phase-1.task-1.review` - Review of task 1
 - `phase-1.task-1.fix` - Fix issues from review
+
+#### Plan Files
+
+Tasks reference plan files via the `plan_file` field. Plan files contain detailed implementation instructions and are stored at `.cm/plans/`:
+
+- `.cm/plans/plan-1.md` - Plan for phase 1 tasks
+- `.cm/plans/plan-2.md` - Plan for phase 2 tasks
+
+**When generating tasks.json, also create the corresponding plan files** with detailed instructions for each phase.
 
 #### Dependency Rules
 
@@ -807,7 +818,7 @@ Rust CLI that reads JSON, applies transformations, and outputs in multiple forma
           "status": "pending",
           "depends_on": [],
           "context": { "files_to_read": [] },
-          "instructions": "Initialize Rust project with Cargo. Add clap, serde, serde_json, thiserror. Create basic CLI setup."
+          "plan_file": ".cm/plans/plan-1.md"
         }
       ]
     }
@@ -827,4 +838,4 @@ Rust CLI that reads JSON, applies transformations, and outputs in multiple forma
 3. **Include context** - List files the agent should read for understanding
 4. **Specify success criteria** - How will we know the task is complete?
 5. **Handle dependencies** - Ensure tasks are ordered correctly
-6. **Keep instructions actionable** - Use imperative language ("Create X", "Implement Y")
+6. **Keep plan files actionable** - Use imperative language in plan files ("Create X", "Implement Y")

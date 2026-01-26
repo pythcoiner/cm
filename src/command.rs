@@ -15,3 +15,4 @@ pub const STRUCTURE_TEMPLATE: &str = include_str!("../assets/templates/STRUCTURE
 pub const ACTIONS_TEMPLATE: &str = include_str!("../assets/templates/ACTIONS.md");
 pub const PLAN_TEMPLATE: &str = include_str!("../assets/templates/PLAN.md");
 pub const PLANNER_TEMPLATE: &str = include_str!("../assets/templates/PLANNER.md");
+pub const SCHEMA_TEMPLATE: &str = include_str!("../assets/templates/SCHEMA.md");

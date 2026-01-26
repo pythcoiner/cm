@@ -252,7 +252,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
             if let Some(plan_file) = task.get("plan_file").and_then(|v| v.as_str()) {
                 let plan_path = Path::new(plan_file);
                 if !plan_path.exists() {
-                    result.add_warning(SanityError::OrphanedReference {
+                    result.add_error(SanityError::OrphanedReference {
                         file: file_name.clone(),
                         id: task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
                         message: format!("plan file '{}' does not exist", plan_file),
@@ -772,31 +772,31 @@ mod tests {
     use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
 
-    fn create_valid_tasks_json() -> String {
-        r#"{
+    fn create_valid_tasks_json_with_plan_file(plan_file_path: &str) -> String {
+        format!(r#"{{
             "version": "1.0.0",
-            "project": {
+            "project": {{
                 "name": "Test Project",
                 "description": "A test project"
-            },
+            }},
             "phases": [
-                {
+                {{
                     "id": "phase-1",
                     "name": "Phase One",
                     "status": "pending",
                     "tasks": [
-                        {
+                        {{
                             "id": "task-1",
                             "name": "First Task",
                             "type": "implement",
                             "status": "pending",
-                            "context": {},
-                            "plan_file": ".cm/plans/plan-test.md"
-                        }
+                            "context": {{}},
+                            "plan_file": "{}"
+                        }}
                     ]
-                }
+                }}
             ]
-        }"#.to_string()
+        }}"#, plan_file_path)
     }
 
     fn create_valid_roadmap_json() -> String {
@@ -822,13 +822,16 @@ mod tests {
 
     #[test]
     fn test_valid_tasks_json_passes() {
+        // Create a plan file that tasks can reference
+        let plan_file = NamedTempFile::new().unwrap();
+        std::fs::write(plan_file.path(), "# Test Plan").unwrap();
+
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, "{}", create_valid_tasks_json()).unwrap();
+        write!(file, "{}", create_valid_tasks_json_with_plan_file(plan_file.path().to_str().unwrap())).unwrap();
 
         let result = validate_tasks_json(file.path());
 
         assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
-        // Note: warnings about missing plan files are expected since the files don't exist in tests
     }
 
     #[test]
@@ -1061,25 +1064,34 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let cm_dir = dir.path();
 
-        // Create valid tasks.json
-        fs::write(cm_dir.join("tasks.json"), r#"{
+        // Create the plans directory and plan file with absolute path
+        let plans_dir = cm_dir.join("plans");
+        fs::create_dir_all(&plans_dir).unwrap();
+        let plan_file_path = plans_dir.join("plan-test.md");
+        fs::write(&plan_file_path, "# Test Plan").unwrap();
+
+        // Use absolute path for plan_file in tasks.json
+        let plan_file_abs = plan_file_path.to_str().unwrap();
+
+        // Create valid tasks.json with absolute plan_file path
+        fs::write(cm_dir.join("tasks.json"), format!(r#"{{
             "version": "1.0.0",
-            "project": { "name": "Test", "description": "Test" },
-            "phases": [{
+            "project": {{ "name": "Test", "description": "Test" }},
+            "phases": [{{
                 "id": "phase-1",
                 "name": "Phase",
                 "status": "pending",
-                "tasks": [{
+                "tasks": [{{
                     "id": "task-1",
                     "name": "Task",
                     "type": "implement",
                     "status": "pending",
-                    "context": {},
-                    "plan_file": ".cm/plans/plan-test.md",
+                    "context": {{}},
+                    "plan_file": "{}",
                     "roadmap_item_id": "item-1"
-                }]
-            }]
-        }"#).unwrap();
+                }}]
+            }}]
+        }}"#, plan_file_abs)).unwrap();
 
         // Create valid roadmap.json with matching reference
         fs::write(cm_dir.join("roadmap.json"), r#"{
@@ -1223,6 +1235,11 @@ mod tests {
 
     #[test]
     fn test_valid_task_with_attempts() {
+        // Create a plan file that tasks can reference
+        let plan_file = NamedTempFile::new().unwrap();
+        std::fs::write(plan_file.path(), "# Test Plan").unwrap();
+        let plan_path = plan_file.path().to_str().unwrap();
+
         let mut file = NamedTempFile::new().unwrap();
         write!(file, r#"{{
             "version": "1.0.0",
@@ -1237,7 +1254,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "plan_file": ".cm/plans/plan-test.md",
+                    "plan_file": "{}",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1249,7 +1266,7 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#, plan_path).unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
@@ -1329,6 +1346,11 @@ mod tests {
 
     #[test]
     fn test_response_with_legacy_raw_response() {
+        // Create a plan file that tasks can reference
+        let plan_file = NamedTempFile::new().unwrap();
+        std::fs::write(plan_file.path(), "# Test Plan").unwrap();
+        let plan_path = plan_file.path().to_str().unwrap();
+
         let mut file = NamedTempFile::new().unwrap();
         write!(file, r#"{{
             "version": "1.0.0",
@@ -1343,7 +1365,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "plan_file": ".cm/plans/plan-test.md",
+                    "plan_file": "{}",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1355,7 +1377,7 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#, plan_path).unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(result.is_valid(), "Legacy raw_response should be accepted, got: {:?}", result.errors);

@@ -145,6 +145,8 @@ Wait for confirmation before proceeding to Step 2CM.
 
 ## Step 2: Update tasks.json
 
+> **Note:** See `.cm/SCHEMA.md` for the complete authoritative schema reference.
+
 Add the new task definitions to `.cm/tasks.json`:
 
 ### 2.1 Read Current tasks.json
@@ -169,7 +171,7 @@ Insert new tasks following the schema:
     "files_to_read": ["relevant/files.rs"],
     "code_style_excerpt": null
   },
-  "instructions": "Detailed implementation instructions..."
+  "plan_file": ".cm/plans/plan-X.md"
 }
 ```
 
@@ -183,7 +185,7 @@ Insert new tasks following the schema:
 - `type`: One of "implement", "review", "fix", "test"
 - `status`: Should be "pending" for new tasks
 - `context`: Must include at minimum an empty object
-- `instructions`: Detailed instructions for the agent
+- `plan_file`: Path to the plan file (e.g., ".cm/plans/plan-X.md")
 
 **Dependencies:**
 - Ensure `depends_on` references only existing task IDs
@@ -388,7 +390,7 @@ For each phase in PLAN.md:
    - Set type to "implement"
    - Set status to "pending"
    - Use the task description from PLAN.md as the name
-   - Generate detailed instructions based on the task name, phase goal, and deliverables
+   - Set `plan_file` to reference the plan file for that phase (e.g., ".cm/plans/plan-1.md")
    - Add relevant files to `files_to_read` if mentioned in PLAN.md
 
 Example:
@@ -410,7 +412,7 @@ Example:
           "context": {
             "files_to_read": []
           },
-          "instructions": "Initialize a new Rust project with Cargo:\n\n1. Create the project structure\n2. Add dependencies to Cargo.toml\n3. Create src/main.rs with basic setup\n4. Ensure `cargo build` succeeds",
+          "plan_file": ".cm/plans/plan-1.md",
           "roadmap_item_id": "phase-1-item-1"
         }
       ]
@@ -433,6 +435,40 @@ Example:
 ### 2CM.4 Write tasks.json
 
 Write the complete JSON structure to `.cm/tasks.json`.
+
+### 2CM.5 Create Plan Files
+
+For each phase, create a plan file at `.cm/plans/plan-N.md` containing detailed instructions for that phase's tasks.
+
+1. Create the `.cm/plans/` directory if it doesn't exist
+2. For each phase, create a plan file with:
+   - Phase goal and overview
+   - Detailed instructions for each task
+   - Success criteria
+   - Files to create or modify
+
+Example `.cm/plans/plan-1.md`:
+```markdown
+# Phase 1: Foundation
+
+## Goal
+Set up the initial project structure and dependencies.
+
+## Tasks
+
+### Task 1: Initialize project structure
+
+1. Create the project with `cargo init`
+2. Add dependencies to Cargo.toml:
+   - clap = "4"
+   - serde = { version = "1", features = ["derive"] }
+3. Create src/main.rs with basic CLI setup
+4. Ensure `cargo build` succeeds
+
+## Success Criteria
+- Project builds without errors
+- All dependencies resolve correctly
+```
 
 ---
 
