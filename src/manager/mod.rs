@@ -621,10 +621,7 @@ impl Manager {
         info!("Executing phase: {}", phase_id);
         emit_cm(&format!("Executing phase: {}", phase_id));
 
-        // Mark phase as in progress
-        self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
-
-        // Get all pending tasks in this phase
+        // Get all pending tasks in this phase BEFORE marking as in progress
         let pending_tasks: Vec<Task> = self
             .state
             .pending_tasks_in_phase(phase_id)
@@ -634,9 +631,23 @@ impl Manager {
 
         if pending_tasks.is_empty() {
             info!("No pending tasks in phase {}, checking completion", phase_id);
+            // Try normal completion check first
             self.check_phase_completion(phase_id)?;
+            // If phase is still not completed (e.g., tasks in weird states), force complete
+            // since there's literally nothing more to do
+            let phase = self.state.get_phase_mut(phase_id)?;
+            if phase.status != PhaseStatus::Completed {
+                info!(
+                    "Phase {} has no pending tasks but wasn't marked complete, forcing completion",
+                    phase_id
+                );
+                phase.status = PhaseStatus::Completed;
+            }
             return Ok(());
         }
+
+        // Mark phase as in progress only if there's actual work to do
+        self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
 
         emit_cm(&format!("Phase {} has {} pending tasks", phase_id, pending_tasks.len()));
 
