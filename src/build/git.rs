@@ -99,14 +99,16 @@ impl GitRunner {
     ///
     /// * `files` - The files to stage. Use `["."]` to stage all changes.
     ///
+    /// Uses `--ignore-errors` to continue staging files even if some cannot be
+    /// accessed (e.g., due to permission issues). Skipped files are logged as warnings.
+    ///
     /// # Errors
     ///
     /// Returns an error if:
     /// - The git command is not found
     /// - The working directory is not a git repository
-    /// - Any of the specified files do not exist
     pub fn add(&self, files: &[&str]) -> Result<(), BuildError> {
-        let mut args = vec!["add"];
+        let mut args = vec!["add", "--ignore-errors"];
         args.extend(files);
 
         let output = Command::new("git")
@@ -125,6 +127,13 @@ impl GitRunner {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            // With --ignore-errors, permission errors are expected - log and continue
+            if stderr.contains("Permission denied") || stderr.contains("unable to index file") {
+                log::warn!("git add skipped some files: {}", stderr.trim());
+                return Ok(());
+            }
+
             return Err(BuildError::CommandFailed {
                 command: format!("git add {}", files.join(" ")),
                 exit_code: output.status.code(),
