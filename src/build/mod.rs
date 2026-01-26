@@ -4,6 +4,7 @@
 //! and git operations (status, add, commit) to verify and commit code changes.
 
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 use thiserror::Error;
 
@@ -42,6 +43,7 @@ pub enum BuildError {
 /// The `BuildVerifier` wraps a `CargoRunner` and provides high-level
 /// verification methods for ensuring code quality before commits.
 pub struct BuildVerifier {
+    working_dir: PathBuf,
     cargo: CargoRunner,
 }
 
@@ -49,6 +51,7 @@ impl BuildVerifier {
     /// Create a new `BuildVerifier` for the given working directory.
     pub fn new(working_dir: PathBuf) -> Self {
         Self {
+            working_dir: working_dir.clone(),
             cargo: CargoRunner::new(working_dir),
         }
     }
@@ -98,6 +101,51 @@ impl BuildVerifier {
                 exit_code: None,
                 stderr: clippy_output.stderr,
             });
+        }
+
+        Ok(())
+    }
+
+    /// Run a list of arbitrary shell commands for verification.
+    ///
+    /// Each command is run in the working directory. If any command fails
+    /// (non-zero exit code), returns an error immediately.
+    ///
+    /// # Arguments
+    ///
+    /// * `commands` - List of shell commands to run (e.g., ["npm run build", "npm run lint"])
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any command fails or cannot be executed.
+    pub fn verify_commands(&self, commands: &[String]) -> Result<(), BuildError> {
+        for cmd in commands {
+            log::info!("Running build command: {}", cmd);
+
+            // Split command into program and args
+            let parts: Vec<&str> = cmd.split_whitespace().collect();
+            if parts.is_empty() {
+                continue;
+            }
+
+            let program = parts[0];
+            let args = &parts[1..];
+
+            let output = Command::new(program)
+                .args(args)
+                .current_dir(&self.working_dir)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .output()?;
+
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+                return Err(BuildError::CommandFailed {
+                    command: cmd.clone(),
+                    exit_code: output.status.code(),
+                    stderr,
+                });
+            }
         }
 
         Ok(())

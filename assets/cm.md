@@ -140,17 +140,22 @@ Wait for the user's response before proceeding.
 > - Running tests? (e.g., `cargo test`, `npm test`)
 > - Linting/checking? (e.g., `cargo clippy`, `npm run lint`)
 >
-> This will be used to customize `.cm/ACTIONS.md`. You can skip this to use the default template.
+> These commands will be:
+> 1. Stored in `.cm/config.toml` as `build_commands` for automatic verification after each phase
+> 2. Documented in `.cm/ACTIONS.md` for reference
+>
+> If you skip this step, build verification will be disabled (phases complete without running any build commands).
 
 Wait for the user's response before proceeding.
 
 **If the user provides build/test/lint commands:**
-- Store them for ACTIONS.md customization in Step 8
-- Replace placeholder commands in the template with actual commands
+- Store the build and lint commands (NOT test commands) in `build_commands` for config.toml
+- Store all commands for ACTIONS.md customization in Step 8
+- Example: If user says "cargo build, cargo clippy, cargo test", store `["cargo build", "cargo clippy"]` in config.toml (exclude tests - they run separately)
 
 **If the user skips:**
-- Use the default ACTIONS.md template as-is
-- The template will contain placeholder text like `[build command]` for manual editing later
+- Leave `build_commands` empty in config.toml (build verification will be skipped)
+- Use the default ACTIONS.md template with placeholder text
 
 ---
 
@@ -214,6 +219,16 @@ Once confirmed, generate all files in the `.cm/` directory:
     - If user provided build/test/lint commands in Step 6: customize template with actual commands
     - If user skipped Step 6: use default ACTIONS.md template with placeholder text like `[build command]`
     - If file doesn't exist, create it from template
+11. Generate `.cm/config.toml`:
+    - If user provided build/lint commands in Step 6: include them as `build_commands`
+    - If user skipped Step 6: create empty config (build verification will be skipped)
+    - Example config.toml:
+      ```toml
+      # CM Configuration
+      # Build commands to run for verification after each phase
+      # If empty or not specified, build verification is skipped
+      build_commands = ["cargo build", "cargo clippy"]
+      ```
 
 **Note:** JSON files (tasks.json, roadmap.json) are the source of truth. Markdown files (ROADMAP.md, TASKS.md) can be regenerated from JSON at any time using `cm --regenerate`.
 
@@ -227,6 +242,7 @@ After generation, inform the user:
 > - `.cm/ROADMAP.md` - Human-readable roadmap (generated from roadmap.json)
 > - `.cm/tasks.json` - Used by cm to orchestrate agents
 > - `.cm/TASKS.md` - Task status overview (generated from tasks.json)
+> - `.cm/config.toml` - Configuration (build commands for verification)
 > - `.cm/agents/IMPLEMENTER.md` - Implementer agent instructions
 > - `.cm/agents/REVIEWER.md` - Reviewer agent instructions
 > - `.cm/STRUCTURE.md` - Project structure documentation

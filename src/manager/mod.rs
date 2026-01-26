@@ -105,6 +105,9 @@ pub struct ManagerConfig {
     pub model: String,
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: u32,
+    /// Build commands to run for verification.
+    /// If empty, build verification is skipped.
+    pub build_commands: Vec<String>,
 }
 
 impl ManagerConfig {
@@ -125,6 +128,7 @@ impl ManagerConfig {
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
             model: "sonnet".to_string(),
             max_cycles: 5,
+            build_commands: Vec::new(),
         }
     }
 
@@ -152,6 +156,11 @@ impl ManagerConfig {
         self
     }
 
+    /// Set the build commands.
+    pub fn build_commands(mut self, commands: Vec<String>) -> Self {
+        self.build_commands = commands;
+        self
+    }
 }
 
 /// The main manager that orchestrates task execution.
@@ -879,26 +888,30 @@ impl Manager {
             }
         }
 
-        // Run build verification
+        // Run build verification (if configured)
         self.manager_state = ManagerState::Verifying;
-        let build_result = self.build_verifier.verify_all();
+        if !self.config.build_commands.is_empty() {
+            let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
-        if let Err(e) = build_result {
-            let err_msg = match &e {
-                BuildError::CommandFailed { stderr, .. } => stderr.clone(),
-                _ => e.to_string(),
-            };
-            warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, err_msg);
-            emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {}", phase_id));
-            // Mark tasks back to pending for retry
-            for task in &pending_tasks {
-                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+            if let Err(e) = build_result {
+                let err_msg = match &e {
+                    BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                    _ => e.to_string(),
+                };
+                warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, err_msg);
+                emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {}", phase_id));
+                // Mark tasks back to pending for retry
+                for task in &pending_tasks {
+                    self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+                }
+                self.manager_state = ManagerState::Executing;
+                return Ok(());
             }
-            self.manager_state = ManagerState::Executing;
-            return Ok(());
+            emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
+        } else {
+            info!("No build commands configured, skipping build verification");
+            emit_cm(&format!("Skipping build verification for phase {} (no commands configured)", phase_id));
         }
-
-        emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
 
         // Save phase IMPLEM completion state for potential resume
         self.save_phase_implem_completion(phase_id, &baseline_commit);
@@ -1170,10 +1183,12 @@ impl Manager {
                         }
                     }
 
-                    // Re-verify build after FIX
+                    // Re-verify build after FIX (if configured)
                     self.manager_state = ManagerState::Verifying;
-                    if let Err(e) = self.build_verifier.verify_all() {
-                        warn!("Build failed after PHASE_FIX: {}", e);
+                    if !self.config.build_commands.is_empty() {
+                        if let Err(e) = self.build_verifier.verify_commands(&self.config.build_commands) {
+                            warn!("Build failed after PHASE_FIX: {}", e);
+                        }
                     }
                     self.manager_state = ManagerState::WaitingForAgent;
 
@@ -1331,11 +1346,27 @@ impl Manager {
             return Ok(true); // Phase not complete yet, no check needed
         }
 
-        // All tasks in phase completed - run build verification
-        emit_cm(&format!("Phase {} complete, verifying build...", phase_id));
+        // All tasks in phase completed - run build verification (if configured)
         self.manager_state = ManagerState::Verifying;
 
-        let build_result = self.build_verifier.verify_all();
+        // If no build commands configured, skip verification and mark complete
+        if self.config.build_commands.is_empty() {
+            info!("No build commands configured, skipping build verification");
+            emit_cm(&format!("Phase {} complete (build verification skipped)", phase_id));
+
+            // Mark phase as completed
+            self.state
+                .mark_phase_status(phase_id, PhaseStatus::Completed)?;
+
+            // Sync roadmap phase - mark all items/sub-items as complete
+            self.sync_roadmap_phase(phase_id);
+
+            self.manager_state = ManagerState::Executing;
+            return Ok(true);
+        }
+
+        emit_cm(&format!("Phase {} complete, verifying build...", phase_id));
+        let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
         match build_result {
             Ok(()) => {

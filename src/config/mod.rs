@@ -37,6 +37,7 @@ pub enum ConfigError {
 /// max_cycles = 5
 /// log_path = ".cm/LOG.md"
 /// working_dir = "."
+/// build_commands = ["cargo build", "cargo clippy"]
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
@@ -52,6 +53,12 @@ pub struct ConfigFile {
 
     /// Working directory for build verification.
     pub working_dir: Option<PathBuf>,
+
+    /// Build commands to run for verification.
+    /// If empty or not specified, build verification is skipped.
+    /// Example: ["cargo build", "cargo clippy"]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub build_commands: Option<Vec<String>>,
 }
 
 impl ConfigFile {
@@ -103,6 +110,7 @@ impl ConfigFile {
             && self.max_cycles.is_none()
             && self.log_path.is_none()
             && self.working_dir.is_none()
+            && self.build_commands.is_none()
     }
 }
 
@@ -118,6 +126,7 @@ mod tests {
         assert!(config.max_cycles.is_none());
         assert!(config.log_path.is_none());
         assert!(config.working_dir.is_none());
+        assert!(config.build_commands.is_none());
         assert!(config.is_empty());
     }
 
@@ -137,6 +146,7 @@ model = "claude-opus-4-5-20251101"
 max_cycles = 10
 log_path = "/tmp/LOG.md"
 working_dir = "/home/user/project"
+build_commands = ["cargo build", "cargo clippy"]
 "#;
 
         std::fs::write(&config_path, content).unwrap();
@@ -149,6 +159,10 @@ working_dir = "/home/user/project"
         assert_eq!(
             config.working_dir,
             Some(PathBuf::from("/home/user/project"))
+        );
+        assert_eq!(
+            config.build_commands,
+            Some(vec!["cargo build".to_string(), "cargo clippy".to_string()])
         );
         assert!(!config.is_empty());
     }
@@ -231,6 +245,7 @@ max_cycles = 3
             max_cycles: Some(5),
             log_path: Some(PathBuf::from("/tmp/log.md")),
             working_dir: None,
+            build_commands: None,
         };
 
         let toml_str = toml::to_string_pretty(&config).unwrap();

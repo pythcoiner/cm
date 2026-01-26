@@ -283,6 +283,9 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
         if let Some(working_dir) = cf.working_dir {
             config = config.working_dir(working_dir);
         }
+        if let Some(build_commands) = cf.build_commands {
+            config = config.build_commands(build_commands);
+        }
     }
 
     // 4. Apply CLI overrides (highest precedence)
