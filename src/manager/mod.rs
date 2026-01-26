@@ -17,7 +17,7 @@ use uuid::Uuid;
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
 use crate::generate::{write_md_file, GenerateError};
-use crate::log::{LogError, LogManager, PhaseLogger, PhaseLogError};
+use crate::log::{tee_eprintln, tee_print, tee_println, LogError, LogManager, PhaseLogger, PhaseLogError};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
     PhaseStatus, RoadmapState, StateError, Task, TaskContext, TaskStatus, TaskType, TasksState,
@@ -169,8 +169,6 @@ pub struct Manager {
     agent_spawner: AgentSpawner,
     /// Verifier for build and clippy checks.
     build_verifier: BuildVerifier,
-    /// Manager for LOG.md entries.
-    log_manager: LogManager,
     /// Per-phase logger for full prompts and responses.
     phase_logger: PhaseLogger,
     /// Current execution state.
@@ -182,7 +180,7 @@ pub struct Manager {
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
 fn emit_cm(msg: &str) {
     let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-    eprintln!("[{} CM] {}", now, msg);
+    tee_eprintln(&format!("[{} CM] {}", now, msg));
 }
 
 impl Manager {
@@ -206,10 +204,9 @@ impl Manager {
         let agent_spawner = AgentSpawner::new(config.model.clone());
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
 
-        // Initialize phase logger and log manager
+        // Initialize phase logger
         let cm_dir = config.state_path.parent().unwrap_or(std::path::Path::new("."));
         let phase_logger = PhaseLogger::new(cm_dir)?;
-        let log_manager = LogManager::new(cm_dir.join("logs/cm.log"));
 
         // Load roadmap if available
         let roadmap_state = match load_roadmap(&config.roadmap_path) {
@@ -231,7 +228,6 @@ impl Manager {
             roadmap_state,
             agent_spawner,
             build_verifier,
-            log_manager,
             phase_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
@@ -304,7 +300,6 @@ impl Manager {
                     let error_msg = format!("Phase {} failed: {}", phase_id, e);
                     error!("{}", error_msg);
                     emit_cm(&format!("Phase {} failed: {}", phase_id, e));
-                    self.log_manager.log_error(&error_msg)?;
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
@@ -379,56 +374,56 @@ impl Manager {
 
         if pending.is_empty() {
             if !in_progress.is_empty() {
-                println!("No runnable tasks available.");
-                println!(
+                tee_println("No runnable tasks available.");
+                tee_println(&format!(
                     "\nFound {} task(s) stuck in 'in_progress' status:",
                     in_progress.len()
-                );
+                ));
                 for task in &in_progress {
-                    println!("  - {} ({})", task.id, task.name);
+                    tee_println(&format!("  - {} ({})", task.id, task.name));
                 }
-                println!("\nRun with --continue to reset and retry these tasks.");
+                tee_println("\nRun with --continue to reset and retry these tasks.");
             } else {
-                println!("No pending tasks.");
+                tee_println("No pending tasks.");
             }
             return Ok(TaskSelection::Quit);
         }
 
-        println!("\nPending tasks ({}):", pending.len());
+        tee_println(&format!("\nPending tasks ({}):", pending.len()));
         for (i, task) in pending.iter().take(10).enumerate() {
             let blocked = if state.is_task_blocked(&task.id) {
                 " (blocked)"
             } else {
                 ""
             };
-            println!("  {}. {} - {}{}", i + 1, task.id, task.name, blocked);
+            tee_println(&format!("  {}. {} - {}{}", i + 1, task.id, task.name, blocked));
         }
         if pending.len() > 10 {
-            println!("  ... and {} more", pending.len() - 10);
+            tee_println(&format!("  ... and {} more", pending.len() - 10));
         }
 
         // Find next runnable task
         if let Some(next) = state.next_runnable_task() {
-            println!("\nNext runnable: {} - {}", next.id, next.name);
+            tee_println(&format!("\nNext runnable: {} - {}", next.id, next.name));
         } else if !in_progress.is_empty() {
             // No runnable tasks, but there are stuck in_progress tasks
-            println!(
+            tee_println(&format!(
                 "\nNo runnable tasks. Found {} task(s) stuck in 'in_progress' status:",
                 in_progress.len()
-            );
+            ));
             for task in &in_progress {
-                println!("  - {} ({})", task.id, task.name);
+                tee_println(&format!("  - {} ({})", task.id, task.name));
             }
-            println!("\nRun with --continue to reset and retry these tasks.");
+            tee_println("\nRun with --continue to reset and retry these tasks.");
             return Ok(TaskSelection::Quit);
         } else {
             // No runnable tasks and no in_progress tasks - all pending tasks are blocked
-            println!("\nNo runnable tasks available (all pending tasks are blocked).");
+            tee_println("\nNo runnable tasks available (all pending tasks are blocked).");
             return Ok(TaskSelection::Quit);
         }
 
         // Prompt
-        print!("\n[s]ingle / [a]ll / [p]hase <# or #-#> / [q]uit: ");
+        tee_print("\n[s]ingle / [a]ll / [p]hase <# or #-#> / [q]uit: ");
         io::stdout()
             .flush()
             .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
@@ -456,20 +451,20 @@ impl Manager {
                             let start = match start_str.parse::<u32>() {
                                 Ok(n) => n,
                                 Err(_) => {
-                                    println!("Invalid phase number: {}", token);
+                                    tee_println(&format!("Invalid phase number: {}", token));
                                     return vec![];
                                 }
                             };
                             let end = match end_str.parse::<u32>() {
                                 Ok(n) => n,
                                 Err(_) => {
-                                    println!("Invalid phase number: {}", token);
+                                    tee_println(&format!("Invalid phase number: {}", token));
                                     return vec![];
                                 }
                             };
                             // Validate range
                             if start > end {
-                                println!("Invalid range: {}-{} (start must be <= end)", start, end);
+                                tee_println(&format!("Invalid range: {}-{} (start must be <= end)", start, end));
                                 return vec![];
                             }
                             (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
@@ -479,21 +474,21 @@ impl Manager {
                             if token.parse::<u32>().is_ok() {
                                 vec![format!("phase-{}", token)]
                             } else {
-                                println!("Invalid phase number: {}", token);
+                                tee_println(&format!("Invalid phase number: {}", token));
                                 vec![]
                             }
                         }
                     })
                     .collect();
                 if phase_ids.is_empty() {
-                    println!("No valid phase numbers provided.");
+                    tee_println("No valid phase numbers provided.");
                     self.prompt_task_selection()
                 } else {
                     Ok(TaskSelection::Phases(phase_ids))
                 }
             }
             _ => {
-                println!("Invalid selection. Use 's', 'a', 'p <#...>', or 'q'.");
+                tee_println("Invalid selection. Use 's', 'a', 'p <#...>', or 'q'.");
                 self.prompt_task_selection() // Retry
             }
         }
@@ -513,7 +508,7 @@ impl Manager {
                     if let Err(e) = self.step() {
                         match e {
                             ManagerError::NoRunnableTasks => {
-                                println!("No runnable tasks available.");
+                                tee_println("No runnable tasks available.");
                                 break;
                             }
                             ManagerError::ShutdownRequested => break,
@@ -530,7 +525,7 @@ impl Manager {
                     // Continue looping for another selection
                 }
                 TaskSelection::Quit => {
-                    println!("Exiting.");
+                    tee_println("Exiting.");
                     break;
                 }
             }
@@ -551,11 +546,11 @@ impl Manager {
 
             match phase {
                 None => {
-                    println!("Warning: Phase '{}' not found, skipping.", phase_id);
+                    tee_println(&format!("Warning: Phase '{}' not found, skipping.", phase_id));
                     continue;
                 }
                 Some(p) if p.status == PhaseStatus::Completed => {
-                    println!("Warning: Phase '{}' already completed, skipping.", phase_id);
+                    tee_println(&format!("Warning: Phase '{}' already completed, skipping.", phase_id));
                     continue;
                 }
                 Some(_) => {
@@ -565,7 +560,7 @@ impl Manager {
                             self.update_state()?;
                         }
                         Err(e) => {
-                            println!("Phase '{}' failed: {}", phase_id, e);
+                            tee_println(&format!("Phase '{}' failed: {}", phase_id, e));
                             // Continue with next phase
                         }
                     }
@@ -588,9 +583,9 @@ impl Manager {
             task_id, cycles_completed
         );
 
-        println!();
-        println!("{}", message);
-        print!("Retry more cycles? [y/N/number]: ");
+        tee_println("");
+        tee_println(&message);
+        tee_print("Retry more cycles? [y/N/number]: ");
         let _ = io::stdout().flush();
 
         let stdin = io::stdin();
@@ -713,9 +708,7 @@ impl Manager {
         // Log prompt to phase logger
         let _ = self.phase_logger.log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
 
-        // Log agent spawn
-        self.log_manager
-            .log_agent_spawn(&AgentType::Plan, phase_id, &plan_prompt)?;
+        // Log agent spawn to state records
         self.state.log_records.push(
             LogManager::create_agent_spawn_record(&AgentType::Plan, phase_id, &plan_prompt),
         );
@@ -784,9 +777,7 @@ impl Manager {
         // Log full prompt to phase logger
         let _ = self.phase_logger.log_prompt(phase_id, "PHASE_IMPLEM", &prompt);
 
-        // Log agent spawn
-        self.log_manager
-            .log_agent_spawn(&AgentType::Implem, phase_id, &prompt)?;
+        // Log agent spawn to state records
         self.state.log_records.push(
             LogManager::create_agent_spawn_record(&AgentType::Implem, phase_id, &prompt),
         );
@@ -816,10 +807,10 @@ impl Manager {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                eprintln!("[{} PHASE_IMPLEM] {} parse failed: {}", now, phase_id, msg);
+                tee_eprintln(&format!("[{} PHASE_IMPLEM] {} parse failed: {}", now, phase_id, msg));
 
                 if let Some(session_id) = &output.session_id {
-                    eprintln!("[{} PHASE_IMPLEM] {} retrying with --continue...", now, phase_id);
+                    tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retrying with --continue...", now, phase_id));
                     let retry_handle = self.agent_spawner.spawn_with_continue(
                         session_id,
                         "Your previous response could not be parsed. Please provide a summary of your changes.",
@@ -828,7 +819,7 @@ impl Manager {
                     )?;
                     let retry_output = retry_handle.wait()?;
                     ResponseParser::parse(&retry_output.stdout).map_err(|e| {
-                        eprintln!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e);
+                        tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e));
                         e
                     })?
                 } else {
@@ -841,8 +832,6 @@ impl Manager {
         // Log full response to phase logger (with parsed result)
         let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code, Some(&response));
 
-        // Log agent response
-        self.log_manager.log_agent_response(&response)?;
 
         // Update invocation completion
         if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == agent_id) {
@@ -917,7 +906,6 @@ impl Manager {
                     for task in &pending_tasks {
                         self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
                         self.sync_roadmap_item(&task.id);
-                        self.log_manager.log_task_complete(&task.id)?;
                         self.state
                             .log_records
                             .push(LogManager::create_task_complete_record(&task.id));
@@ -930,7 +918,6 @@ impl Manager {
                     let reason = format!("Review cycle exhausted after {} cycles", self.config.max_cycles);
                     for task in &pending_tasks {
                         self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
-                        self.log_manager.log_task_deferred(&task.id, &reason)?;
                         self.state
                             .log_records
                             .push(LogManager::create_task_deferred_record(&task.id, &reason));
@@ -1002,8 +989,6 @@ impl Manager {
             // Log full prompt to phase logger
             let _ = self.phase_logger.log_prompt(phase_id, "PHASE_REVIEW", &review_prompt);
 
-            self.log_manager
-                .log_agent_spawn(&AgentType::Review, phase_id, &review_prompt)?;
             self.state.log_records.push(
                 LogManager::create_agent_spawn_record(&AgentType::Review, phase_id, &review_prompt),
             );
@@ -1068,8 +1053,6 @@ impl Manager {
                 inv.exit_status = review_output.exit_code;
             }
 
-            self.log_manager.log_agent_response(&agent_response_for_log)?;
-
             if review_response.status == AgentStatus::Failed {
                 warn!("Phase review agent failed for {}", phase_id);
                 return Ok(Verdict::Approved);
@@ -1088,7 +1071,6 @@ impl Manager {
             };
 
             // Log with actual issue count
-            self.log_manager.log_review_result(&verdict, &[])?;
             self.state
                 .log_records
                 .push(LogManager::create_review_result_record(&verdict, &[]));
@@ -1126,8 +1108,6 @@ impl Manager {
 
                     let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
 
-                    self.log_manager
-                        .log_agent_spawn(&AgentType::Fix, phase_id, &fix_prompt)?;
                     self.state.log_records.push(
                         LogManager::create_agent_spawn_record(&AgentType::Fix, phase_id, &fix_prompt),
                     );
@@ -1157,9 +1137,6 @@ impl Manager {
                         inv.exit_status = fix_output.exit_code;
                     }
 
-                    if let Some(ref resp) = fix_response {
-                        self.log_manager.log_agent_response(resp)?;
-                    }
 
                     if !self.check_git_changes()? {
                         warn!("PHASE_FIX made no changes for {}", phase_id);
@@ -1369,7 +1346,6 @@ impl Manager {
                     stdout: String::new(),
                     stderr: String::new(),
                 };
-                self.log_manager.log_build_result(&build_output)?;
                 self.state
                     .log_records
                     .push(LogManager::create_build_result_record(&build_output));
@@ -1401,7 +1377,6 @@ impl Manager {
                     stdout: String::new(),
                     stderr: err_msg.clone(),
                 };
-                self.log_manager.log_build_result(&build_output)?;
                 self.state
                     .log_records
                     .push(LogManager::create_build_result_record(&build_output));

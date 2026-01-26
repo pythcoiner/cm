@@ -17,6 +17,7 @@ use thiserror::Error;
 
 use crate::config::{ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
+use crate::log::{init_log_file, TeeWriter};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
 
@@ -168,12 +169,21 @@ pub struct Cli {
 pub fn run() -> Result<(), CliError> {
     let cli = Cli::parse();
 
-    // Initialize logger based on verbosity
-    if cli.verbose {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
-    } else {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    // Initialize log file early (before any logging)
+    // Determine .cm directory from state path
+    let cm_dir = cli
+        .state
+        .parent()
+        .unwrap_or(std::path::Path::new(".cm"));
+    if let Err(e) = init_log_file(cm_dir) {
+        eprintln!("Warning: failed to initialize log file: {}", e);
     }
+
+    // Initialize logger with TeeWriter to mirror output to cm.log
+    let filter = if cli.verbose { "debug" } else { "info" };
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(filter))
+        .target(env_logger::Target::Pipe(Box::new(TeeWriter::stderr())))
+        .init();
 
     // Register signal handlers for graceful shutdown
     let shutdown_handler = ShutdownHandler::new();
