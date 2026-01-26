@@ -788,26 +788,8 @@ impl PromptBuilder {
             phase.tasks.len()
         ));
 
-        // Include phase plan if present
-        if !phase.plan.is_empty() {
-            prompt.push_str("### Phase Plan\n\n");
-            prompt.push_str("This is the original implementation plan for context:\n\n");
-            prompt.push_str(&phase.plan);
-            prompt.push_str("\n\n");
-        }
-
-        // List all tasks with their full instructions (loaded from plan files)
-        prompt.push_str("### Tasks in This Phase\n\n");
-        for (i, task) in phase.tasks.iter().enumerate() {
-            prompt.push_str(&format!(
-                "#### Task {}: {} ({})\n\n",
-                i + 1,
-                task.name,
-                task.id
-            ));
-            let plan_content = load_task_plan(task);
-            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
-        }
+        // Reference to plan file (don't embed full plan to keep prompt focused)
+        prompt.push_str("If you need context about the original implementation plan, read: `.cm/PLAN.md`\n\n");
 
         // Review feedback
         prompt.push_str("### Review Feedback\n\n");
@@ -815,16 +797,12 @@ impl PromptBuilder {
         prompt.push_str(review_feedback);
         prompt.push_str("\n\n");
 
-        // Collect all files to read from all tasks
-        let all_files: std::collections::HashSet<&String> = phase
-            .tasks
-            .iter()
-            .flat_map(|t| &t.context.files_to_read)
-            .collect();
-        if !all_files.is_empty() {
-            prompt.push_str("### Files to Read for Context\n\n");
-            prompt.push_str("Read the following files to understand the existing codebase:\n\n");
-            for file in all_files {
+        // Extract files from issue locations (e.g., "**Location:** src/main.rs:42")
+        let issue_files = extract_files_from_feedback(review_feedback);
+        if !issue_files.is_empty() {
+            prompt.push_str("### Files to Modify\n\n");
+            prompt.push_str("Based on the issues above, these files need changes:\n\n");
+            for file in &issue_files {
                 prompt.push_str(&format!("- {}\n", file));
             }
             prompt.push('\n');
@@ -851,6 +829,33 @@ impl PromptBuilder {
 
         prompt
     }
+}
+
+/// Extract unique file paths from review feedback issue locations.
+/// Parses patterns like "**Location:** src/file.rs:42" and returns deduplicated file paths.
+fn extract_files_from_feedback(feedback: &str) -> Vec<String> {
+    use std::collections::HashSet;
+
+    let mut files: HashSet<String> = HashSet::new();
+    for line in feedback.lines() {
+        if line.starts_with("**Location:**") {
+            // Format: "**Location:** path/to/file.rs:line"
+            if let Some(loc) = line.strip_prefix("**Location:**") {
+                let loc = loc.trim();
+                // Split on ':' to remove line number
+                if let Some(path) = loc.split(':').next() {
+                    let path = path.trim();
+                    if !path.is_empty() {
+                        files.insert(path.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    let mut result: Vec<String> = files.into_iter().collect();
+    result.sort();
+    result
 }
 
 /// Extension trait to get severity as a string.
@@ -1163,6 +1168,52 @@ mod tests {
         // Should contain the review feedback
         assert!(prompt.contains(review_feedback));
         assert!(prompt.contains("## Original Task: Test Task"));
+    }
+
+    #[test]
+    fn test_extract_files_from_feedback() {
+        let feedback = r#"## Review Summary
+
+Found 2 issues
+
+## Issues to Fix
+
+### Issue: issue-1 (high)
+**Location:** src/main.rs:42
+**Problem:** Missing error handling
+**Suggested Fix:** Add ? operator
+
+### Issue: issue-2 (medium)
+**Location:** src/lib.rs:100
+**Problem:** Unused variable
+**Suggested Fix:** Remove or use it
+"#;
+
+        let files = extract_files_from_feedback(feedback);
+        assert_eq!(files, vec!["src/lib.rs", "src/main.rs"]);
+    }
+
+    #[test]
+    fn test_extract_files_from_feedback_empty() {
+        let feedback = "## Review Summary\n\nNo issues found.";
+        let files = extract_files_from_feedback(feedback);
+        assert!(files.is_empty());
+    }
+
+    #[test]
+    fn test_extract_files_from_feedback_duplicate_files() {
+        let feedback = r#"### Issue: issue-1 (high)
+**Location:** src/main.rs:10
+**Problem:** Problem 1
+
+### Issue: issue-2 (high)
+**Location:** src/main.rs:20
+**Problem:** Problem 2
+"#;
+
+        let files = extract_files_from_feedback(feedback);
+        // Should deduplicate
+        assert_eq!(files, vec!["src/main.rs"]);
     }
 
 }
