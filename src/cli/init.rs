@@ -183,12 +183,13 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("Commands initialized successfully!");
     println!();
     println!("Available commands:");
-    println!("  /cm    - Project setup wizard");
-    println!("  /feat  - Feature addition wizard");
-    println!("  /fix   - Bug fix wizard");
-    println!("  /split - Refine PLAN.md into detailed phases");
-    println!("  /end   - Finalize feat/fix/cm session");
-    println!("  /run   - Run cm orchestration");
+    println!("  /cm     - Project setup wizard");
+    println!("  /feat   - Feature addition wizard");
+    println!("  /fix    - Bug fix wizard");
+    println!("  /split  - Refine PLAN.md into detailed phases");
+    println!("  /expand - Expand plan files with detailed instructions");
+    println!("  /end    - Finalize feat/fix/cm session");
+    println!("  /run    - Run cm orchestration");
 
     Ok(())
 }
