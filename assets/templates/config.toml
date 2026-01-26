@@ -1,5 +1,4 @@
 # cm configuration file
-# Place this file at .cm/config.toml in your project root
 
 # Claude model to use for agent spawning
 # Options: "claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101"
@@ -9,19 +8,11 @@
 # Default: 5
 # max_cycles = 5
 
-# Path to the LOG.md file (relative to project root)
-# Default: ".cm/LOG.md"
-# log_path = ".cm/LOG.md"
-
 # Working directory for build verification (relative to project root)
 # Default: "."
 # working_dir = "."
 
 # Build commands to run for verification
 # If empty or not specified, build verification is skipped entirely
-# Examples:
-#   Rust:    ["cargo build", "cargo clippy"]
-#   Node.js: ["npm run build", "npm run lint"]
-#   Python:  ["ruff check .", "mypy ."]
-#   Go:      ["go build ./...", "go vet ./..."]
+# Example: ["cargo build", "cargo clippy"]
 # build_commands = []

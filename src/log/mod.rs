@@ -126,12 +126,12 @@ impl LogEntry {
     }
 }
 
-/// Manages the LOG.md file.
+/// Manages the cm.log file.
 ///
-/// The `LogManager` is responsible for appending entries to LOG.md.
-/// It ensures that the log is append-only and properly formatted as markdown.
+/// The `LogManager` is responsible for appending entries to `.cm/logs/cm.log`.
+/// It ensures that the log is append-only and properly formatted.
 pub struct LogManager {
-    /// Path to the LOG.md file.
+    /// Path to the cm.log file.
     path: PathBuf,
 }
 
@@ -140,7 +140,7 @@ impl LogManager {
     ///
     /// # Arguments
     ///
-    /// * `path` - Path to the LOG.md file
+    /// * `path` - Path to the cm.log file
     pub fn new(path: PathBuf) -> Self {
         Self { path }
     }

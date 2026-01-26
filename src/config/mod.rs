@@ -1,8 +1,8 @@
 //! Configuration file support for cm.
 //!
 //! This module provides TOML-based configuration file support, allowing users
-//! to specify default values for model, timeout, max_cycles, log_path, and
-//! working_dir in a config file instead of command-line arguments.
+//! to specify default values for model, max_cycles, working_dir, and
+//! build_commands in a config file instead of command-line arguments.
 
 use std::path::{Path, PathBuf};
 
@@ -35,7 +35,6 @@ pub enum ConfigError {
 /// ```toml
 /// model = "claude-sonnet-4-5-20250929"
 /// max_cycles = 5
-/// log_path = ".cm/LOG.md"
 /// working_dir = "."
 /// build_commands = ["cargo build", "cargo clippy"]
 /// ```
@@ -47,9 +46,6 @@ pub struct ConfigFile {
 
     /// Maximum number of cycles (attempts) per task before deferring.
     pub max_cycles: Option<u32>,
-
-    /// Path to the LOG.md file.
-    pub log_path: Option<PathBuf>,
 
     /// Working directory for build verification.
     pub working_dir: Option<PathBuf>,
@@ -108,7 +104,6 @@ impl ConfigFile {
     pub fn is_empty(&self) -> bool {
         self.model.is_none()
             && self.max_cycles.is_none()
-            && self.log_path.is_none()
             && self.working_dir.is_none()
             && self.build_commands.is_none()
     }
@@ -124,7 +119,6 @@ mod tests {
         let config = ConfigFile::default();
         assert!(config.model.is_none());
         assert!(config.max_cycles.is_none());
-        assert!(config.log_path.is_none());
         assert!(config.working_dir.is_none());
         assert!(config.build_commands.is_none());
         assert!(config.is_empty());
@@ -144,7 +138,6 @@ mod tests {
         let content = r#"
 model = "claude-opus-4-5-20251101"
 max_cycles = 10
-log_path = "/tmp/LOG.md"
 working_dir = "/home/user/project"
 build_commands = ["cargo build", "cargo clippy"]
 "#;
@@ -155,7 +148,6 @@ build_commands = ["cargo build", "cargo clippy"]
 
         assert_eq!(config.model, Some("claude-opus-4-5-20251101".to_string()));
         assert_eq!(config.max_cycles, Some(10));
-        assert_eq!(config.log_path, Some(PathBuf::from("/tmp/LOG.md")));
         assert_eq!(
             config.working_dir,
             Some(PathBuf::from("/home/user/project"))
@@ -186,7 +178,6 @@ max_cycles = 3
             Some("claude-sonnet-4-5-20250929".to_string())
         );
         assert_eq!(config.max_cycles, Some(3));
-        assert!(config.log_path.is_none());
         assert!(config.working_dir.is_none());
     }
 
@@ -243,7 +234,6 @@ max_cycles = 3
         let config = ConfigFile {
             model: Some("test-model".to_string()),
             max_cycles: Some(5),
-            log_path: Some(PathBuf::from("/tmp/log.md")),
             working_dir: None,
             build_commands: None,
         };

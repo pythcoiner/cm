@@ -136,10 +136,6 @@ pub struct Cli {
     #[arg(long, value_name = "N")]
     pub max_cycles: Option<u32>,
 
-    /// Path to LOG.md file.
-    #[arg(long, value_name = "FILE")]
-    pub log_path: Option<PathBuf>,
-
     /// Working directory for build verification.
     #[arg(long, value_name = "DIR")]
     pub working_dir: Option<PathBuf>,
@@ -277,9 +273,6 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
         if let Some(max_cycles) = cf.max_cycles {
             config = config.max_cycles(max_cycles);
         }
-        if let Some(log_path) = cf.log_path {
-            config = config.log_path(log_path);
-        }
         if let Some(working_dir) = cf.working_dir {
             config = config.working_dir(working_dir);
         }
@@ -299,27 +292,11 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     if let Some(max_cycles) = cli.max_cycles {
         config = config.max_cycles(max_cycles);
     }
-    if let Some(ref log_path) = cli.log_path {
-        config = config.log_path(log_path.clone());
-    }
     if let Some(ref working_dir) = cli.working_dir {
         config = config.working_dir(working_dir.clone());
     }
 
     // 5. Apply defaults for paths that weren't set
-    // If log_path wasn't explicitly set, derive from state path
-    if cli.log_path.is_none() {
-        let default_log = cli
-            .state
-            .parent()
-            .unwrap_or(std::path::Path::new("."))
-            .join("LOG.md");
-        // Only set if config file didn't specify it
-        if config.log_path == ManagerConfig::new(cli.state.clone()).log_path {
-            config = config.log_path(default_log);
-        }
-    }
-
     // If working_dir wasn't explicitly set, use current directory
     if cli.working_dir.is_none() {
         let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -1191,12 +1168,6 @@ mod tests {
     }
 
     #[test]
-    fn test_cli_parse_log_path() {
-        let cli = Cli::parse_from(["cm", "--log-path", "/tmp/LOG.md"]);
-        assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
-    }
-
-    #[test]
     fn test_cli_parse_working_dir() {
         let cli = Cli::parse_from(["cm", "--working-dir", "/home/user/project"]);
         assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
@@ -1210,7 +1181,6 @@ mod tests {
             "--state", "/path/to/tasks.json",
             "--model", "opus",
             "--max-cycles", "10",
-            "--log-path", "/tmp/LOG.md",
             "--working-dir", "/home/user/project",
             "--verbose",
         ]);
@@ -1219,7 +1189,6 @@ mod tests {
         assert_eq!(cli.state, PathBuf::from("/path/to/tasks.json"));
         assert_eq!(cli.model, Some(ModelChoice::Opus));
         assert_eq!(cli.max_cycles, Some(10));
-        assert_eq!(cli.log_path, Some(PathBuf::from("/tmp/LOG.md")));
         assert_eq!(cli.working_dir, Some(PathBuf::from("/home/user/project")));
         assert!(cli.verbose);
     }
@@ -1241,14 +1210,12 @@ mod tests {
             "--state", "/tmp/tasks.json",
             "--model", "opus",
             "--max-cycles", "10",
-            "--log-path", "/custom/LOG.md",
             "--working-dir", "/custom/dir",
         ]);
         let config = build_manager_config(&cli).unwrap();
 
         assert_eq!(config.model, "opus");
         assert_eq!(config.max_cycles, 10);
-        assert_eq!(config.log_path, PathBuf::from("/custom/LOG.md"));
         assert_eq!(config.working_dir, PathBuf::from("/custom/dir"));
     }
 

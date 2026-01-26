@@ -585,18 +585,15 @@ fn test_manager_config_defaults() {
     let config = ManagerConfig::new(PathBuf::from("/tmp/.cm/tasks.json"));
 
     assert_eq!(config.state_path, PathBuf::from("/tmp/.cm/tasks.json"));
-    assert_eq!(config.log_path, PathBuf::from("/tmp/.cm/LOG.md"));
     assert_eq!(config.max_cycles, 5);
 }
 
 #[test]
 fn test_manager_config_builder_pattern() {
     let config = ManagerConfig::new(PathBuf::from("/tmp/.cm/tasks.json"))
-        .log_path(PathBuf::from("/tmp/.cm/custom.log.md"))
         .model("claude-opus-4-5-20251101".to_string())
         .max_cycles(10);
 
-    assert_eq!(config.log_path, PathBuf::from("/tmp/.cm/custom.log.md"));
     assert_eq!(config.model, "claude-opus-4-5-20251101");
     assert_eq!(config.max_cycles, 10);
 }

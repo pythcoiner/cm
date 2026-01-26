@@ -93,8 +93,6 @@ pub enum ManagerError {
 pub struct ManagerConfig {
     /// Path to the tasks.json state file.
     pub state_path: PathBuf,
-    /// Path to the LOG.md file.
-    pub log_path: PathBuf,
     /// Path to the roadmap.json file.
     pub roadmap_path: PathBuf,
     /// Path to the ROADMAP.md file.
@@ -122,7 +120,6 @@ impl ManagerConfig {
             .unwrap_or(std::path::Path::new("."));
         Self {
             state_path: state_path.clone(),
-            log_path: parent.join("LOG.md"),
             roadmap_path: parent.join("roadmap.json"),
             roadmap_md_path: parent.join("ROADMAP.md"),
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
@@ -130,12 +127,6 @@ impl ManagerConfig {
             max_cycles: 5,
             build_commands: Vec::new(),
         }
-    }
-
-    /// Set the log path.
-    pub fn log_path(mut self, path: PathBuf) -> Self {
-        self.log_path = path;
-        self
     }
 
     /// Set the working directory.
@@ -214,11 +205,11 @@ impl Manager {
         let state = load_state(&config.state_path)?;
         let agent_spawner = AgentSpawner::new(config.model.clone());
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
-        let log_manager = LogManager::new(config.log_path.clone());
 
-        // Initialize phase logger
+        // Initialize phase logger and log manager
         let cm_dir = config.state_path.parent().unwrap_or(std::path::Path::new("."));
         let phase_logger = PhaseLogger::new(cm_dir)?;
+        let log_manager = LogManager::new(cm_dir.join("logs/cm.log"));
 
         // Load roadmap if available
         let roadmap_state = match load_roadmap(&config.roadmap_path) {
@@ -1622,18 +1613,15 @@ mod tests {
         let config = ManagerConfig::new(PathBuf::from("/tmp/tasks.json"));
 
         assert_eq!(config.state_path, PathBuf::from("/tmp/tasks.json"));
-        assert_eq!(config.log_path, PathBuf::from("/tmp/LOG.md"));
         assert_eq!(config.max_cycles, 5);
     }
 
     #[test]
     fn test_manager_config_builder() {
         let config = ManagerConfig::new(PathBuf::from("/tmp/tasks.json"))
-            .log_path(PathBuf::from("/tmp/custom.md"))
             .model("claude-opus-4-5-20251101".to_string())
             .max_cycles(10);
 
-        assert_eq!(config.log_path, PathBuf::from("/tmp/custom.md"));
         assert_eq!(config.model, "claude-opus-4-5-20251101");
         assert_eq!(config.max_cycles, 10);
     }
