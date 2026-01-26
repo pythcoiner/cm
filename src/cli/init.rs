@@ -9,9 +9,9 @@ use log::info;
 
 use super::CliError;
 use crate::command::{
-    ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE,
-    IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
-    SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE,
+    ACTIONS_TEMPLATE, CM_COMMAND, END_COMMAND, EXPAND_COMMAND, FEAT_COMMAND, FIX_COMMAND,
+    FIX_TEMPLATE, IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND,
+    SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE, TASK_PLAN_TEMPLATE,
 };
 
 /// Command file definition.
@@ -56,6 +56,10 @@ const COMMANDS: &[CommandFile] = &[
         name: "split",
         content: SPLIT_COMMAND,
     },
+    CommandFile {
+        name: "expand",
+        content: EXPAND_COMMAND,
+    },
 ];
 
 /// All template files to write.
@@ -83,6 +87,10 @@ const TEMPLATES: &[TemplateFile] = &[
     TemplateFile {
         path: "agents/PLAN.md",
         content: PLAN_TEMPLATE,
+    },
+    TemplateFile {
+        path: "agents/TASK_PLAN_TEMPLATE.md",
+        content: TASK_PLAN_TEMPLATE,
     },
     TemplateFile {
         path: "SCHEMA.md",

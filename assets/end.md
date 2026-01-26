@@ -440,34 +440,53 @@ Write the complete JSON structure to `.cm/tasks.json`.
 
 For each phase, create a plan file at `.cm/plans/plan-N.md` containing detailed instructions for that phase's tasks.
 
+**Reference:** See `.cm/agents/TASK_PLAN_TEMPLATE.md` for the complete template structure.
+
 1. Create the `.cm/plans/` directory if it doesn't exist
-2. For each phase, create a plan file with:
-   - Phase goal and overview
-   - Detailed instructions for each task
-   - Success criteria
-   - Files to create or modify
+2. For each phase, create a plan file following the template with:
+   - **Objective** - What the phase/task accomplishes
+   - **Files to Read** - Context files with line ranges for large files
+   - **Implementation Steps** - Numbered steps with file paths and line numbers
+   - **Files to Modify/Create** - Specific files with changes
+   - **Verification** - Commands and checks
+   - **Reviewer Criteria** - Must-check and may-skip items
+
+**Tip:** After creating minimal plans, run `/expand` to enrich them with detailed file references, code examples, and reviewer criteria.
 
 Example `.cm/plans/plan-1.md`:
 ```markdown
 # Phase 1: Foundation
 
-## Goal
+## Objective
 Set up the initial project structure and dependencies.
 
-## Tasks
+## Files to Read
+- None (new project)
+
+## Implementation Steps
 
 ### Task 1: Initialize project structure
 
-1. Create the project with `cargo init`
-2. Add dependencies to Cargo.toml:
-   - clap = "4"
-   - serde = { version = "1", features = ["derive"] }
-3. Create src/main.rs with basic CLI setup
-4. Ensure `cargo build` succeeds
+1. **Create project** (project root)
+   - Run `cargo init`
+   - Verify Cargo.toml is created
 
-## Success Criteria
-- Project builds without errors
-- All dependencies resolve correctly
+2. **Add dependencies** (`Cargo.toml:6-12`)
+   - Add clap = "4"
+   - Add serde = { version = "1", features = ["derive"] }
+
+3. **Create CLI entry point** (`src/main.rs:1-30`)
+   - Set up basic Clap argument parsing
+   - Add help and version flags
+
+## Verification
+- [ ] `cargo build` succeeds
+- [ ] All dependencies resolve correctly
+
+## Reviewer Criteria
+**Must check:**
+- [ ] Project builds without warnings
+- [ ] Dependencies are at latest stable versions
 ```
 
 ---
