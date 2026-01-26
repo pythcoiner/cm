@@ -809,6 +809,18 @@ impl Manager {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
                 tee_eprintln(&format!("[{} PHASE_IMPLEM] {} parse failed: {}", now, phase_id, msg));
 
+                // Log stderr if available (may contain error info)
+                if !output.stderr.trim().is_empty() {
+                    tee_eprintln(&format!("[{} PHASE_IMPLEM] {} stderr: {}", now, phase_id, output.stderr.trim()));
+                }
+
+                // Log non-zero exit code
+                if let Some(code) = output.exit_code {
+                    if code != 0 {
+                        tee_eprintln(&format!("[{} PHASE_IMPLEM] {} exit code: {}", now, phase_id, code));
+                    }
+                }
+
                 if let Some(session_id) = &output.session_id {
                     tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retrying with --continue...", now, phase_id));
                     let retry_handle = self.agent_spawner.spawn_with_continue(
@@ -818,15 +830,32 @@ impl Manager {
                         "PHASE_IMPLEM",
                     )?;
                     let retry_output = retry_handle.wait()?;
-                    ResponseParser::parse(&retry_output.stdout).map_err(|e| {
-                        tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e));
-                        e
-                    })?
+                    match ResponseParser::parse(&retry_output.stdout) {
+                        Ok(resp) => resp,
+                        Err(e) => {
+                            tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e));
+                            // Restore task state before returning error
+                            for task in &pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                            return Err(e.into());
+                        }
+                    }
                 } else {
+                    // Restore task state before returning error
+                    for task in &pending_tasks {
+                        let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                    }
                     return Err(AgentError::ParseError(msg).into());
                 }
             }
-            Err(e) => return Err(e.into()),
+            Err(e) => {
+                // Restore task state before returning error
+                for task in &pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+                return Err(e.into());
+            }
         };
 
         // Log full response to phase logger (with parsed result)

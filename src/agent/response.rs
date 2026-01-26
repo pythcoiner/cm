@@ -177,6 +177,13 @@ impl ResponseParser {
     pub fn parse(raw_json: &str) -> Result<AgentResponse, AgentError> {
         let trimmed = raw_json.trim();
 
+        // Check for empty output first
+        if trimmed.is_empty() {
+            return Err(AgentError::ParseError(
+                "claude CLI returned empty output (no stdout)".to_string(),
+            ));
+        }
+
         // Check if it's a JSON array (streaming format)
         if trimmed.starts_with('[') {
             return Self::parse_streaming_format(trimmed);
