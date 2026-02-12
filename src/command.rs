@@ -7,6 +7,7 @@ pub const END_COMMAND: &str = include_str!("../assets/end.md");
 pub const RUN_COMMAND: &str = include_str!("../assets/run.md");
 pub const SPLIT_COMMAND: &str = include_str!("../assets/split.md");
 pub const EXPAND_COMMAND: &str = include_str!("../assets/expand.md");
+pub const CLONE_COMMAND: &str = include_str!("../assets/clone.md");
 
 // Template files for cm init
 pub const IMPLEMENTER_TEMPLATE: &str = include_str!("../assets/templates/IMPLEMENTER.md");

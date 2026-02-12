@@ -9,9 +9,10 @@ use log::info;
 
 use super::CliError;
 use crate::command::{
-    ACTIONS_TEMPLATE, CM_COMMAND, CONFIG_TEMPLATE, END_COMMAND, EXPAND_COMMAND, FEAT_COMMAND,
-    FIX_COMMAND, FIX_TEMPLATE, IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE, REVIEWER_TEMPLATE,
-    RUN_COMMAND, SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE, TASK_PLAN_TEMPLATE,
+    ACTIONS_TEMPLATE, CLONE_COMMAND, CM_COMMAND, CONFIG_TEMPLATE, END_COMMAND, EXPAND_COMMAND,
+    FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE, IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE,
+    REVIEWER_TEMPLATE, RUN_COMMAND, SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE,
+    TASK_PLAN_TEMPLATE,
 };
 
 /// Command file definition.
@@ -59,6 +60,10 @@ const COMMANDS: &[CommandFile] = &[
     CommandFile {
         name: "expand",
         content: EXPAND_COMMAND,
+    },
+    CommandFile {
+        name: "clone",
+        content: CLONE_COMMAND,
     },
 ];
 
@@ -194,6 +199,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
     println!("  /expand - Expand plan files with detailed instructions");
     println!("  /end    - Finalize feat/fix/cm session");
     println!("  /run    - Run cm orchestration");
+    println!("  /clone  - Generate spec documents from source code");
 
     Ok(())
 }
