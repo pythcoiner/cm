@@ -743,7 +743,12 @@ impl Manager {
                     let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                 }
             })?;
-        let plan_output = plan_handle.wait()?;
+        let plan_output = plan_handle.wait()
+            .inspect_err(|_| {
+                for task in &pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
 
         // Parse plan response
         let plan_response = match ResponseParser::parse_plan_response(&plan_output.stdout) {
@@ -821,7 +826,12 @@ impl Manager {
                     let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                 }
             })?;
-        let output = handle.wait()?;
+        let output = handle.wait()
+            .inspect_err(|_| {
+                for task in &pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
 
         // Parse the response
         let response = match ResponseParser::parse(&output.stdout) {
@@ -854,7 +864,12 @@ impl Manager {
                             let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                         }
                     })?;
-                    let retry_output = retry_handle.wait()?;
+                    let retry_output = retry_handle.wait()
+                        .inspect_err(|_| {
+                            for task in &pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
                     match ResponseParser::parse(&retry_output.stdout) {
                         Ok(resp) => resp,
                         Err(e) => {
@@ -1067,7 +1082,12 @@ impl Manager {
                         let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                     }
                 })?;
-            let review_output = review_handle.wait()?;
+            let review_output = review_handle.wait()
+                .inspect_err(|_| {
+                    for task in pending_tasks {
+                        let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                    }
+                })?;
 
             // Parse review response with proper JSON extraction
             let review_response = match ResponseParser::parse_review_response(&review_output.stdout) {
@@ -1085,7 +1105,12 @@ impl Manager {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                             }
                         })?;
-                        let retry_output = retry_handle.wait()?;
+                        let retry_output = retry_handle.wait()
+                            .inspect_err(|_| {
+                                for task in pending_tasks {
+                                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                                }
+                            })?;
                         match ResponseParser::parse_review_response(&retry_output.stdout) {
                             Ok(resp) => resp,
                             Err(_) => {
@@ -1196,7 +1221,12 @@ impl Manager {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                             }
                         })?;
-                    let fix_output = fix_handle.wait()?;
+                    let fix_output = fix_handle.wait()
+                        .inspect_err(|_| {
+                            for task in pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
 
                     // Parse and log with parsed response if available
                     let fix_response = ResponseParser::parse(&fix_output.stdout).ok();
