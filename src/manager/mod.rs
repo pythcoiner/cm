@@ -668,7 +668,7 @@ impl Manager {
                 );
                 emit_cm(&format!("Resuming {} at REVIEW cycle {}", phase_id, starting_cycle));
 
-                let verdict = self.run_phase_review_cycle(phase_id, baseline, starting_cycle)?;
+                let verdict = self.run_phase_review_cycle(phase_id, baseline, starting_cycle, &pending_tasks)?;
 
                 match verdict {
                     Verdict::Approved => {
@@ -952,7 +952,7 @@ impl Manager {
 
         // Run phase-level review cycle
         if !baseline_commit.is_empty() {
-            let verdict = self.run_phase_review_cycle(phase_id, &baseline_commit, 0)?;
+            let verdict = self.run_phase_review_cycle(phase_id, &baseline_commit, 0, &pending_tasks)?;
 
             match verdict {
                 Verdict::Approved => {
@@ -1002,6 +1002,7 @@ impl Manager {
         phase_id: &str,
         baseline_commit: &str,
         starting_cycle: u32,
+        pending_tasks: &[Task],
     ) -> Result<Verdict, ManagerError> {
         let mut cycle = starting_cycle;
         let mut max_cycles = self.config.max_cycles;
@@ -1060,7 +1061,12 @@ impl Manager {
                 commit_hash: None,
             });
 
-            let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")?;
+            let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")
+                .inspect_err(|_| {
+                    for task in pending_tasks {
+                        let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                    }
+                })?;
             let review_output = review_handle.wait()?;
 
             // Parse review response with proper JSON extraction
@@ -1073,7 +1079,12 @@ impl Manager {
                             "Please provide your review verdict.",
                             phase_id,
                             "PHASE_REVIEW",
-                        )?;
+                        )
+                        .inspect_err(|_| {
+                            for task in pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
                         let retry_output = retry_handle.wait()?;
                         match ResponseParser::parse_review_response(&retry_output.stdout) {
                             Ok(resp) => resp,
@@ -1179,7 +1190,12 @@ impl Manager {
                         commit_hash: None,
                     });
 
-                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")?;
+                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
+                        .inspect_err(|_| {
+                            for task in pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
                     let fix_output = fix_handle.wait()?;
 
                     // Parse and log with parsed response if available
