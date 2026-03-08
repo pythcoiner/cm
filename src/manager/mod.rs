@@ -303,8 +303,9 @@ impl Manager {
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
-
-                    // Don't propagate the error; continue with next phase
+                    // Save state so task reverts (Pending) are persisted before stopping
+                    self.update_state()?;
+                    return Err(e);
                 }
             }
 
@@ -628,10 +629,20 @@ impl Manager {
             info!("No pending tasks in phase {}, checking completion", phase_id);
             // Try normal completion check first
             self.check_phase_completion(phase_id)?;
-            // If phase is still not completed (e.g., tasks in weird states), force complete
-            // since there's literally nothing more to do
+            // If phase is still not completed, only force complete if no tasks are InProgress.
+            // InProgress tasks indicate a previous spawn failure that was not properly reverted —
+            // forcing completion in that state would silently mark unimplemented work as done.
             let phase = self.state.get_phase_mut(phase_id)?;
             if phase.status != PhaseStatus::Completed {
+                let has_in_progress = phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress);
+                if has_in_progress {
+                    let msg = format!(
+                        "Phase {} has tasks stuck in InProgress state (spawn failure?); stopping to avoid silent force-completion",
+                        phase_id
+                    );
+                    error!("{}", msg);
+                    return Err(ManagerError::TaskNotRunnable(msg));
+                }
                 info!(
                     "Phase {} has no pending tasks but wasn't marked complete, forcing completion",
                     phase_id
@@ -726,7 +737,12 @@ impl Manager {
             commit_hash: None,
         });
 
-        let plan_handle = self.agent_spawner.spawn(&plan_prompt, phase_id, "PHASE_PLAN")?;
+        let plan_handle = self.agent_spawner.spawn(&plan_prompt, phase_id, "PHASE_PLAN")
+            .inspect_err(|_| {
+                for task in &pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
         let plan_output = plan_handle.wait()?;
 
         // Parse plan response
@@ -799,7 +815,12 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.manager_state = ManagerState::WaitingForAgent;
-        let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")?;
+        let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")
+            .inspect_err(|_| {
+                for task in &pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
         let output = handle.wait()?;
 
         // Parse the response
@@ -828,7 +849,11 @@ impl Manager {
                         "Your previous response could not be parsed. Please provide a summary of your changes.",
                         phase_id,
                         "PHASE_IMPLEM",
-                    )?;
+                    ).inspect_err(|_| {
+                        for task in &pending_tasks {
+                            let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                        }
+                    })?;
                     let retry_output = retry_handle.wait()?;
                     match ResponseParser::parse(&retry_output.stdout) {
                         Ok(resp) => resp,

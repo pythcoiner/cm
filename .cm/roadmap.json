@@ -611,6 +611,31 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-39",
+      "number": "39",
+      "name": "Fix Agent Spawn Failures",
+      "items": [
+        {
+          "id": "phase-39-item-1",
+          "name": "Pass agent prompt via stdin instead of -p CLI arg",
+          "completed": false,
+          "linked_task_ids": ["phase-39.fix-stdin-prompt.impl-1"]
+        },
+        {
+          "id": "phase-39-item-2",
+          "name": "Revert task status on spawn failure and stop on phase error",
+          "completed": false,
+          "linked_task_ids": ["phase-39.fix-error-handling.impl-2"]
+        },
+        {
+          "id": "phase-39-item-3",
+          "name": "Review spawn fix and error handling",
+          "completed": false,
+          "linked_task_ids": ["phase-39.review"]
+        }
+      ]
     }
   ]
 }

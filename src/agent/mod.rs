@@ -103,14 +103,13 @@ impl AgentSpawner {
         // Spawn the child process
         let mut child = Command::new("claude")
             .args([
-                "-p",
-                &prompt_owned,
                 "--output-format",
                 "json",
                 "--model",
                 &model_owned,
                 "--dangerously-skip-permissions",
             ])
+            .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -121,6 +120,13 @@ impl AgentSpawner {
                     AgentError::SpawnFailed(e.to_string())
                 }
             })?;
+
+        // Write prompt to stdin then close it so claude sees EOF
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
+                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {}", e))
+            })?;
+        }
 
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
@@ -167,12 +173,11 @@ impl AgentSpawner {
             .args([
                 "--continue",
                 &session_id_owned,
-                "-p",
-                &prompt_owned,
                 "--output-format",
                 "json",
                 "--dangerously-skip-permissions",
             ])
+            .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -183,6 +188,13 @@ impl AgentSpawner {
                     AgentError::SpawnFailed(e.to_string())
                 }
             })?;
+
+        // Write prompt to stdin then close it so claude sees EOF
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
+                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {}", e))
+            })?;
+        }
 
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();

@@ -542,6 +542,71 @@
         }
       ],
       "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-39",
+      "name": "Fix Agent Spawn Failures",
+      "plan": "Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-39.fix-stdin-prompt.impl-1",
+          "name": "Fix: Pass agent prompt via stdin instead of -p CLI arg",
+          "type": "fix",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/agent/mod.rs"
+            ],
+            "prior_review_issues": [
+              "Bug: Agent spawn fails with 'Argument list too long (os error 7)' when prompt exceeds ARG_MAX",
+              "Observed: Large prompts (100KB+) cause execve() to fail with E2BIG",
+              "Expected: Agent should spawn successfully regardless of prompt size",
+              "Location: src/agent/mod.rs:104-123 — prompt passed as -p CLI argument"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-39.md",
+          "roadmap_item_id": "phase-39-item-1"
+        },
+        {
+          "id": "phase-39.fix-error-handling.impl-2",
+          "name": "Fix: Revert task status on spawn failure and stop on phase error",
+          "type": "fix",
+          "status": "pending",
+          "depends_on": ["phase-39.fix-stdin-prompt.impl-1"],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs",
+              "src/state/tasks.rs"
+            ],
+            "prior_review_issues": [
+              "Bug: Spawn failure leaves tasks as InProgress, causing manager to force-complete unimplemented phases",
+              "Observed: Phase marked complete without implementation or review",
+              "Expected: Tasks reverted to Pending on error, execution stops",
+              "Location: src/manager/mod.rs:687-690 (tasks marked InProgress before spawn), src/manager/mod.rs:294-309 (error swallowed)"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-39.md",
+          "roadmap_item_id": "phase-39-item-2"
+        },
+        {
+          "id": "phase-39.review",
+          "name": "Review agent spawn fix and error handling",
+          "type": "review",
+          "status": "pending",
+          "depends_on": ["phase-39.fix-error-handling.impl-2"],
+          "context": {
+            "files_to_read": [
+              "src/agent/mod.rs",
+              "src/manager/mod.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-39.md",
+          "roadmap_item_id": "phase-39-item-3"
+        }
+      ],
+      "review_cycles_completed": 0
     }
   ],
   "agent_history": [

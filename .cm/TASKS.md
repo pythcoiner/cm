@@ -232,41 +232,57 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ## phase-35: Remove TUI Module
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-35.feat-remove-tui.impl-1**: Remove TUI and make daemon mode default - # Plan: Remove TUI and Make Daemon Mode Default
+- [x] **phase-35.feat-remove-tui.impl-1**: Remove TUI and make daemon mode default - # Plan: Remove TUI and Make Daemon Mode Default
 
 ---
 
 ## phase-36: Remove Unused MANAGER.md
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-36.feat-remove-manager.impl-1**: Remove unused MANAGER.md template and related code - # Plan: Remove Unused MANAGER.md
+- [x] **phase-36.feat-remove-manager.impl-1**: Remove unused MANAGER.md template and related code - # Plan: Remove Unused MANAGER.md
 
 ---
 
 ## phase-37: Add Phase Range Selection
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-37.feat-phase-range.impl-1**: Add range-based phase selection (e.g., p 3-6) - # Plan: Add Range-Based Phase Selection
+- [x] **phase-37.feat-phase-range.impl-1**: Add range-based phase selection (e.g., p 3-6) - # Plan: Add Range-Based Phase Selection
 
 ---
 
 ## phase-38: Add Model Selection Flag
 
-**Status:** Pending (0/1)
+**Status:** Complete (1/1)
 
 ### Tasks
 
-- [ ] **phase-38.feat-model-flag.impl-1**: Add --model flag with sonnet/opus shorthand - # Plan: Add Shorthand Model Selection (sonnet/opus)
+- [x] **phase-38.feat-model-flag.impl-1**: Add --model flag with sonnet/opus shorthand - # Plan: Add Shorthand Model Selection (sonnet/opus)
+
+---
+
+## phase-39: Fix Agent Spawn Failures
+
+**Status:** Pending (0/3)
+
+### Plan
+
+Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.
+
+### Tasks
+
+- [ ] **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg - Fix: Agent spawn failures and silent phase completion
+- [ ] **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error - Fix: Agent spawn failures and silent phase completion
+- [ ] **phase-39.review**: Review agent spawn fix and error handling - Fix: Agent spawn failures and silent phase completion
 
 ---
 
@@ -303,8 +319,9 @@ This document shows phase plans and task status. Generated from tasks.json.
 | phase-32: Add Phase Selection by Number | Complete | 1 | 1 |
 | phase-33: Add PLAN Agent Before IMPLEM | Complete | 1 | 1 |
 | phase-34: Add /split Command + Extend... | Complete | 2 | 2 |
-| phase-35: Remove TUI Module | Pending | 1 | 0 |
-| phase-36: Remove Unused MANAGER.md | Pending | 1 | 0 |
-| phase-37: Add Phase Range Selection | Pending | 1 | 0 |
-| phase-38: Add Model Selection Flag | Pending | 1 | 0 |
-| **Total** | | **13** | **9** |
+| phase-35: Remove TUI Module | Complete | 1 | 1 |
+| phase-36: Remove Unused MANAGER.md | Complete | 1 | 1 |
+| phase-37: Add Phase Range Selection | Complete | 1 | 1 |
+| phase-38: Add Model Selection Flag | Complete | 1 | 1 |
+| phase-39: Fix Agent Spawn Failures | Pending | 3 | 0 |
+| **Total** | | **16** | **13** |
