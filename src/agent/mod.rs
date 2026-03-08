@@ -103,6 +103,7 @@ impl AgentSpawner {
         // Spawn the child process
         let mut child = Command::new("claude")
             .args([
+                "--print",
                 "--output-format",
                 "json",
                 "--model",
@@ -171,6 +172,7 @@ impl AgentSpawner {
         // Spawn the child process with --continue flag
         let mut child = Command::new("claude")
             .args([
+                "--print",
                 "--continue",
                 &session_id_owned,
                 "--output-format",

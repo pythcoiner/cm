@@ -1785,12 +1785,10 @@ mod tests {
                         return vec![];
                     }
                     (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
+                } else if token.parse::<u32>().is_ok() {
+                    vec![format!("phase-{}", token)]
                 } else {
-                    if token.parse::<u32>().is_ok() {
-                        vec![format!("phase-{}", token)]
-                    } else {
-                        vec![]
-                    }
+                    vec![]
                 }
             })
             .collect()

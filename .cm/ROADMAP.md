@@ -302,11 +302,11 @@ Status: **Complete** (1/1)
 
 ## Phase 39: Fix Agent Spawn Failures
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Pass agent prompt via stdin instead of -p CLI arg
-- [ ] Revert task status on spawn failure and stop on phase error
-- [ ] Review spawn fix and error handling
+- [x] Pass agent prompt via stdin instead of -p CLI arg
+- [x] Revert task status on spawn failure and stop on phase error
+- [x] Review spawn fix and error handling
 
 ---
 
@@ -347,5 +347,5 @@ Status: **Not Started** (0/3)
 | Phase 36: Remove Unused MANAGER.md | Complete | 6/6 |
 | Phase 37: Add Phase Range Selection | Complete | 4/4 |
 | Phase 38: Add Model Selection Flag | Complete | 5/5 |
-| Phase 39: Fix Agent Spawn Failures | Not Started | 0/3 |
-| **Total** | | **67/70** |
+| Phase 39: Fix Agent Spawn Failures | Complete | 3/3 |
+| **Total** | | **70/70** |
