@@ -954,7 +954,7 @@ impl Manager {
                     self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
                 }
                 self.manager_state = ManagerState::Executing;
-                return Ok(());
+                return Err(e.into());
             }
             emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
         } else {
