@@ -943,18 +943,112 @@ impl Manager {
             let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
             if let Err(e) = build_result {
-                let err_msg = match &e {
+                let mut last_err_msg = match &e {
                     BuildError::CommandFailed { stderr, .. } => stderr.clone(),
                     _ => e.to_string(),
                 };
-                warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, err_msg);
+                warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, last_err_msg);
                 emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {}", phase_id));
-                // Mark tasks back to pending for retry
-                for task in &pending_tasks {
-                    self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+
+                // Enter build-fix cycle bounded by max_cycles
+                let max_cycles = self.config.max_cycles;
+                let mut build_fixed = false;
+
+                for cycle in 0..max_cycles {
+                    emit_cm(&format!(
+                        "Build-fix cycle {}/{} for {}",
+                        cycle + 1, max_cycles, phase_id
+                    ));
+
+                    let build_feedback = format!(
+                        "## Build Error\n\nThe build failed after implementation. Fix the following build errors:\n\n```\n{}\n```\n",
+                        last_err_msg
+                    );
+
+                    let phase = self
+                        .state
+                        .phases
+                        .iter()
+                        .find(|p| p.id == phase_id)
+                        .cloned()
+                        .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
+
+                    let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &build_feedback);
+                    let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
+
+                    self.state.log_records.push(
+                        LogManager::create_agent_spawn_record(&AgentType::Fix, phase_id, &fix_prompt),
+                    );
+
+                    let fix_agent_id = Uuid::new_v4().to_string();
+                    self.state.agent_history.push(AgentInvocation {
+                        id: fix_agent_id.clone(),
+                        task_id: phase_id.to_string(),
+                        agent_type: AgentType::Fix,
+                        started_at: Utc::now(),
+                        completed_at: None,
+                        exit_status: None,
+                        commit_hash: None,
+                    });
+
+                    emit_cm(&format!("Spawning FIX agent for build error in {}", phase_id));
+                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
+                        .inspect_err(|_| {
+                            for task in &pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
+                    let fix_output = fix_handle.wait()
+                        .inspect_err(|_| {
+                            for task in &pending_tasks {
+                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                            }
+                        })?;
+
+                    let fix_response = ResponseParser::parse(&fix_output.stdout).ok();
+                    let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code, fix_response.as_ref());
+
+                    if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
+                        inv.completed_at = Some(Utc::now());
+                        inv.exit_status = fix_output.exit_code;
+                    }
+
+                    // Commit fix changes if any
+                    if self.check_git_changes()? {
+                        if let Err(ce) = self.commit_agent_changes(phase_id, "PHASE_FIX", &fix_agent_id) {
+                            warn!("Failed to commit PHASE_FIX changes: {}", ce);
+                        }
+                    }
+
+                    // Re-verify build
+                    match self.build_verifier.verify_commands(&self.config.build_commands) {
+                        Ok(()) => {
+                            emit_cm(&format!("Build PASSED after fix cycle {} for {}", cycle + 1, phase_id));
+                            build_fixed = true;
+                            break;
+                        }
+                        Err(e2) => {
+                            last_err_msg = match &e2 {
+                                BuildError::CommandFailed { stderr, .. } => stderr.clone(),
+                                _ => e2.to_string(),
+                            };
+                            warn!("Build still failing after fix cycle {} for {}: {}", cycle + 1, phase_id, last_err_msg);
+                            emit_cm(&format!("Build still FAILED after fix cycle {} for {}", cycle + 1, phase_id));
+                        }
+                    }
+
+                    self.update_state()?;
                 }
-                self.manager_state = ManagerState::Executing;
-                return Err(e.into());
+
+                if !build_fixed {
+                    warn!("Build-fix cycles exhausted for {} after {} attempts", phase_id, max_cycles);
+                    emit_cm(&format!("Build-fix EXHAUSTED for {} after {} cycles", phase_id, max_cycles));
+                    for task in &pending_tasks {
+                        self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+                    }
+                    self.manager_state = ManagerState::Executing;
+                    return Err(ManagerError::MaxCyclesExceeded(phase_id.to_string()));
+                }
             }
             emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
         } else {
