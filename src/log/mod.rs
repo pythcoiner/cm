@@ -181,7 +181,7 @@ impl LogManager {
             .create(true)
             .open(&self.path)?;
 
-        writeln!(file, "{}", content)?;
+        writeln!(file, "{content}")?;
         Ok(())
     }
 
@@ -191,15 +191,15 @@ impl LogManager {
         let mut parts = vec![format!("[{}] **{}**", timestamp, entry.action)];
 
         if let Some(ref phase) = entry.phase {
-            parts.push(format!("Phase: {}", phase));
+            parts.push(format!("Phase: {phase}"));
         }
 
         if let Some(ref task) = entry.task {
-            parts.push(format!("Task: {}", task));
+            parts.push(format!("Task: {task}"));
         }
 
         if let Some(ref agent_id) = entry.agent_id {
-            parts.push(format!("Agent: {}", agent_id));
+            parts.push(format!("Agent: {agent_id}"));
         }
 
         format!("{}\n\n{}\n", parts.join(" | "), entry.details)
@@ -234,8 +234,7 @@ impl LogManager {
     pub fn format_agent_spawn(agent_type: &AgentType, task_id: &str, prompt: &str) -> String {
         let truncated_prompt = truncate_content(prompt, MAX_CONTENT_LENGTH);
         format!(
-            "### Agent Spawn\n\n**Type:** {:?}\n**Task:** {}\n\n<details>\n<summary>Prompt</summary>\n\n```\n{}\n```\n\n</details>",
-            agent_type, task_id, truncated_prompt
+            "### Agent Spawn\n\n**Type:** {agent_type:?}\n**Task:** {task_id}\n\n<details>\n<summary>Prompt</summary>\n\n```\n{truncated_prompt}\n```\n\n</details>"
         )
     }
 
@@ -252,7 +251,7 @@ impl LogManager {
         if !response.files_created.is_empty() {
             output.push_str("**Files Created:**\n");
             for file in &response.files_created {
-                output.push_str(&format!("- `{}`\n", file));
+                output.push_str(&format!("- `{file}`\n"));
             }
             output.push('\n');
         }
@@ -260,7 +259,7 @@ impl LogManager {
         if !response.files_modified.is_empty() {
             output.push_str("**Files Modified:**\n");
             for file in &response.files_modified {
-                output.push_str(&format!("- `{}`\n", file));
+                output.push_str(&format!("- `{file}`\n"));
             }
             output.push('\n');
         }
@@ -268,14 +267,13 @@ impl LogManager {
         if !response.commands_run.is_empty() {
             output.push_str("**Commands Run:**\n");
             for cmd in &response.commands_run {
-                output.push_str(&format!("- `{}`\n", cmd));
+                output.push_str(&format!("- `{cmd}`\n"));
             }
             output.push('\n');
         }
 
         output.push_str(&format!(
-            "<details>\n<summary>Raw Response</summary>\n\n```\n{}\n```\n\n</details>",
-            truncated_response
+            "<details>\n<summary>Raw Response</summary>\n\n```\n{truncated_response}\n```\n\n</details>"
         ));
 
         output
@@ -288,7 +286,7 @@ impl LogManager {
     /// * `output` - The output from the build command
     pub fn format_build_result(output: &BuildOutput) -> String {
         let status = if output.success { "PASS" } else { "FAIL" };
-        let mut result = format!("### Build Result: {}\n\n", status);
+        let mut result = format!("### Build Result: {status}\n\n");
 
         if !output.errors.is_empty() {
             result.push_str("**Errors:**\n");
@@ -317,8 +315,7 @@ impl LogManager {
         if !output.success {
             let truncated_stderr = truncate_content(&output.stderr, MAX_CONTENT_LENGTH / 2);
             result.push_str(&format!(
-                "<details>\n<summary>Stderr</summary>\n\n```\n{}\n```\n\n</details>",
-                truncated_stderr
+                "<details>\n<summary>Stderr</summary>\n\n```\n{truncated_stderr}\n```\n\n</details>"
             ));
         }
 
@@ -337,7 +334,7 @@ impl LogManager {
             Verdict::NeedsFixes => "NEEDS_FIXES",
         };
 
-        let mut result = format!("### Review Result: {}\n\n", verdict_str);
+        let mut result = format!("### Review Result: {verdict_str}\n\n");
 
         if issues.is_empty() {
             result.push_str("No issues found.\n");
@@ -460,7 +457,7 @@ impl LogManager {
     ///
     /// Returns an error if writing to the log file fails.
     pub fn log_task_complete(&mut self, task_id: &str) -> Result<(), LogError> {
-        let details = format!("Task `{}` completed successfully.", task_id);
+        let details = format!("Task `{task_id}` completed successfully.");
         let entry =
             LogEntry::new(LogAction::TaskComplete, details).with_task(task_id.to_string());
         self.append_entry(&entry)
@@ -477,7 +474,7 @@ impl LogManager {
     ///
     /// Returns an error if writing to the log file fails.
     pub fn log_task_deferred(&mut self, task_id: &str, reason: &str) -> Result<(), LogError> {
-        let details = format!("Task `{}` deferred.\n\n**Reason:** {}", task_id, reason);
+        let details = format!("Task `{task_id}` deferred.\n\n**Reason:** {reason}");
         let entry =
             LogEntry::new(LogAction::TaskDeferred, details).with_task(task_id.to_string());
         self.append_entry(&entry)
@@ -493,7 +490,7 @@ impl LogManager {
     ///
     /// Returns an error if writing to the log file fails.
     pub fn log_error(&mut self, error: &str) -> Result<(), LogError> {
-        let details = format!("**Error:** {}", error);
+        let details = format!("**Error:** {error}");
         let entry = LogEntry::new(LogAction::Error, details);
         self.append_entry(&entry)
     }
@@ -524,15 +521,15 @@ impl LogManager {
         details.push_str("**Status:** Manager shutting down gracefully.\n\n");
 
         if let Some(phase) = current_phase {
-            details.push_str(&format!("**Interrupted Phase:** {}\n", phase));
+            details.push_str(&format!("**Interrupted Phase:** {phase}\n"));
         }
 
         if let Some(task) = current_task {
-            details.push_str(&format!("**Interrupted Task:** {}\n", task));
+            details.push_str(&format!("**Interrupted Task:** {task}\n"));
         }
 
         if let Some(r) = reason {
-            details.push_str(&format!("\n**Reason:** {}\n", r));
+            details.push_str(&format!("\n**Reason:** {r}\n"));
         }
 
         details.push_str(
@@ -581,7 +578,7 @@ impl LogManager {
         LogRecord::new(
             StateLogAction::AgentSpawn,
             LogData::AgentSpawn {
-                agent_type: format!("{:?}", agent_type).to_lowercase(),
+                agent_type: format!("{agent_type:?}").to_lowercase(),
                 prompt_preview,
             },
         )

@@ -176,7 +176,7 @@ pub fn run() -> Result<(), CliError> {
         .parent()
         .unwrap_or(std::path::Path::new(".cm"));
     if let Err(e) = init_log_file(cm_dir) {
-        eprintln!("Warning: failed to initialize log file: {}", e);
+        eprintln!("Warning: failed to initialize log file: {e}");
     }
 
     // Initialize logger with TeeWriter to mirror output to cm.log
@@ -191,10 +191,10 @@ pub fn run() -> Result<(), CliError> {
     let shutdown_flag = shutdown_handler.shutdown_flag();
 
     info!("Claude Code Manager starting...");
-    debug!("CLI arguments: {:?}", cli);
+    debug!("CLI arguments: {cli:?}");
 
     if let Some(config) = &cli.config {
-        debug!("Using config file: {:?}", config);
+        debug!("Using config file: {config:?}");
     }
 
     // Handle subcommand first (before flag dispatch)
@@ -229,7 +229,7 @@ pub fn run() -> Result<(), CliError> {
 
     match &result {
         Ok(()) => info!("Claude Code Manager finished."),
-        Err(e) => warn!("Claude Code Manager finished with error: {}", e),
+        Err(e) => warn!("Claude Code Manager finished with error: {e}"),
     }
 
     result
@@ -252,7 +252,7 @@ pub fn run() -> Result<(), CliError> {
 fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     // 1. Load config file (explicit path or default)
     let config_file = if let Some(ref path) = cli.config {
-        debug!("Loading config from explicit path: {:?}", path);
+        debug!("Loading config from explicit path: {path:?}");
         Some(ConfigFile::load(path)?)
     } else {
         debug!("Trying to load default config from .cm/config.toml");
@@ -260,7 +260,7 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     };
 
     if let Some(ref cf) = config_file {
-        debug!("Config file loaded: {:?}", cf);
+        debug!("Config file loaded: {cf:?}");
     } else {
         debug!("No config file found, using defaults");
     }
@@ -274,8 +274,7 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
             // Validate model value from config file
             if model != "sonnet" && model != "opus" {
                 return Err(CliError::ValidationFailed(format!(
-                    "invalid model '{}' in config file, must be 'sonnet' or 'opus'",
-                    model
+                    "invalid model '{model}' in config file, must be 'sonnet' or 'opus'"
                 )));
             }
             config = config.model(model);
@@ -316,7 +315,7 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
         }
     }
 
-    debug!("Final ManagerConfig: {:?}", config);
+    debug!("Final ManagerConfig: {config:?}");
     Ok(config)
 }
 
@@ -351,7 +350,7 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
         .recover_from_crash(&state)
         .map_err(|e| CliError::StateError(StateError::ParseError(e.to_string())))?;
 
-    info!("Recovery action: {}", action);
+    info!("Recovery action: {action}");
 
     match action {
         RecoveryAction::Continue | RecoveryAction::Retry => {
@@ -380,7 +379,7 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
         }
         RecoveryAction::Rollback(checkpoint_id) => {
             // Restore from checkpoint and resume
-            info!("Rolling back to checkpoint {}", checkpoint_id);
+            info!("Rolling back to checkpoint {checkpoint_id}");
 
             let restored_state = recovery
                 .restore(&checkpoint_id)
@@ -465,8 +464,7 @@ fn print_status(state: &TasksState) {
         .filter(|p| p.status == crate::state::PhaseStatus::Completed)
         .count();
     println!(
-        "Phase progress: {}/{} phases complete",
-        completed_phases, total_phases
+        "Phase progress: {completed_phases}/{total_phases} phases complete"
     );
 
     // Current phase and task
@@ -498,10 +496,10 @@ fn print_status(state: &TasksState) {
 
     let total = pending + in_progress + completed + deferred;
     println!("Task summary:");
-    println!("  Completed:   {}/{}", completed, total);
-    println!("  In Progress: {}/{}", in_progress, total);
-    println!("  Pending:     {}/{}", pending, total);
-    println!("  Deferred:    {}/{}", deferred, total);
+    println!("  Completed:   {completed}/{total}");
+    println!("  In Progress: {in_progress}/{total}");
+    println!("  Pending:     {pending}/{total}");
+    println!("  Deferred:    {deferred}/{total}");
     println!();
 
     // List deferred tasks
@@ -534,6 +532,7 @@ fn print_status(state: &TasksState) {
             crate::state::PhaseStatus::Pending => "[ ]",
             crate::state::PhaseStatus::InProgress => "[~]",
             crate::state::PhaseStatus::Completed => "[x]",
+            crate::state::PhaseStatus::Deferred => "[!]",
         };
 
         println!(
@@ -558,7 +557,7 @@ fn print_status(state: &TasksState) {
         println!();
         println!("WARNING: Execution was interrupted. Use --continue to resume.");
         if let Some(interrupted_at) = state.interrupted_at {
-            println!("Interrupted at: {}", interrupted_at);
+            println!("Interrupted at: {interrupted_at}");
         }
     }
 }
@@ -631,8 +630,7 @@ fn execute_validate(cli: &Cli) -> Result<(), CliError> {
     if let Some(ref current_phase) = state.current_phase {
         if !state.phases.iter().any(|p| &p.id == current_phase) {
             errors.push(format!(
-                "current_phase '{}' not found in phases",
-                current_phase
+                "current_phase '{current_phase}' not found in phases"
             ));
         }
     }
@@ -641,8 +639,7 @@ fn execute_validate(cli: &Cli) -> Result<(), CliError> {
     if let Some(ref current_task) = state.current_task {
         if !task_id_set.contains(current_task.as_str()) {
             errors.push(format!(
-                "current_task '{}' not found in any phase",
-                current_task
+                "current_task '{current_task}' not found in any phase"
             ));
         }
     }
@@ -657,7 +654,7 @@ fn execute_validate(cli: &Cli) -> Result<(), CliError> {
     } else {
         println!("Validation errors:");
         for error in &errors {
-            println!("  - {}", error);
+            println!("  - {error}");
         }
         Err(CliError::ValidationFailed(format!(
             "{} validation error(s)",
@@ -713,7 +710,7 @@ fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
         );
         files_regenerated += 1;
     } else {
-        println!("Skipped ROADMAP.md: {:?} not found", roadmap_json_path);
+        println!("Skipped ROADMAP.md: {roadmap_json_path:?} not found");
     }
 
     // Regenerate TASKS.md from tasks.json
@@ -736,7 +733,7 @@ fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
     );
     files_regenerated += 1;
 
-    println!("\n{} file(s) regenerated.", files_regenerated);
+    println!("\n{files_regenerated} file(s) regenerated.");
     Ok(())
 }
 
@@ -759,7 +756,7 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
     if !result.errors.is_empty() {
         println!("Errors ({}):", result.errors.len());
         for error in &result.errors {
-            println!("  - {}", error);
+            println!("  - {error}");
         }
         println!();
     }
@@ -768,7 +765,7 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
     if !result.warnings.is_empty() {
         println!("Warnings ({}):", result.warnings.len());
         for warning in &result.warnings {
-            println!("  ! {}", warning);
+            println!("  ! {warning}");
         }
         println!();
     }
@@ -799,14 +796,14 @@ fn execute_prune(cli: &Cli) -> Result<(), CliError> {
 
     // Prune all phase logs
     if logs_dir.exists() {
-        info!("Pruning phase logs in: {:?}", logs_dir);
+        info!("Pruning phase logs in: {logs_dir:?}");
         let stats = crate::log::PhaseLogger::prune_all(&logs_dir)?;
         println!(
             "Pruned phase logs: {} entries removed, {} entries kept",
             stats.removed_count, stats.kept_count
         );
     } else {
-        println!("No phase logs directory found at {:?}", logs_dir);
+        println!("No phase logs directory found at {logs_dir:?}");
     }
 
     Ok(())
@@ -888,9 +885,9 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
     // Save modified state
     save_state(&state, &cli.state)?;
 
-    println!("Phase '{}' reset to pending state", phase_id);
+    println!("Phase '{phase_id}' reset to pending state");
     println!("  - Phase status: pending");
-    println!("  - {} task(s) reset", task_count);
+    println!("  - {task_count} task(s) reset");
 
     // Reset roadmap.json items linked to this phase
     let cm_dir = cli
@@ -929,13 +926,13 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
             let roadmap_content = generate_roadmap_md(&roadmap);
             write_md_file(&roadmap_content, &roadmap_md_path)?;
 
-            println!("  - {} roadmap item(s) reset", items_reset);
+            println!("  - {items_reset} roadmap item(s) reset");
         }
     }
 
     // Remove phase log file
     let logs_dir = cm_dir.join("logs");
-    let phase_log_path = logs_dir.join(format!("{}.log", phase_id));
+    let phase_log_path = logs_dir.join(format!("{phase_id}.log"));
 
     if phase_log_path.exists() {
         fs::remove_file(&phase_log_path)?;

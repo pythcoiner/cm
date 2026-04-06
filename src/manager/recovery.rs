@@ -80,7 +80,7 @@ impl std::fmt::Display for RecoveryAction {
             RecoveryAction::Continue => write!(f, "Continue"),
             RecoveryAction::Retry => write!(f, "Retry"),
             RecoveryAction::Skip => write!(f, "Skip"),
-            RecoveryAction::Rollback(id) => write!(f, "Rollback to {}", id),
+            RecoveryAction::Rollback(id) => write!(f, "Rollback to {id}"),
         }
     }
 }
@@ -139,8 +139,7 @@ impl RecoveryManager {
         fs::write(&checkpoint_path, content)?;
 
         info!(
-            "Created checkpoint {} at {:?}",
-            checkpoint_id, checkpoint_path
+            "Created checkpoint {checkpoint_id} at {checkpoint_path:?}"
         );
 
         Ok(checkpoint_id)
@@ -174,7 +173,7 @@ impl RecoveryManager {
         let state: TasksState = serde_json::from_str(&content)
             .map_err(|e| RecoveryError::CorruptedCheckpoint(e.to_string()))?;
 
-        info!("Restored state from checkpoint {}", checkpoint_id);
+        info!("Restored state from checkpoint {checkpoint_id}");
 
         Ok(state)
     }
@@ -273,7 +272,7 @@ impl RecoveryManager {
 
             // Try to find a checkpoint to rollback to
             if let Some(checkpoint_id) = self.latest_checkpoint()? {
-                info!("Suggesting rollback to checkpoint {}", checkpoint_id);
+                info!("Suggesting rollback to checkpoint {checkpoint_id}");
                 return Ok(RecoveryAction::Rollback(checkpoint_id));
             } else {
                 warn!("No checkpoints available for rollback");
@@ -320,7 +319,7 @@ impl RecoveryManager {
         // Check for invalid current_phase reference
         if let Some(ref current_phase) = state.current_phase {
             if !state.phases.iter().any(|p| &p.id == current_phase) {
-                error!("current_phase '{}' not found in phases", current_phase);
+                error!("current_phase '{current_phase}' not found in phases");
                 return true;
             }
         }
@@ -334,7 +333,7 @@ impl RecoveryManager {
                 .any(|t| &t.id == current_task);
 
             if !task_exists {
-                error!("current_task '{}' not found in any phase", current_task);
+                error!("current_task '{current_task}' not found in any phase");
                 return true;
             }
         }
@@ -366,16 +365,16 @@ impl RecoveryManager {
 
             match fs::remove_file(&checkpoint_path) {
                 Ok(()) => {
-                    debug!("Deleted old checkpoint {}", checkpoint_id);
+                    debug!("Deleted old checkpoint {checkpoint_id}");
                     deleted += 1;
                 }
                 Err(e) => {
-                    warn!("Failed to delete checkpoint {}: {}", checkpoint_id, e);
+                    warn!("Failed to delete checkpoint {checkpoint_id}: {e}");
                 }
             }
         }
 
-        info!("Cleaned up {} old checkpoint(s)", deleted);
+        info!("Cleaned up {deleted} old checkpoint(s)");
         Ok(deleted)
     }
 }

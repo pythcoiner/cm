@@ -139,7 +139,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
         Err(e) => {
             result.add_error(SanityError::JsonSyntaxError {
                 file: file_name,
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             });
             return result;
         }
@@ -161,8 +161,8 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
 
     // Check project fields
     if let Some(project) = json.get("project") {
-        check_required_field(project, "name", &format!("{} (project)", file_name), &mut result);
-        check_required_field(project, "description", &format!("{} (project)", file_name), &mut result);
+        check_required_field(project, "name", &format!("{file_name} (project)"), &mut result);
+        check_required_field(project, "description", &format!("{file_name} (project)"), &mut result);
     } else {
         result.add_error(SanityError::SchemaError {
             file: file_name.clone(),
@@ -196,7 +196,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
     let mut phase_ids = HashSet::new();
 
     for (phase_idx, phase) in phases.iter().enumerate() {
-        let phase_context = format!("{} (phases[{}])", file_name, phase_idx);
+        let phase_context = format!("{file_name} (phases[{phase_idx}])");
 
         // Check phase required fields
         check_required_field(phase, "id", &phase_context, &mut result);
@@ -219,7 +219,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
             Some(_) => {
                 result.add_error(SanityError::SchemaError {
                     file: file_name.clone(),
-                    field: format!("phases[{}].tasks", phase_idx),
+                    field: format!("phases[{phase_idx}].tasks"),
                     message: "must be an array".to_string(),
                 });
                 continue;
@@ -227,7 +227,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
             None => {
                 result.add_error(SanityError::SchemaError {
                     file: file_name.clone(),
-                    field: format!("phases[{}].tasks", phase_idx),
+                    field: format!("phases[{phase_idx}].tasks"),
                     message: "required field is missing".to_string(),
                 });
                 continue;
@@ -238,7 +238,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
         let mut task_ids = HashSet::new();
 
         for (task_idx, task) in tasks.iter().enumerate() {
-            let task_context = format!("{} (phases[{}].tasks[{}])", file_name, phase_idx, task_idx);
+            let task_context = format!("{file_name} (phases[{phase_idx}].tasks[{task_idx}])");
 
             // Check task required fields
             check_required_field(task, "id", &task_context, &mut result);
@@ -255,7 +255,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
                     result.add_error(SanityError::OrphanedReference {
                         file: file_name.clone(),
                         id: task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
-                        message: format!("plan file '{}' does not exist", plan_file),
+                        message: format!("plan file '{plan_file}' does not exist"),
                     });
                 }
             }
@@ -274,8 +274,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
             if let Some(Value::Array(attempts)) = task.get("attempts") {
                 for (attempt_idx, attempt) in attempts.iter().enumerate() {
                     let attempt_context = format!(
-                        "{} (phases[{}].tasks[{}].attempts[{}])",
-                        file_name, phase_idx, task_idx, attempt_idx
+                        "{file_name} (phases[{phase_idx}].tasks[{task_idx}].attempts[{attempt_idx}])"
                     );
 
                     check_required_field(attempt, "attempt_number", &attempt_context, &mut result);
@@ -286,7 +285,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
                     // Validate response if present and non-null
                     if let Some(response) = attempt.get("response") {
                         if !response.is_null() {
-                            let resp_context = format!("{} (response)", attempt_context);
+                            let resp_context = format!("{attempt_context} (response)");
                             // Accept either "message" or legacy "raw_response"
                             if response.get("message").is_none()
                                 && response.get("raw_response").is_none()
@@ -309,7 +308,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
         match agent_history {
             Value::Array(entries) => {
                 for (idx, entry) in entries.iter().enumerate() {
-                    let ctx = format!("{} (agent_history[{}])", file_name, idx);
+                    let ctx = format!("{file_name} (agent_history[{idx}])");
                     check_required_field(entry, "id", &ctx, &mut result);
                     check_required_field(entry, "task_id", &ctx, &mut result);
                     check_required_field(entry, "agent_type", &ctx, &mut result);
@@ -331,7 +330,7 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
         match log_records {
             Value::Array(entries) => {
                 for (idx, entry) in entries.iter().enumerate() {
-                    let ctx = format!("{} (log_records[{}])", file_name, idx);
+                    let ctx = format!("{file_name} (log_records[{idx}])");
                     check_required_field(entry, "id", &ctx, &mut result);
                     check_required_field(entry, "timestamp", &ctx, &mut result);
                     check_required_field(entry, "action", &ctx, &mut result);
@@ -380,7 +379,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
         Err(e) => {
             result.add_error(SanityError::JsonSyntaxError {
                 file: file_name,
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             });
             return result;
         }
@@ -427,7 +426,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
     let mut item_ids = HashSet::new();
 
     for (phase_idx, phase) in phases.iter().enumerate() {
-        let phase_context = format!("{} (phases[{}])", file_name, phase_idx);
+        let phase_context = format!("{file_name} (phases[{phase_idx}])");
 
         // Check phase required fields
         check_required_field(phase, "id", &phase_context, &mut result);
@@ -450,7 +449,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
             Some(_) => {
                 result.add_error(SanityError::SchemaError {
                     file: file_name.clone(),
-                    field: format!("phases[{}].items", phase_idx),
+                    field: format!("phases[{phase_idx}].items"),
                     message: "must be an array".to_string(),
                 });
                 continue;
@@ -458,7 +457,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
             None => {
                 result.add_error(SanityError::SchemaError {
                     file: file_name.clone(),
-                    field: format!("phases[{}].items", phase_idx),
+                    field: format!("phases[{phase_idx}].items"),
                     message: "required field is missing".to_string(),
                 });
                 continue;
@@ -466,7 +465,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
         };
 
         for (item_idx, item) in items.iter().enumerate() {
-            let item_context = format!("{} (phases[{}].items[{}])", file_name, phase_idx, item_idx);
+            let item_context = format!("{file_name} (phases[{phase_idx}].items[{item_idx}])");
 
             // Check item required fields
             check_required_field(item, "id", &item_context, &mut result);
@@ -503,8 +502,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
 
                     // Check sub_item required fields (name and completed)
                     let sub_context = format!(
-                        "{} (phases[{}].items[{}].sub_items[{}])",
-                        file_name, phase_idx, item_idx, sub_idx
+                        "{file_name} (phases[{phase_idx}].items[{item_idx}].sub_items[{sub_idx}])"
                     );
                     check_required_field(sub_item, "name", &sub_context, &mut result);
                     check_required_field(sub_item, "completed", &sub_context, &mut result);
@@ -529,8 +527,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
                             file: file_name.clone(),
                             id: item_id.to_string(),
                             message: format!(
-                                "item marked completed but has {} uncompleted sub_item(s)",
-                                uncompleted_count
+                                "item marked completed but has {uncompleted_count} uncompleted sub_item(s)"
                             ),
                         });
                     }
@@ -567,7 +564,7 @@ pub fn validate_cross_references(tasks_path: &Path, roadmap_path: &Path) -> Vali
         Err(e) => {
             result.add_error(SanityError::JsonSyntaxError {
                 file: tasks_file,
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             });
             return result;
         }
@@ -590,7 +587,7 @@ pub fn validate_cross_references(tasks_path: &Path, roadmap_path: &Path) -> Vali
         Err(e) => {
             result.add_error(SanityError::JsonSyntaxError {
                 file: roadmap_file,
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             });
             return result;
         }

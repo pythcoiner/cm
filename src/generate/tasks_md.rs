@@ -53,10 +53,10 @@ fn format_phase(phase: &Phase) -> String {
         PhaseStatus::Completed => "Complete",
         PhaseStatus::InProgress => "In Progress",
         PhaseStatus::Pending => "Pending",
+        PhaseStatus::Deferred => "Deferred",
     };
     output.push_str(&format!(
-        "**Status:** {} ({}/{})\n\n",
-        status_str, completed_tasks, total_tasks
+        "**Status:** {status_str} ({completed_tasks}/{total_tasks})\n\n"
     ));
 
     // Phase plan (if present)
@@ -121,6 +121,7 @@ fn generate_summary_table(state: &TasksState) -> String {
             PhaseStatus::Completed => "Complete",
             PhaseStatus::InProgress => "In Progress",
             PhaseStatus::Pending => "Pending",
+            PhaseStatus::Deferred => "Deferred",
         };
 
         output.push_str(&format!(
@@ -135,9 +136,7 @@ fn generate_summary_table(state: &TasksState) -> String {
 
     // Total row
     output.push_str(&format!(
-        "| **Total** | | **{}** | **{}** |\n",
-        total_tasks,
-        total_completed
+        "| **Total** | | **{total_tasks}** | **{total_completed}** |\n"
     ));
 
     output

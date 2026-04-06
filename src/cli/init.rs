@@ -132,11 +132,11 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
 
     // Create the directories if they don't exist
     if !commands_dir.exists() {
-        info!("Creating directory: {:?}", commands_dir);
+        info!("Creating directory: {commands_dir:?}");
         fs::create_dir_all(&commands_dir)?;
     }
     if !cm_dir.exists() {
-        info!("Creating directory: {:?}", cm_dir);
+        info!("Creating directory: {cm_dir:?}");
         fs::create_dir_all(&cm_dir)?;
     }
 
@@ -152,7 +152,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
             continue;
         }
 
-        info!("Writing command file: {:?}", file_path);
+        info!("Writing command file: {file_path:?}");
         fs::write(&file_path, command.content)?;
         println!("Created {}", file_path.display());
     }
@@ -164,7 +164,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
         // Create parent directory if needed
         if let Some(parent) = file_path.parent() {
             if !parent.exists() {
-                info!("Creating directory: {:?}", parent);
+                info!("Creating directory: {parent:?}");
                 fs::create_dir_all(parent)?;
             }
         }
@@ -177,7 +177,7 @@ fn execute_init_in_dir(base_dir: &Path, force: bool) -> Result<(), CliError> {
             continue;
         }
 
-        info!("Writing template file: {:?}", file_path);
+        info!("Writing template file: {file_path:?}");
         fs::write(&file_path, template.content)?;
         println!("Created {}", file_path.display());
     }
@@ -237,8 +237,8 @@ fn ensure_gitignore_entry(base_dir: &Path) -> Result<(), CliError> {
     new_content.push('\n');
 
     fs::write(&gitignore_path, new_content)?;
-    info!("Added '{}' to .gitignore", entry);
-    println!("Added '{}' to .gitignore", entry);
+    info!("Added '{entry}' to .gitignore");
+    println!("Added '{entry}' to .gitignore");
 
     Ok(())
 }
@@ -263,7 +263,7 @@ fn cleanup_legacy_skills(base_dir: &Path) -> Result<(), CliError> {
 
         // Remove legacy SKILL.md file if it exists
         if skill_file.exists() {
-            info!("Removing legacy file: {:?}", skill_file);
+            info!("Removing legacy file: {skill_file:?}");
             fs::remove_file(&skill_file)?;
             removed_any = true;
         }
@@ -271,14 +271,14 @@ fn cleanup_legacy_skills(base_dir: &Path) -> Result<(), CliError> {
         // Try to remove the skill subdirectory if it's empty
         if skill_dir.exists() {
             if let Ok(()) = fs::remove_dir(&skill_dir) {
-                info!("Removed empty directory: {:?}", skill_dir);
+                info!("Removed empty directory: {skill_dir:?}");
             }
         }
     }
 
     // Try to remove the .claude/skills directory if it's empty
     if let Ok(()) = fs::remove_dir(&skills_dir) {
-        info!("Removed empty directory: {:?}", skills_dir);
+        info!("Removed empty directory: {skills_dir:?}");
     }
 
     if removed_any {

@@ -98,7 +98,7 @@ impl PhaseLogger {
         let mut files = self.files.lock().unwrap_or_else(|e| e.into_inner());
 
         if !files.contains_key(phase_id) {
-            let file_path = self.logs_dir.join(format!("{}.log", phase_id));
+            let file_path = self.logs_dir.join(format!("{phase_id}.log"));
             let file = OpenOptions::new()
                 .append(true)
                 .create(true)
@@ -125,7 +125,7 @@ impl PhaseLogger {
         let mut files = self.files.lock().unwrap_or_else(|e| e.into_inner());
         let file = files.get_mut(phase_id).expect("file should exist");
 
-        writeln!(file, "{}", content)?;
+        writeln!(file, "{content}")?;
         file.flush()?;
 
         Ok(())
@@ -155,8 +155,7 @@ impl PhaseLogger {
         let separator = "=".repeat(80);
 
         let content = format!(
-            "{}\n[{}] PROMPT: {} for {}\n{}\n\n{}\n",
-            separator, timestamp, agent_type, task_id, separator, prompt
+            "{separator}\n[{timestamp}] PROMPT: {agent_type} for {task_id}\n{separator}\n\n{prompt}\n"
         );
 
         self.write_to_phase(phase_id, &content)
@@ -192,12 +191,11 @@ impl PhaseLogger {
         let separator = "=".repeat(80);
 
         let exit_code_str = exit_code
-            .map(|code| format!("Exit Code: {}", code))
+            .map(|code| format!("Exit Code: {code}"))
             .unwrap_or_else(|| "Exit Code: N/A".to_string());
 
         let mut content = format!(
-            "{}\n[{}] RESPONSE: {} for {} (Duration: {}s, {})\n{}\n",
-            separator, timestamp, agent_type, task_id, duration_secs, exit_code_str, separator
+            "{separator}\n[{timestamp}] RESPONSE: {agent_type} for {task_id} (Duration: {duration_secs}s, {exit_code_str})\n{separator}\n"
         );
 
         // Extract and format assistant messages
@@ -223,19 +221,19 @@ impl PhaseLogger {
             if !resp.files_created.is_empty() {
                 content.push_str("\n**Files Created:**\n");
                 for f in &resp.files_created {
-                    content.push_str(&format!("- `{}`\n", f));
+                    content.push_str(&format!("- `{f}`\n"));
                 }
             }
             if !resp.files_modified.is_empty() {
                 content.push_str("\n**Files Modified:**\n");
                 for f in &resp.files_modified {
-                    content.push_str(&format!("- `{}`\n", f));
+                    content.push_str(&format!("- `{f}`\n"));
                 }
             }
             if !resp.commands_run.is_empty() {
                 content.push_str("\n**Commands Run:**\n");
                 for c in &resp.commands_run {
-                    content.push_str(&format!("- `{}`\n", c));
+                    content.push_str(&format!("- `{c}`\n"));
                 }
             }
         }
@@ -333,7 +331,7 @@ fn prune_log_file(
         .truncate(true)
         .open(path)?;
     for line in &kept_lines {
-        writeln!(file, "{}", line)?;
+        writeln!(file, "{line}")?;
     }
     file.flush()?;
 

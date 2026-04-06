@@ -206,7 +206,7 @@ impl GitRunner {
     ///
     /// Returns an error if the git command fails.
     pub fn diff_range(&self, from: &str, to: &str) -> Result<String, BuildError> {
-        let range = format!("{}..{}", from, to);
+        let range = format!("{from}..{to}");
         self.run_git_command(&["diff", &range])
     }
 

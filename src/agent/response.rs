@@ -191,7 +191,7 @@ impl ResponseParser {
 
         // Try legacy format
         let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
-            AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+            AgentError::ParseError(format!("failed to parse claude CLI output: {e}"))
         })?;
 
         let result_text = output.result;
@@ -205,7 +205,7 @@ impl ResponseParser {
     /// Uses serde_json::Value for flexibility since events have many varying fields.
     fn parse_streaming_format(raw_json: &str) -> Result<AgentResponse, AgentError> {
         let events: Vec<serde_json::Value> = serde_json::from_str(raw_json).map_err(|e| {
-            AgentError::ParseError(format!("failed to parse streaming output: {}", e))
+            AgentError::ParseError(format!("failed to parse streaming output: {e}"))
         })?;
 
         let mut result_text = String::new();
@@ -307,7 +307,7 @@ impl ResponseParser {
             Self::extract_result_from_streaming(trimmed)?
         } else {
             let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
-                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+                AgentError::ParseError(format!("failed to parse claude CLI output: {e}"))
             })?;
             output.result
         };
@@ -328,7 +328,7 @@ impl ResponseParser {
     /// Extract result text from streaming format.
     fn extract_result_from_streaming(raw_json: &str) -> Result<String, AgentError> {
         let events: Vec<serde_json::Value> = serde_json::from_str(raw_json).map_err(|e| {
-            AgentError::ParseError(format!("failed to parse streaming output: {}", e))
+            AgentError::ParseError(format!("failed to parse streaming output: {e}"))
         })?;
 
         let mut result_text = String::new();
@@ -396,7 +396,7 @@ impl ResponseParser {
             Self::extract_result_from_streaming(trimmed)?
         } else {
             let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
-                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+                AgentError::ParseError(format!("failed to parse claude CLI output: {e}"))
             })?;
             output.result
         };
@@ -452,7 +452,7 @@ impl ResponseParser {
             Self::extract_result_from_streaming(trimmed)?
         } else {
             let output: ClaudeJsonOutput = serde_json::from_str(raw_json).map_err(|e| {
-                AgentError::ParseError(format!("failed to parse claude CLI output: {}", e))
+                AgentError::ParseError(format!("failed to parse claude CLI output: {e}"))
             })?;
             output.result
         };

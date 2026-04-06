@@ -118,6 +118,8 @@ pub enum PhaseStatus {
     InProgress,
     /// Phase has been completed.
     Completed,
+    /// Phase was deferred after exhausting review cycles.
+    Deferred,
 }
 
 /// A single task to be executed by an agent.

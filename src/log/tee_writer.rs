@@ -47,7 +47,7 @@ fn write_to_log(s: &str) {
     if let Some(file_mutex) = LOG_FILE.get() {
         if let Ok(mut file) = file_mutex.lock() {
             // Ignore write errors - logging shouldn't crash the program
-            let _ = writeln!(file, "{}", s);
+            let _ = writeln!(file, "{s}");
         }
     }
 }
@@ -56,7 +56,7 @@ fn write_to_log(s: &str) {
 fn write_to_log_raw(s: &str) {
     if let Some(file_mutex) = LOG_FILE.get() {
         if let Ok(mut file) = file_mutex.lock() {
-            let _ = write!(file, "{}", s);
+            let _ = write!(file, "{s}");
             let _ = file.flush();
         }
     }
@@ -66,13 +66,13 @@ fn write_to_log_raw(s: &str) {
 ///
 /// Use this instead of `println!` to capture output in cm.log.
 pub fn tee_println(s: &str) {
-    println!("{}", s);
+    println!("{s}");
     write_to_log(s);
 }
 
 /// Print to stdout without newline and mirror to log file.
 pub fn tee_print(s: &str) {
-    print!("{}", s);
+    print!("{s}");
     let _ = io::stdout().flush();
     write_to_log_raw(s);
 }
@@ -81,7 +81,7 @@ pub fn tee_print(s: &str) {
 ///
 /// Use this instead of `eprintln!` to capture output in cm.log.
 pub fn tee_eprintln(s: &str) {
-    eprintln!("{}", s);
+    eprintln!("{s}");
     write_to_log(s);
 }
 

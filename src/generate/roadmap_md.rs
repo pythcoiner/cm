@@ -57,8 +57,7 @@ fn format_phase(phase: &RoadmapPhase) -> String {
         "Not Started"
     };
     output.push_str(&format!(
-        "Status: **{}** ({}/{})\n\n",
-        status, completed_items, total_items
+        "Status: **{status}** ({completed_items}/{total_items})\n\n"
     ));
 
     // Items
@@ -124,8 +123,7 @@ fn generate_summary_table(roadmap: &RoadmapState) -> String {
 
     // Total row
     output.push_str(&format!(
-        "| **Total** | | **{}/{}** |\n",
-        total_completed, total_items
+        "| **Total** | | **{total_completed}/{total_items}** |\n"
     ));
 
     output

@@ -120,7 +120,7 @@ impl BuildVerifier {
     /// Returns an error if any command fails or cannot be executed.
     pub fn verify_commands(&self, commands: &[String]) -> Result<(), BuildError> {
         for cmd in commands {
-            log::info!("Running build command: {}", cmd);
+            log::info!("Running build command: {cmd}");
 
             // Split command into program and args
             let parts: Vec<&str> = cmd.split_whitespace().collect();

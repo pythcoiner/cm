@@ -125,7 +125,7 @@ impl AgentSpawner {
         // Write prompt to stdin then close it so claude sees EOF
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
-                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {}", e))
+                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {e}"))
             })?;
         }
 
@@ -194,7 +194,7 @@ impl AgentSpawner {
         // Write prompt to stdin then close it so claude sees EOF
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
-                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {}", e))
+                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {e}"))
             })?;
         }
 
@@ -319,7 +319,7 @@ fn run_agent_thread(
         let elapsed_secs = start.elapsed().as_secs();
         if elapsed_secs > last_progress_secs {
             let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-            eprint!("\r[{} {}] {} running for {}s...", now, agent_label, task_id, elapsed_secs);
+            eprint!("\r[{now} {agent_label}] {task_id} running for {elapsed_secs}s...");
             std::io::stderr().flush().ok();
             last_progress_secs = elapsed_secs;
         }
@@ -363,8 +363,7 @@ fn run_agent_thread(
             }
             Err(e) => {
                 return Err(AgentError::OutputError(format!(
-                    "failed to check process status: {}",
-                    e
+                    "failed to check process status: {e}"
                 )));
             }
         }

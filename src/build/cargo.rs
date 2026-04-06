@@ -220,7 +220,7 @@ impl CargoRunner {
             }
         }
         // Handle "error: message" format
-        let prefix_with_colon = format!("{}:", prefix);
+        let prefix_with_colon = format!("{prefix}:");
         if let Some(pos) = line.find(&prefix_with_colon) {
             return line[pos + prefix_with_colon.len()..].trim().to_string();
         }
@@ -231,7 +231,7 @@ impl CargoRunner {
     ///
     /// Looks for lines like "test result: ok. 5 passed; 0 failed; 2 ignored"
     fn parse_test_results(stdout: &str, stderr: &str) -> (u32, u32, u32) {
-        let combined = format!("{}\n{}", stdout, stderr);
+        let combined = format!("{stdout}\n{stderr}");
 
         for line in combined.lines() {
             if line.contains("test result:") {

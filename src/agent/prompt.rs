@@ -46,19 +46,19 @@ fn ensure_template(path: &Path, default_content: &str) -> io::Result<String> {
         // Create parent directory if it doesn't exist
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| {
-                log::error!("Failed to create parent directory for template: {}", e);
+                log::error!("Failed to create parent directory for template: {e}");
                 e
             })?;
         }
         fs::write(path, default_content).map_err(|e| {
-            log::error!("Failed to write default template content: {}", e);
+            log::error!("Failed to write default template content: {e}");
             e
         })?;
     }
 
     // Read and return the file contents
     fs::read_to_string(path).map_err(|e| {
-        log::error!("Failed to read template file: {}", e);
+        log::error!("Failed to read template file: {e}");
         e
     })
 }
@@ -88,7 +88,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/IMPLEMENTER.md");
         let template = ensure_template(&template_path, crate::command::IMPLEMENTER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load IMPLEMENTER template: {}, using embedded default", e);
+                log::error!("Failed to load IMPLEMENTER template: {e}, using embedded default");
                 crate::command::IMPLEMENTER_TEMPLATE.to_string()
             });
 
@@ -108,7 +108,7 @@ impl PromptBuilder {
             prompt.push_str("### Files to Read for Context\n\n");
             prompt.push_str("Read the following files to understand the existing codebase:\n\n");
             for file in &task.context.files_to_read {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
@@ -163,7 +163,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
         let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load REVIEWER template: {}, using embedded default", e);
+                log::error!("Failed to load REVIEWER template: {e}, using embedded default");
                 crate::command::REVIEWER_TEMPLATE.to_string()
             });
 
@@ -189,7 +189,7 @@ impl PromptBuilder {
             prompt.push_str("### Reference Files\n\n");
             prompt.push_str("These files provide context for the review:\n\n");
             for file in &task.context.files_to_read {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
@@ -252,7 +252,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/FIX.md");
         let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load FIX template: {}, using embedded default", e);
+                log::error!("Failed to load FIX template: {e}, using embedded default");
                 crate::command::FIX_TEMPLATE.to_string()
             });
 
@@ -285,7 +285,7 @@ impl PromptBuilder {
             prompt.push_str("### Files to Read for Context\n\n");
             prompt.push_str("Read the following files to understand the existing codebase:\n\n");
             for file in &task.context.files_to_read {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
@@ -341,7 +341,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
         let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load REVIEWER template: {}, using embedded default", e);
+                log::error!("Failed to load REVIEWER template: {e}, using embedded default");
                 crate::command::REVIEWER_TEMPLATE.to_string()
             });
 
@@ -375,7 +375,7 @@ impl PromptBuilder {
             prompt.push_str("### Reference Files\n\n");
             prompt.push_str("These files provide context for the review:\n\n");
             for file in &task.context.files_to_read {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
@@ -436,7 +436,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/FIX.md");
         let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load FIX template: {}, using embedded default", e);
+                log::error!("Failed to load FIX template: {e}, using embedded default");
                 crate::command::FIX_TEMPLATE.to_string()
             });
 
@@ -462,7 +462,7 @@ impl PromptBuilder {
             prompt.push_str("### Files to Read for Context\n\n");
             prompt.push_str("Read the following files to understand the existing codebase:\n\n");
             for file in &task.context.files_to_read {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
@@ -512,7 +512,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/PLANNER.md");
         let template = ensure_template(&template_path, crate::command::PLANNER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load PLANNER template: {}, using embedded default", e);
+                log::error!("Failed to load PLANNER template: {e}, using embedded default");
                 crate::command::PLANNER_TEMPLATE.to_string()
             });
 
@@ -559,7 +559,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/IMPLEMENTER.md");
         let template = ensure_template(&template_path, crate::command::IMPLEMENTER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load IMPLEMENTER template: {}, using embedded default", e);
+                log::error!("Failed to load IMPLEMENTER template: {e}, using embedded default");
                 crate::command::IMPLEMENTER_TEMPLATE.to_string()
             });
 
@@ -591,13 +591,13 @@ impl PromptBuilder {
                 task.id
             ));
             let plan_content = load_task_plan(task);
-            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
+            prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
 
             // Include task-specific context files
             if !task.context.files_to_read.is_empty() {
                 prompt.push_str("**Files to read:**\n");
                 for file in &task.context.files_to_read {
-                    prompt.push_str(&format!("- {}\n", file));
+                    prompt.push_str(&format!("- {file}\n"));
                 }
                 prompt.push('\n');
             }
@@ -675,7 +675,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/REVIEWER.md");
         let template = ensure_template(&template_path, crate::command::REVIEWER_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load REVIEWER template: {}, using embedded default", e);
+                log::error!("Failed to load REVIEWER template: {e}, using embedded default");
                 crate::command::REVIEWER_TEMPLATE.to_string()
             });
 
@@ -708,7 +708,7 @@ impl PromptBuilder {
                 task.id
             ));
             let plan_content = load_task_plan(task);
-            prompt.push_str(&format!("**Instructions:**\n{}\n\n", plan_content));
+            prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
         }
 
         // Code changes to review
@@ -773,7 +773,7 @@ impl PromptBuilder {
         let template_path = PathBuf::from(".cm/agents/FIX.md");
         let template = ensure_template(&template_path, crate::command::FIX_TEMPLATE)
             .unwrap_or_else(|e| {
-                log::error!("Failed to load FIX template: {}, using embedded default", e);
+                log::error!("Failed to load FIX template: {e}, using embedded default");
                 crate::command::FIX_TEMPLATE.to_string()
             });
 
@@ -803,7 +803,7 @@ impl PromptBuilder {
             prompt.push_str("### Files to Modify\n\n");
             prompt.push_str("Based on the issues above, these files need changes:\n\n");
             for file in &issue_files {
-                prompt.push_str(&format!("- {}\n", file));
+                prompt.push_str(&format!("- {file}\n"));
             }
             prompt.push('\n');
         }
