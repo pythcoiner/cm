@@ -497,7 +497,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
             "files_to_read": ["src/relevant/file.rs"],
             "code_style_excerpt": "Relevant style guidelines if any"
           },
-          "plan_file": ".cm/plans/plan-1.md"
+          "plan_file": ".cm/plans/plan-1.task-1.md"
         }
       ]
     }
@@ -553,7 +553,7 @@ The `tasks.json` file follows this schema (based on `src/state/tasks.rs`):
 | status | TaskStatus | Yes | "pending", "in_progress", "completed", or "deferred" |
 | depends_on | string[] | No | IDs of tasks this depends on |
 | context | TaskContext | Yes | Context for the agent |
-| plan_file | string | Yes | Path to plan file (e.g., ".cm/plans/plan-1.md") |
+| plan_file | string | Yes | Path to per-task plan file (e.g., ".cm/plans/plan-1.task-1.md") |
 | attempts | TaskAttempt[] | No | Execution history |
 | roadmap_item_id | string | No | ID of linked roadmap item (for roadmap sync) |
 
@@ -577,12 +577,13 @@ For review/fix cycles, extend with a suffix:
 
 #### Plan Files
 
-Tasks reference plan files via the `plan_file` field. Plan files contain detailed implementation instructions and are stored at `.cm/plans/`:
+Each task must have its own dedicated plan file via the `plan_file` field. Plan files contain detailed implementation instructions for a single task and are stored at `.cm/plans/`:
 
-- `.cm/plans/plan-1.md` - Plan for phase 1 tasks
-- `.cm/plans/plan-2.md` - Plan for phase 2 tasks
+- `.cm/plans/plan-1.task-1.md` - Plan for task 1 in phase 1
+- `.cm/plans/plan-1.task-2.md` - Plan for task 2 in phase 1
+- `.cm/plans/plan-2.task-1.md` - Plan for task 1 in phase 2
 
-**When generating tasks.json, also create the corresponding plan files** with detailed instructions for each phase.
+**Never point multiple tasks to the same plan file** — this causes prompt bloat and review failures. When generating tasks.json, create a separate plan file for each task.
 
 #### Dependency Rules
 
@@ -834,7 +835,7 @@ Rust CLI that reads JSON, applies transformations, and outputs in multiple forma
           "status": "pending",
           "depends_on": [],
           "context": { "files_to_read": [] },
-          "plan_file": ".cm/plans/plan-1.md"
+          "plan_file": ".cm/plans/plan-1.task-1.md"
         }
       ]
     }

@@ -120,7 +120,7 @@ Present ALL results in a single message:
 >     "files_to_read": ["affected/files.rs"],
 >     "prior_review_issues": ["[bug description]"]
 >   },
->   "plan_file": ".cm/plans/plan-[phase].md"
+>   "plan_file": ".cm/plans/plan-[phase].task-[n].md"
 > }
 > ```
 
@@ -159,9 +159,9 @@ When creating a new phase for a fix, use this JSON template. The `plan` field co
 
 ## Fix Task Template
 
-**IMPORTANT:** For each fix phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed fix instructions. All tasks in the phase reference this plan file via the `plan_file` field.
+**IMPORTANT:** Create a **separate plan file per task** at `.cm/plans/plan-X.task-Y.md` (where X is the phase number and Y is the task number). Each task's `plan_file` field must point to its own dedicated file containing only that task's instructions. **Never** point multiple tasks to the same plan file — this causes prompt bloat and review failures.
 
-Create plan file at `.cm/plans/plan-X.md`:
+Create plan file at `.cm/plans/plan-X.task-1.md`:
 ```markdown
 Fix [bug summary]:
 
@@ -209,7 +209,7 @@ Task JSON:
       "Expected: [behavior]"
     ]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cm/plans/plan-X.task-1.md"
 }
 ```
 

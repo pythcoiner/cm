@@ -292,11 +292,11 @@ When creating a new phase, use this JSON template. The `plan` field contains the
 
 ## Task Templates
 
-**IMPORTANT:** For each phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed instructions for all tasks in that phase. All tasks in the phase reference this same plan file via the `plan_file` field.
+**IMPORTANT:** Create a **separate plan file per task** at `.cm/plans/plan-X.task-Y.md` (where X is the phase number and Y is the task number). Each task's `plan_file` field must point to its own dedicated file containing only that task's instructions. **Never** point multiple tasks to the same plan file — this causes prompt bloat and review failures.
 
 ### Implementation Task Template
 
-Create plan file at `.cm/plans/plan-X.md`:
+Create plan file at `.cm/plans/plan-X.task-1.md`:
 ```markdown
 Implement [component] for [feature]:
 
@@ -322,13 +322,13 @@ Task JSON:
     "files_to_read": [],
     "code_style_excerpt": null
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cm/plans/plan-X.task-1.md"
 }
 ```
 
 ### Test Task Template
 
-Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+Create plan file at `.cm/plans/plan-X.task-2.md`:
 ```markdown
 Add tests for [component]:
 
@@ -351,13 +351,13 @@ Task JSON:
   "context": {
     "files_to_read": ["src/component.rs"]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cm/plans/plan-X.task-2.md"
 }
 ```
 
 ### Review Task Template
 
-Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+Create plan file at `.cm/plans/plan-X.task-3.md`:
 ```markdown
 Review [feature] implementation:
 
@@ -379,7 +379,7 @@ Task JSON:
   "context": {
     "files_to_read": ["src/feature/"]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cm/plans/plan-X.task-3.md"
 }
 ```
 

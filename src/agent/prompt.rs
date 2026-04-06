@@ -5,6 +5,7 @@
 //! task-specific context, never global knowledge.
 
 use crate::state::{Phase, ReviewIssue, Task};
+use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -582,7 +583,9 @@ impl PromptBuilder {
         }
 
         // List all tasks with their instructions (loaded from plan files)
+        // Deduplicate: if multiple tasks share the same plan_file, only include content once
         prompt.push_str("### Tasks to Implement\n\n");
+        let mut seen_plan_files = HashSet::new();
         for (i, task) in tasks.iter().enumerate() {
             prompt.push_str(&format!(
                 "#### Task {}: {} ({})\n\n",
@@ -590,8 +593,15 @@ impl PromptBuilder {
                 task.name,
                 task.id
             ));
-            let plan_content = load_task_plan(task);
-            prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
+            if seen_plan_files.insert(task.plan_file.clone()) {
+                let plan_content = load_task_plan(task);
+                prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
+            } else {
+                prompt.push_str(&format!(
+                    "**Instructions:** (Same plan file as above: `{}`)\n\n",
+                    task.plan_file
+                ));
+            }
 
             // Include task-specific context files
             if !task.context.files_to_read.is_empty() {
@@ -699,7 +709,9 @@ impl PromptBuilder {
         }
 
         // List all tasks with their full instructions (loaded from plan files)
+        // Deduplicate: if multiple tasks share the same plan_file, only include content once
         prompt.push_str("### Tasks in This Phase\n\n");
+        let mut seen_plan_files = HashSet::new();
         for (i, task) in phase.tasks.iter().enumerate() {
             prompt.push_str(&format!(
                 "#### Task {}: {} ({})\n\n",
@@ -707,8 +719,15 @@ impl PromptBuilder {
                 task.name,
                 task.id
             ));
-            let plan_content = load_task_plan(task);
-            prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
+            if seen_plan_files.insert(task.plan_file.clone()) {
+                let plan_content = load_task_plan(task);
+                prompt.push_str(&format!("**Instructions:**\n{plan_content}\n\n"));
+            } else {
+                prompt.push_str(&format!(
+                    "**Instructions:** (Same plan file as above: `{}`)\n\n",
+                    task.plan_file
+                ));
+            }
         }
 
         // Code changes to review

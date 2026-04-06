@@ -171,7 +171,7 @@ Insert new tasks following the schema:
     "files_to_read": ["relevant/files.rs"],
     "code_style_excerpt": null
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cm/plans/plan-X.task-1.md"
 }
 ```
 
@@ -185,7 +185,7 @@ Insert new tasks following the schema:
 - `type`: One of "implement", "review", "fix", "test"
 - `status`: Should be "pending" for new tasks
 - `context`: Must include at minimum an empty object
-- `plan_file`: Path to the plan file (e.g., ".cm/plans/plan-X.md")
+- `plan_file`: Path to the per-task plan file (e.g., ".cm/plans/plan-X.task-Y.md") — each task must have its own plan file
 
 **Dependencies:**
 - Ensure `depends_on` references only existing task IDs
@@ -390,7 +390,7 @@ For each phase in PLAN.md:
    - Set type to "implement"
    - Set status to "pending"
    - Use the task description from PLAN.md as the name
-   - Set `plan_file` to reference the plan file for that phase (e.g., ".cm/plans/plan-1.md")
+   - Set `plan_file` to a per-task plan file (e.g., ".cm/plans/plan-1.task-1.md") — each task must have its own file
    - Add relevant files to `files_to_read` if mentioned in PLAN.md
 
 Example:
@@ -412,7 +412,7 @@ Example:
           "context": {
             "files_to_read": []
           },
-          "plan_file": ".cm/plans/plan-1.md",
+          "plan_file": ".cm/plans/plan-1.task-1.md",
           "roadmap_item_id": "phase-1-item-1"
         }
       ]
