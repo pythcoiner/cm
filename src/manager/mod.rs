@@ -650,33 +650,55 @@ impl Manager {
             info!("No pending tasks in phase {phase_id}, checking completion");
             // Try normal completion check first
             self.check_phase_completion(phase_id)?;
-            let phase = self.state.get_phase_mut(phase_id)?;
-            if phase.status == PhaseStatus::Completed {
-                return Ok(PhaseOutcome::Completed);
+
+            // Determine phase state in a scoped borrow
+            let action = {
+                let phase = self.state.get_phase_mut(phase_id)?;
+                if phase.status == PhaseStatus::Completed {
+                    return Ok(PhaseOutcome::Completed);
+                }
+                if phase.status == PhaseStatus::Deferred {
+                    return Ok(PhaseOutcome::Deferred);
+                }
+                // Re-check for pending tasks — check_phase_completion may have
+                // injected a build-fix task
+                if phase.tasks.iter().any(|t| t.status == TaskStatus::Pending) {
+                    Some("pending")
+                } else if phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress) {
+                    Some("in_progress")
+                } else if phase.tasks.iter().any(|t| t.status == TaskStatus::Deferred) {
+                    phase.status = PhaseStatus::Deferred;
+                    Some("deferred")
+                } else {
+                    None
+                }
+            };
+
+            match action {
+                Some("pending") => {
+                    info!("Phase {phase_id} has new pending tasks after completion check, re-executing");
+                    return self.execute_phase(phase_id);
+                }
+                Some("in_progress") => {
+                    let msg = format!(
+                        "Phase {phase_id} has tasks stuck in InProgress state (spawn failure?); stopping to avoid silent force-completion"
+                    );
+                    error!("{msg}");
+                    return Err(ManagerError::TaskNotRunnable(msg));
+                }
+                Some("deferred") => {
+                    info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
+                    return Ok(PhaseOutcome::Deferred);
+                }
+                _ => {
+                    info!(
+                        "Phase {phase_id} has no pending tasks but wasn't marked complete, forcing completion"
+                    );
+                    let phase = self.state.get_phase_mut(phase_id)?;
+                    phase.status = PhaseStatus::Completed;
+                    return Ok(PhaseOutcome::Completed);
+                }
             }
-            if phase.status == PhaseStatus::Deferred {
-                return Ok(PhaseOutcome::Deferred);
-            }
-            // Phase still not in a terminal state — check why
-            let has_in_progress = phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress);
-            if has_in_progress {
-                let msg = format!(
-                    "Phase {phase_id} has tasks stuck in InProgress state (spawn failure?); stopping to avoid silent force-completion"
-                );
-                error!("{msg}");
-                return Err(ManagerError::TaskNotRunnable(msg));
-            }
-            let has_deferred = phase.tasks.iter().any(|t| t.status == TaskStatus::Deferred);
-            if has_deferred {
-                info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
-                phase.status = PhaseStatus::Deferred;
-                return Ok(PhaseOutcome::Deferred);
-            }
-            info!(
-                "Phase {phase_id} has no pending tasks but wasn't marked complete, forcing completion"
-            );
-            phase.status = PhaseStatus::Completed;
-            return Ok(PhaseOutcome::Completed);
         }
 
         // Mark phase as in progress only if there's actual work to do
@@ -1685,7 +1707,7 @@ impl Manager {
     /// If git is unavailable, returns `true` (assumes changes were made).
     fn check_git_changes(&self) -> Result<bool, ManagerError> {
         match std::process::Command::new("git")
-            .args(["diff", "--stat"])
+            .args(["status", "--porcelain", "--", ":(exclude).cm/"])
             .current_dir(&self.config.working_dir)
             .output()
         {
@@ -1694,7 +1716,7 @@ impl Manager {
                 Ok(!stdout.trim().is_empty())
             }
             Err(e) => {
-                warn!("Failed to run git diff, assuming changes exist: {e}");
+                warn!("Failed to run git status, assuming changes exist: {e}");
                 Ok(true)
             }
         }
