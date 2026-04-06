@@ -129,7 +129,7 @@ impl TasksState {
     pub fn next_runnable_task(&self) -> Option<&Task> {
         // Only return tasks from the first phase that isn't completed
         for phase in &self.phases {
-            if phase.status == PhaseStatus::Completed {
+            if phase.status == PhaseStatus::Completed || phase.status == PhaseStatus::Deferred {
                 continue;
             }
             // This phase isn't complete - look for runnable tasks here
@@ -174,8 +174,11 @@ impl TasksState {
         })
     }
 
-    /// Check if all tasks in a phase are completed (or deferred).
-    pub fn all_phase_tasks_completed(&self, phase_id: &str) -> bool {
+    /// Check if all tasks in a phase are resolved (completed or deferred).
+    ///
+    /// A "resolved" phase has no `Pending` or `InProgress` tasks remaining.
+    /// Use this to check if a phase is done executing, regardless of outcome.
+    pub fn all_phase_tasks_resolved(&self, phase_id: &str) -> bool {
         self.phases
             .iter()
             .find(|p| p.id == phase_id)
@@ -292,13 +295,13 @@ impl TasksState {
         Err(StateError::PhaseNotFound(phase_id.to_string()))
     }
 
-    /// Get the next runnable phase (first non-completed phase).
+    /// Get the next runnable phase (first non-completed/non-deferred phase).
     ///
-    /// Returns the first phase that is not `Completed`.
+    /// Returns the first phase that is not `Completed` or `Deferred`.
     pub fn next_runnable_phase(&self) -> Option<&Phase> {
         self.phases
             .iter()
-            .find(|p| p.status != PhaseStatus::Completed)
+            .find(|p| p.status != PhaseStatus::Completed && p.status != PhaseStatus::Deferred)
     }
 
     /// Get a mutable reference to a phase by ID.

@@ -31,6 +31,15 @@ mod state;
 pub use recovery::{CheckpointId, RecoveryAction, RecoveryError, RecoveryManager, ShutdownHandler};
 pub use state::ManagerState;
 
+/// Outcome of executing a phase.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PhaseOutcome {
+    /// All tasks completed and review approved.
+    Completed,
+    /// Phase deferred after review cycles exhausted.
+    Deferred,
+}
+
 /// Task selection mode from user prompt.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TaskSelection {
@@ -180,7 +189,7 @@ pub struct Manager {
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
 fn emit_cm(msg: &str) {
     let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-    tee_eprintln(&format!("[{} CM] {}", now, msg));
+    tee_eprintln(&format!("[{now} CM] {msg}"));
 }
 
 impl Manager {
@@ -215,7 +224,7 @@ impl Manager {
                 Some(roadmap)
             }
             Err(e) => {
-                warn!("No roadmap loaded: {}", e);
+                warn!("No roadmap loaded: {e}");
                 None
             }
         };
@@ -287,19 +296,23 @@ impl Manager {
                 }
             };
 
-            info!("Selected phase for execution: {}", phase_id);
-            emit_cm(&format!("Selected phase: {}", phase_id));
+            info!("Selected phase for execution: {phase_id}");
+            emit_cm(&format!("Selected phase: {phase_id}"));
 
             // Execute the phase (all pending tasks in one agent call)
             match self.execute_phase(&phase_id) {
-                Ok(()) => {
-                    info!("Phase {} completed successfully", phase_id);
-                    emit_cm(&format!("Phase {} completed", phase_id));
+                Ok(PhaseOutcome::Completed) => {
+                    info!("Phase {phase_id} completed successfully");
+                    emit_cm(&format!("Phase {phase_id} completed"));
+                }
+                Ok(PhaseOutcome::Deferred) => {
+                    warn!("Phase {phase_id} deferred (review cycles exhausted)");
+                    emit_cm(&format!("Phase {phase_id} deferred"));
                 }
                 Err(e) => {
-                    let error_msg = format!("Phase {} failed: {}", phase_id, e);
-                    error!("{}", error_msg);
-                    emit_cm(&format!("Phase {} failed: {}", phase_id, e));
+                    let error_msg = format!("Phase {phase_id} failed: {e}");
+                    error!("{error_msg}");
+                    emit_cm(&format!("Phase {phase_id} failed: {e}"));
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
@@ -341,7 +354,7 @@ impl Manager {
             None => return Err(ManagerError::NoRunnableTasks),
         };
 
-        self.execute_phase(&phase_id)?;
+        let _outcome = self.execute_phase(&phase_id)?;
         self.update_state()?;
 
         Ok(())
@@ -452,30 +465,30 @@ impl Manager {
                             let start = match start_str.parse::<u32>() {
                                 Ok(n) => n,
                                 Err(_) => {
-                                    tee_println(&format!("Invalid phase number: {}", token));
+                                    tee_println(&format!("Invalid phase number: {token}"));
                                     return vec![];
                                 }
                             };
                             let end = match end_str.parse::<u32>() {
                                 Ok(n) => n,
                                 Err(_) => {
-                                    tee_println(&format!("Invalid phase number: {}", token));
+                                    tee_println(&format!("Invalid phase number: {token}"));
                                     return vec![];
                                 }
                             };
                             // Validate range
                             if start > end {
-                                tee_println(&format!("Invalid range: {}-{} (start must be <= end)", start, end));
+                                tee_println(&format!("Invalid range: {start}-{end} (start must be <= end)"));
                                 return vec![];
                             }
-                            (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
+                            (start..=end).map(|n| format!("phase-{n}")).collect::<Vec<_>>()
                         } else {
                             // Single: "3" -> ["phase-3"]
                             // Validate it's a number
                             if token.parse::<u32>().is_ok() {
                                 vec![format!("phase-{}", token)]
                             } else {
-                                tee_println(&format!("Invalid phase number: {}", token));
+                                tee_println(&format!("Invalid phase number: {token}"));
                                 vec![]
                             }
                         }
@@ -547,21 +560,30 @@ impl Manager {
 
             match phase {
                 None => {
-                    tee_println(&format!("Warning: Phase '{}' not found, skipping.", phase_id));
+                    tee_println(&format!("Warning: Phase '{phase_id}' not found, skipping."));
                     continue;
                 }
                 Some(p) if p.status == PhaseStatus::Completed => {
-                    tee_println(&format!("Warning: Phase '{}' already completed, skipping.", phase_id));
+                    tee_println(&format!("Warning: Phase '{phase_id}' already completed, skipping."));
+                    continue;
+                }
+                Some(p) if p.status == PhaseStatus::Deferred => {
+                    tee_println(&format!("Warning: Phase '{phase_id}' was deferred (review cycles exhausted), skipping."));
                     continue;
                 }
                 Some(_) => {
                     // Execute the phase
                     match self.execute_phase(phase_id) {
-                        Ok(()) => {
+                        Ok(PhaseOutcome::Completed) => {
+                            tee_println(&format!("Phase '{phase_id}' completed."));
+                            self.update_state()?;
+                        }
+                        Ok(PhaseOutcome::Deferred) => {
+                            tee_println(&format!("Phase '{phase_id}' deferred (review cycles exhausted)."));
                             self.update_state()?;
                         }
                         Err(e) => {
-                            tee_println(&format!("Phase '{}' failed: {}", phase_id, e));
+                            tee_println(&format!("Phase '{phase_id}' failed: {e}"));
                             // Continue with next phase
                         }
                     }
@@ -580,8 +602,7 @@ impl Manager {
         use std::io::{self, BufRead, Write};
 
         let message = format!(
-            "Task {} exhausted {} review cycles. Retry more cycles?",
-            task_id, cycles_completed
+            "Task {task_id} exhausted {cycles_completed} review cycles. Retry more cycles?"
         );
 
         tee_println("");
@@ -613,9 +634,9 @@ impl Manager {
     ///
     /// This is the phase-level equivalent of `execute_implem()`. Instead of running
     /// one agent per task, it runs one agent for all pending tasks in the phase.
-    pub fn execute_phase(&mut self, phase_id: &str) -> Result<(), ManagerError> {
-        info!("Executing phase: {}", phase_id);
-        emit_cm(&format!("Executing phase: {}", phase_id));
+    pub fn execute_phase(&mut self, phase_id: &str) -> Result<PhaseOutcome, ManagerError> {
+        info!("Executing phase: {phase_id}");
+        emit_cm(&format!("Executing phase: {phase_id}"));
 
         // Get all pending tasks in this phase BEFORE marking as in progress
         let pending_tasks: Vec<Task> = self
@@ -626,30 +647,36 @@ impl Manager {
             .collect();
 
         if pending_tasks.is_empty() {
-            info!("No pending tasks in phase {}, checking completion", phase_id);
+            info!("No pending tasks in phase {phase_id}, checking completion");
             // Try normal completion check first
             self.check_phase_completion(phase_id)?;
-            // If phase is still not completed, only force complete if no tasks are InProgress.
-            // InProgress tasks indicate a previous spawn failure that was not properly reverted —
-            // forcing completion in that state would silently mark unimplemented work as done.
             let phase = self.state.get_phase_mut(phase_id)?;
-            if phase.status != PhaseStatus::Completed {
-                let has_in_progress = phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress);
-                if has_in_progress {
-                    let msg = format!(
-                        "Phase {} has tasks stuck in InProgress state (spawn failure?); stopping to avoid silent force-completion",
-                        phase_id
-                    );
-                    error!("{}", msg);
-                    return Err(ManagerError::TaskNotRunnable(msg));
-                }
-                info!(
-                    "Phase {} has no pending tasks but wasn't marked complete, forcing completion",
-                    phase_id
-                );
-                phase.status = PhaseStatus::Completed;
+            if phase.status == PhaseStatus::Completed {
+                return Ok(PhaseOutcome::Completed);
             }
-            return Ok(());
+            if phase.status == PhaseStatus::Deferred {
+                return Ok(PhaseOutcome::Deferred);
+            }
+            // Phase still not in a terminal state — check why
+            let has_in_progress = phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress);
+            if has_in_progress {
+                let msg = format!(
+                    "Phase {phase_id} has tasks stuck in InProgress state (spawn failure?); stopping to avoid silent force-completion"
+                );
+                error!("{msg}");
+                return Err(ManagerError::TaskNotRunnable(msg));
+            }
+            let has_deferred = phase.tasks.iter().any(|t| t.status == TaskStatus::Deferred);
+            if has_deferred {
+                info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
+                phase.status = PhaseStatus::Deferred;
+                return Ok(PhaseOutcome::Deferred);
+            }
+            info!(
+                "Phase {phase_id} has no pending tasks but wasn't marked complete, forcing completion"
+            );
+            phase.status = PhaseStatus::Completed;
+            return Ok(PhaseOutcome::Completed);
         }
 
         // Mark phase as in progress only if there's actual work to do
@@ -663,32 +690,13 @@ impl Manager {
             if let Some(ref baseline) = phase.baseline_commit.clone() {
                 let starting_cycle = phase.review_cycles_completed;
                 info!(
-                    "Resuming phase {} at REVIEW cycle {} (IMPLEM already completed)",
-                    phase_id, starting_cycle
+                    "Resuming phase {phase_id} at REVIEW cycle {starting_cycle} (IMPLEM already completed)"
                 );
-                emit_cm(&format!("Resuming {} at REVIEW cycle {}", phase_id, starting_cycle));
+                emit_cm(&format!("Resuming {phase_id} at REVIEW cycle {starting_cycle}"));
 
                 let verdict = self.run_phase_review_cycle(phase_id, baseline, starting_cycle, &pending_tasks)?;
-
-                match verdict {
-                    Verdict::Approved => {
-                        // Mark all pending tasks as completed
-                        for task in &pending_tasks {
-                            self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-                            self.sync_roadmap_item(&task.id);
-                        }
-                        self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
-                        self.clear_phase_implem_completion(phase_id);
-                    }
-                    Verdict::NeedsFixes => {
-                        // Defer all tasks
-                        for task in &pending_tasks {
-                            self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
-                        }
-                        self.clear_phase_implem_completion(phase_id);
-                    }
-                }
-                return Ok(());
+                let outcome = self.apply_phase_verdict(phase_id, verdict, &pending_tasks)?;
+                return Ok(outcome);
             }
         }
 
@@ -713,8 +721,8 @@ impl Manager {
         let initial_plan = phase.plan.clone();
         let plan_prompt = PromptBuilder::build_phase_plan_prompt(&phase, &initial_plan);
 
-        info!("Spawning PLAN agent for {}", phase_id);
-        emit_cm(&format!("Spawning PLAN agent for {}", phase_id));
+        info!("Spawning PLAN agent for {phase_id}");
+        emit_cm(&format!("Spawning PLAN agent for {phase_id}"));
 
         // Log prompt to phase logger
         let _ = self.phase_logger.log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
@@ -754,7 +762,7 @@ impl Manager {
         let plan_response = match ResponseParser::parse_plan_response(&plan_output.stdout) {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
-                warn!("PLAN agent parse failed: {}, using original plan", msg);
+                warn!("PLAN agent parse failed: {msg}, using original plan");
                 // If parse fails, just use the original plan
                 crate::agent::PlanAgentResponse { plan: None }
             }
@@ -780,13 +788,13 @@ impl Manager {
         // Use detailed plan if provided, otherwise use original
         let final_plan = match plan_response.plan {
             Some(detailed) => {
-                info!("PLAN agent provided detailed plan for {}", phase_id);
-                emit_cm(&format!("PLAN agent: using detailed plan for {}", phase_id));
+                info!("PLAN agent provided detailed plan for {phase_id}");
+                emit_cm(&format!("PLAN agent: using detailed plan for {phase_id}"));
                 detailed
             }
             None => {
-                info!("PLAN agent: original plan sufficient for {}", phase_id);
-                emit_cm(&format!("PLAN agent: using original plan for {}", phase_id));
+                info!("PLAN agent: original plan sufficient for {phase_id}");
+                emit_cm(&format!("PLAN agent: using original plan for {phase_id}"));
                 initial_plan
             }
         };
@@ -838,7 +846,7 @@ impl Manager {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                tee_eprintln(&format!("[{} PHASE_IMPLEM] {} parse failed: {}", now, phase_id, msg));
+                tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} parse failed: {msg}"));
 
                 // Log stderr if available (may contain error info)
                 if !output.stderr.trim().is_empty() {
@@ -848,12 +856,12 @@ impl Manager {
                 // Log non-zero exit code
                 if let Some(code) = output.exit_code {
                     if code != 0 {
-                        tee_eprintln(&format!("[{} PHASE_IMPLEM] {} exit code: {}", now, phase_id, code));
+                        tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} exit code: {code}"));
                     }
                 }
 
                 if let Some(session_id) = &output.session_id {
-                    tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retrying with --continue...", now, phase_id));
+                    tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} retrying with --continue..."));
                     let retry_handle = self.agent_spawner.spawn_with_continue(
                         session_id,
                         "Your previous response could not be parsed. Please provide a summary of your changes.",
@@ -873,7 +881,7 @@ impl Manager {
                     match ResponseParser::parse(&retry_output.stdout) {
                         Ok(resp) => resp,
                         Err(e) => {
-                            tee_eprintln(&format!("[{} PHASE_IMPLEM] {} retry also failed: {}", now, phase_id, e));
+                            tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} retry also failed: {e}"));
                             // Restore task state before returning error
                             for task in &pending_tasks {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
@@ -916,24 +924,28 @@ impl Manager {
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
             }
             self.manager_state = ManagerState::Executing;
-            return Ok(());
+            return Err(ManagerError::TaskNotRunnable(
+                format!("IMPLEM agent reported failure for phase {phase_id}: {}", response.message),
+            ));
         }
 
         // Verify agent actually made file changes
         if !self.check_git_changes()? {
-            warn!("Agent reported success but no file changes detected for phase {}", phase_id);
+            warn!("Agent reported success but no file changes detected for phase {phase_id}");
             for task in &pending_tasks {
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
             }
             self.manager_state = ManagerState::Executing;
-            return Ok(());
+            return Err(ManagerError::TaskNotRunnable(
+                format!("IMPLEM agent made no file changes for phase {phase_id}"),
+            ));
         }
 
         // Commit IMPLEM agent changes for audit trail
         match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
             Ok(_) => {}
             Err(e) => {
-                warn!("Failed to commit PHASE_IMPLEM changes for {}: {}", phase_id, e);
+                warn!("Failed to commit PHASE_IMPLEM changes for {phase_id}: {e}");
             }
         }
 
@@ -947,8 +959,8 @@ impl Manager {
                     BuildError::CommandFailed { stderr, .. } => stderr.clone(),
                     _ => e.to_string(),
                 };
-                warn!("Build failed after PHASE_IMPLEM for {}: {}", phase_id, last_err_msg);
-                emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {}", phase_id));
+                warn!("Build failed after PHASE_IMPLEM for {phase_id}: {last_err_msg}");
+                emit_cm(&format!("Build FAILED after PHASE_IMPLEM for {phase_id}"));
 
                 // Enter build-fix cycle bounded by max_cycles
                 let max_cycles = self.config.max_cycles;
@@ -961,8 +973,7 @@ impl Manager {
                     ));
 
                     let build_feedback = format!(
-                        "## Build Error\n\nThe build failed after implementation. Fix the following build errors:\n\n```\n{}\n```\n",
-                        last_err_msg
+                        "## Build Error\n\nThe build failed after implementation. Fix the following build errors:\n\n```\n{last_err_msg}\n```\n"
                     );
 
                     let phase = self
@@ -991,7 +1002,7 @@ impl Manager {
                         commit_hash: None,
                     });
 
-                    emit_cm(&format!("Spawning FIX agent for build error in {}", phase_id));
+                    emit_cm(&format!("Spawning FIX agent for build error in {phase_id}"));
                     let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
                         .inspect_err(|_| {
                             for task in &pending_tasks {
@@ -1016,7 +1027,7 @@ impl Manager {
                     // Commit fix changes if any
                     if self.check_git_changes()? {
                         if let Err(ce) = self.commit_agent_changes(phase_id, "PHASE_FIX", &fix_agent_id) {
-                            warn!("Failed to commit PHASE_FIX changes: {}", ce);
+                            warn!("Failed to commit PHASE_FIX changes: {ce}");
                         }
                     }
 
@@ -1041,8 +1052,8 @@ impl Manager {
                 }
 
                 if !build_fixed {
-                    warn!("Build-fix cycles exhausted for {} after {} attempts", phase_id, max_cycles);
-                    emit_cm(&format!("Build-fix EXHAUSTED for {} after {} cycles", phase_id, max_cycles));
+                    warn!("Build-fix cycles exhausted for {phase_id} after {max_cycles} attempts");
+                    emit_cm(&format!("Build-fix EXHAUSTED for {phase_id} after {max_cycles} cycles"));
                     for task in &pending_tasks {
                         self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
                     }
@@ -1050,56 +1061,69 @@ impl Manager {
                     return Err(ManagerError::MaxCyclesExceeded(phase_id.to_string()));
                 }
             }
-            emit_cm(&format!("Build PASSED for phase {}, starting review", phase_id));
+            emit_cm(&format!("Build PASSED for phase {phase_id}, starting review"));
         } else {
             info!("No build commands configured, skipping build verification");
-            emit_cm(&format!("Skipping build verification for phase {} (no commands configured)", phase_id));
+            emit_cm(&format!("Skipping build verification for phase {phase_id} (no commands configured)"));
         }
 
         // Save phase IMPLEM completion state for potential resume
         self.save_phase_implem_completion(phase_id, &baseline_commit);
 
         // Run phase-level review cycle
-        if !baseline_commit.is_empty() {
+        let outcome = if !baseline_commit.is_empty() {
             let verdict = self.run_phase_review_cycle(phase_id, &baseline_commit, 0, &pending_tasks)?;
-
-            match verdict {
-                Verdict::Approved => {
-                    // Mark all tasks as completed
-                    for task in &pending_tasks {
-                        self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-                        self.sync_roadmap_item(&task.id);
-                        self.state
-                            .log_records
-                            .push(LogManager::create_task_complete_record(&task.id));
-                    }
-                    self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
-                    self.clear_phase_implem_completion(phase_id);
-                }
-                Verdict::NeedsFixes => {
-                    // Defer all tasks
-                    let reason = format!("Review cycle exhausted after {} cycles", self.config.max_cycles);
-                    for task in &pending_tasks {
-                        self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
-                        self.state
-                            .log_records
-                            .push(LogManager::create_task_deferred_record(&task.id, &reason));
-                    }
-                    self.clear_phase_implem_completion(phase_id);
-                }
-            }
+            self.apply_phase_verdict(phase_id, verdict, &pending_tasks)?
         } else {
             // No baseline commit — skip review, mark complete
-            warn!("No baseline commit for phase {}, skipping review", phase_id);
-            for task in &pending_tasks {
-                self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
-                self.sync_roadmap_item(&task.id);
-            }
-            self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
-        }
+            warn!("No baseline commit for phase {phase_id}, skipping review");
+            self.apply_phase_verdict(phase_id, Verdict::Approved, &pending_tasks)?
+        };
 
         self.manager_state = ManagerState::Executing;
-        Ok(())
+        Ok(outcome)
+    }
+
+    /// Apply the verdict from a phase review cycle, updating task statuses,
+    /// phase status, log records, roadmap sync, and clearing implem state.
+    ///
+    /// This is the single source of truth for verdict handling — all code paths
+    /// that receive a `Verdict` from `run_phase_review_cycle` must use this method.
+    fn apply_phase_verdict(
+        &mut self,
+        phase_id: &str,
+        verdict: Verdict,
+        pending_tasks: &[Task],
+    ) -> Result<PhaseOutcome, ManagerError> {
+        match verdict {
+            Verdict::Approved => {
+                for task in pending_tasks {
+                    self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                    self.sync_roadmap_item(&task.id);
+                    self.state
+                        .log_records
+                        .push(LogManager::create_task_complete_record(&task.id));
+                }
+                self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
+                self.clear_phase_implem_completion(phase_id);
+                Ok(PhaseOutcome::Completed)
+            }
+            Verdict::NeedsFixes => {
+                let reason = format!(
+                    "Review cycle exhausted after {} cycles",
+                    self.config.max_cycles
+                );
+                for task in pending_tasks {
+                    self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                    self.state
+                        .log_records
+                        .push(LogManager::create_task_deferred_record(&task.id, &reason));
+                }
+                self.state.mark_phase_status(phase_id, PhaseStatus::Deferred)?;
+                self.clear_phase_implem_completion(phase_id);
+                Ok(PhaseOutcome::Deferred)
+            }
+        }
     }
 
     /// Run phase-level REVIEW → FIX → re-REVIEW cycle.
@@ -1121,9 +1145,9 @@ impl Manager {
             if cycle >= max_cycles {
                 if let Some(additional) = self.prompt_retry_cycles(phase_id, cycle) {
                     max_cycles += additional;
-                    emit_cm(&format!("Retrying {} more cycles for phase {}", additional, phase_id));
+                    emit_cm(&format!("Retrying {additional} more cycles for phase {phase_id}"));
                 } else {
-                    warn!("Phase review cycle exhausted for {} after {} cycles", phase_id, cycle);
+                    warn!("Phase review cycle exhausted for {phase_id} after {cycle} cycles");
                     return Ok(Verdict::NeedsFixes);
                 }
             }
@@ -1134,7 +1158,7 @@ impl Manager {
             let diff = self.get_diff_between(baseline_commit, "HEAD")?;
 
             if diff.trim().is_empty() {
-                warn!("No diff found for phase {}", phase_id);
+                warn!("No diff found for phase {phase_id}");
                 return Ok(Verdict::Approved);
             }
 
@@ -1238,7 +1262,7 @@ impl Manager {
             }
 
             if review_response.status == AgentStatus::Failed {
-                warn!("Phase review agent failed for {}", phase_id);
+                warn!("Phase review agent failed for {phase_id}");
                 return Ok(Verdict::Approved);
             }
 
@@ -1261,8 +1285,8 @@ impl Manager {
 
             match verdict {
                 Verdict::Approved => {
-                    info!("Phase review approved for {}", phase_id);
-                    emit_cm(&format!("Phase review APPROVED for {}", phase_id));
+                    info!("Phase review approved for {phase_id}");
+                    emit_cm(&format!("Phase review APPROVED for {phase_id}"));
                     return Ok(Verdict::Approved);
                 }
                 Verdict::NeedsFixes => {
@@ -1272,8 +1296,8 @@ impl Manager {
                     if cycle + 1 >= max_cycles {
                         cycle += 1;
                         self.update_phase_review_cycles(phase_id, cycle);
-                        warn!("Phase {} reached max cycles ({}), deferring", phase_id, max_cycles);
-                        emit_cm(&format!("Phase {} deferred after {} cycles", phase_id, max_cycles));
+                        warn!("Phase {phase_id} reached max cycles ({max_cycles}), deferring");
+                        emit_cm(&format!("Phase {phase_id} deferred after {max_cycles} cycles"));
                         return Ok(Verdict::NeedsFixes);
                     }
 
@@ -1333,14 +1357,14 @@ impl Manager {
 
 
                     if !self.check_git_changes()? {
-                        warn!("PHASE_FIX made no changes for {}", phase_id);
+                        warn!("PHASE_FIX made no changes for {phase_id}");
                         continue;
                     }
 
                     match self.commit_agent_changes(phase_id, "PHASE_FIX", &fix_agent_id) {
                         Ok(_) => {}
                         Err(e) => {
-                            warn!("Failed to commit PHASE_FIX changes: {}", e);
+                            warn!("Failed to commit PHASE_FIX changes: {e}");
                             continue;
                         }
                     }
@@ -1349,7 +1373,7 @@ impl Manager {
                     self.manager_state = ManagerState::Verifying;
                     if !self.config.build_commands.is_empty() {
                         if let Err(e) = self.build_verifier.verify_commands(&self.config.build_commands) {
-                            warn!("Build failed after PHASE_FIX: {}", e);
+                            warn!("Build failed after PHASE_FIX: {e}");
                         }
                     }
                     self.manager_state = ManagerState::WaitingForAgent;
@@ -1395,12 +1419,12 @@ impl Manager {
         // Save roadmap and regenerate ROADMAP.md if loaded
         if let Some(ref roadmap) = self.roadmap_state {
             if let Err(e) = save_roadmap(roadmap, &self.config.roadmap_path) {
-                warn!("Failed to save roadmap: {}", e);
+                warn!("Failed to save roadmap: {e}");
             } else {
                 debug!("Roadmap saved to {:?}", self.config.roadmap_path);
                 let content = generate_roadmap_md(roadmap);
                 if let Err(e) = write_md_file(&content, &self.config.roadmap_md_path) {
-                    warn!("Failed to regenerate ROADMAP.md: {}", e);
+                    warn!("Failed to regenerate ROADMAP.md: {e}");
                 } else {
                     debug!("ROADMAP.md regenerated at {:?}", self.config.roadmap_md_path);
                 }
@@ -1460,7 +1484,7 @@ impl Manager {
             }
         }
 
-        debug!("Roadmap item {} not found for task {}", item_id, task_id);
+        debug!("Roadmap item {item_id} not found for task {task_id}");
     }
 
     /// Sync a completed phase's status to the roadmap.
@@ -1496,7 +1520,7 @@ impl Manager {
             }
         }
 
-        debug!("Roadmap phase {} not found", phase_id);
+        debug!("Roadmap phase {phase_id} not found");
     }
 
     /// Check if a phase just completed and run build verification.
@@ -1504,17 +1528,32 @@ impl Manager {
     /// Returns `Ok(true)` if build passed (or no check needed),
     /// `Ok(false)` if build failed and a fix task was injected.
     fn check_phase_completion(&mut self, phase_id: &str) -> Result<bool, ManagerError> {
-        if !self.state.all_phase_tasks_completed(phase_id) {
+        if !self.state.all_phase_tasks_resolved(phase_id) {
             return Ok(true); // Phase not complete yet, no check needed
         }
 
-        // All tasks in phase completed - run build verification (if configured)
+        // If any tasks are deferred, mark the phase as deferred — don't attempt
+        // build verification or mark it completed.
+        let has_deferred = self
+            .state
+            .phases
+            .iter()
+            .find(|p| p.id == phase_id)
+            .map(|p| p.tasks.iter().any(|t| t.status == TaskStatus::Deferred))
+            .unwrap_or(false);
+        if has_deferred {
+            info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
+            self.state.mark_phase_status(phase_id, PhaseStatus::Deferred)?;
+            return Ok(true);
+        }
+
+        // All tasks completed — run build verification (if configured)
         self.manager_state = ManagerState::Verifying;
 
         // If no build commands configured, skip verification and mark complete
         if self.config.build_commands.is_empty() {
             info!("No build commands configured, skipping build verification");
-            emit_cm(&format!("Phase {} complete (build verification skipped)", phase_id));
+            emit_cm(&format!("Phase {phase_id} complete (build verification skipped)"));
 
             // Mark phase as completed
             self.state
@@ -1527,12 +1566,12 @@ impl Manager {
             return Ok(true);
         }
 
-        emit_cm(&format!("Phase {} complete, verifying build...", phase_id));
+        emit_cm(&format!("Phase {phase_id} complete, verifying build..."));
         let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
         match build_result {
             Ok(()) => {
-                emit_cm(&format!("Build PASSED for phase {}", phase_id));
+                emit_cm(&format!("Build PASSED for phase {phase_id}"));
                 let build_output = crate::build::BuildOutput {
                     success: true,
                     errors: vec![],
@@ -1560,8 +1599,7 @@ impl Manager {
                     _ => e.to_string(),
                 };
                 emit_cm(&format!(
-                    "Build FAILED for phase {}, injecting fix task",
-                    phase_id
+                    "Build FAILED for phase {phase_id}, injecting fix task"
                 ));
 
                 let build_output = crate::build::BuildOutput {
@@ -1605,13 +1643,12 @@ impl Manager {
 
         let task_id = format!("{}.build-fix-{}", phase_id, fix_count + 1);
         let plan_content = format!(
-            "The build failed after all tasks in this phase completed. Fix the build errors.\n\nBuild errors:\n{}",
-            build_errors
+            "The build failed after all tasks in this phase completed. Fix the build errors.\n\nBuild errors:\n{build_errors}"
         );
 
         // Create plan file for this task (use phase number for simple naming)
         let phase_num = phase_id.strip_prefix("phase-").unwrap_or(phase_id);
-        let plan_file = format!(".cm/plans/plan-{}.md", phase_num);
+        let plan_file = format!(".cm/plans/plan-{phase_num}.md");
         let plan_dir = std::path::Path::new(".cm/plans");
         if !plan_dir.exists() {
             std::fs::create_dir_all(plan_dir).map_err(StateError::from)?;
@@ -1638,7 +1675,7 @@ impl Manager {
         };
 
         self.state.add_task_to_phase(phase_id, task)?;
-        emit_cm(&format!("Injected build-fix task: {}", task_id));
+        emit_cm(&format!("Injected build-fix task: {task_id}"));
         Ok(())
     }
 
@@ -1657,7 +1694,7 @@ impl Manager {
                 Ok(!stdout.trim().is_empty())
             }
             Err(e) => {
-                warn!("Failed to run git diff, assuming changes exist: {}", e);
+                warn!("Failed to run git diff, assuming changes exist: {e}");
                 Ok(true)
             }
         }
@@ -1680,7 +1717,7 @@ impl Manager {
                 Err(ManagerError::TaskNotRunnable(msg.to_string()))
             }
             Err(e) => {
-                warn!("Preflight git check failed (git not available?): {}", e);
+                warn!("Preflight git check failed (git not available?): {e}");
                 // Don't block execution if git isn't available
                 Ok(())
             }
@@ -1710,7 +1747,7 @@ impl Manager {
         git.add(&["-A"])?;
 
         // Commit with descriptive message
-        let message = format!("cm: {} {} changes", task_id, agent_label);
+        let message = format!("cm: {task_id} {agent_label} changes");
         let commit_id = git.commit(&message)?;
         let hash = commit_id.0.clone();
 
