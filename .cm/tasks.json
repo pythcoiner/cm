@@ -6,7 +6,7 @@
     "created_at": "2026-01-25T12:00:00Z"
   },
   "global_context": {
-    "plan_summary": "Claude Code Manager (cm) is a Rust CLI tool that automates coordination between Claude agents for software development tasks. The manager mediates all agent communication through a strict IMPLEM → REVIEW → FIX cycle with context isolation. Supports crash recovery, real-time TUI monitoring, and deterministic markdown generation from JSON source of truth."
+    "plan_summary": "Claude Code Manager (cm) is a Rust CLI tool that automates coordination between Claude agents for software development tasks. The manager mediates all agent communication through a strict IMPLEM \u2192 REVIEW \u2192 FIX cycle with context isolation. Supports crash recovery, real-time TUI monitoring, and deterministic markdown generation from JSON source of truth."
   },
   "phases": [
     {
@@ -546,7 +546,7 @@
     {
       "id": "phase-39",
       "name": "Fix Agent Spawn Failures",
-      "plan": "Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.",
+      "plan": "Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX \u2014 switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases \u2014 revert tasks on error and stop execution.",
       "status": "completed",
       "tasks": [
         {
@@ -563,7 +563,7 @@
               "Bug: Agent spawn fails with 'Argument list too long (os error 7)' when prompt exceeds ARG_MAX",
               "Observed: Large prompts (100KB+) cause execve() to fail with E2BIG",
               "Expected: Agent should spawn successfully regardless of prompt size",
-              "Location: src/agent/mod.rs:104-123 — prompt passed as -p CLI argument"
+              "Location: src/agent/mod.rs:104-123 \u2014 prompt passed as -p CLI argument"
             ]
           },
           "plan_file": ".cm/plans/plan-39.md",
@@ -618,6 +618,131 @@
         }
       ],
       "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-40",
+      "name": "Post-Run Review Agent",
+      "plan": "After every cm run (normal, Ctrl-C, or crash), spawn a review agent that inspects all logs from phases touched during the run, prints a markdown report to stdout verbatim, saves it to .cm/reports/, and exits non-zero if issues are found.",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-40.feat-run-review.impl-1",
+          "name": "Add run-tracking state (run_started_at, touched_phases)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/manager/state.rs",
+              "src/manager/mod.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-1",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-40.feat-run-review.impl-2",
+          "name": "Create src/review/mod.rs log gathering module",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-40.feat-run-review.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/log/phase_logger.rs",
+              "src/log/file_logger.rs",
+              "src/lib.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-2",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-40.feat-run-review.impl-3",
+          "name": "Add RunReview agent kind, prompt, and response parser",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-40.feat-run-review.impl-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/agent/mod.rs",
+              "src/agent/prompt.rs",
+              "src/agent/response.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-3",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-40.feat-run-review.impl-4",
+          "name": "Wire run_post_run_review into orchestrator and propagate exit code",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-40.feat-run-review.impl-3"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs",
+              "src/cli/mod.rs",
+              "src/main.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-4",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-40.feat-run-review.test-1",
+          "name": "Tests for log gathering and trailing-JSON parser",
+          "type": "test",
+          "status": "pending",
+          "depends_on": [
+            "phase-40.feat-run-review.impl-4"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/review/mod.rs",
+              "src/agent/response.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-5",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-40.feat-run-review.review",
+          "name": "Review post-run review feature",
+          "type": "review",
+          "status": "pending",
+          "depends_on": [
+            "phase-40.feat-run-review.impl-4",
+            "phase-40.feat-run-review.test-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/review/mod.rs",
+              "src/manager/mod.rs",
+              "src/agent/mod.rs"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-40.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-40-item-6",
+          "review_cycles_completed": 0
+        }
+      ]
     }
   ],
   "agent_history": [
@@ -1961,7 +2086,7 @@
       "data": {
         "type": "agent_spawn",
         "agent_type": "plan",
-        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Fix Agent Spawn Failures\n\n## Initial Plan\n\nFix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.\n\n## Tasks in This Phase\n\n- **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg\n- **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error\n- **phase-39.review**: Review agent spawn fix and error handling\n\n"
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Fix Agent Spawn Failures\n\n## Initial Plan\n\nFix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX \u2014 switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases \u2014 revert tasks on error and stop execution.\n\n## Tasks in This Phase\n\n- **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg\n- **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error\n- **phase-39.review**: Review agent spawn fix and error handling\n\n"
       }
     },
     {

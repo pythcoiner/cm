@@ -272,7 +272,7 @@ This document shows phase plans and task status. Generated from tasks.json.
 
 ## phase-39: Fix Agent Spawn Failures
 
-**Status:** Pending (0/3)
+**Status:** Complete (3/3)
 
 ### Plan
 
@@ -280,9 +280,28 @@ Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to std
 
 ### Tasks
 
-- [ ] **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg - Fix: Agent spawn failures and silent phase completion
-- [ ] **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error - Fix: Agent spawn failures and silent phase completion
-- [ ] **phase-39.review**: Review agent spawn fix and error handling - Fix: Agent spawn failures and silent phase completion
+- [x] **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg - Fix: Agent spawn failures and silent phase completion
+- [x] **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error - Fix: Agent spawn failures and silent phase completion
+- [x] **phase-39.review**: Review agent spawn fix and error handling - Fix: Agent spawn failures and silent phase completion
+
+---
+
+## phase-40: Post-Run Review Agent
+
+**Status:** Pending (0/6)
+
+### Plan
+
+After every cm run (normal, Ctrl-C, or crash), spawn a review agent that inspects all logs from phases touched during the run, prints a markdown report to stdout verbatim, saves it to .cm/reports/, and exits non-zero if issues are found.
+
+### Tasks
+
+- [ ] **phase-40.feat-run-review.impl-1**: Add run-tracking state (run_started_at, touched_phases) - # Phase 40: Post-Run Review Agent
+- [ ] **phase-40.feat-run-review.impl-2**: Create src/review/mod.rs log gathering module - # Phase 40: Post-Run Review Agent
+- [ ] **phase-40.feat-run-review.impl-3**: Add RunReview agent kind, prompt, and response parser - # Phase 40: Post-Run Review Agent
+- [ ] **phase-40.feat-run-review.impl-4**: Wire run_post_run_review into orchestrator and propagate exit code - # Phase 40: Post-Run Review Agent
+- [ ] **phase-40.feat-run-review.test-1**: Tests for log gathering and trailing-JSON parser - # Phase 40: Post-Run Review Agent
+- [ ] **phase-40.feat-run-review.review**: Review post-run review feature - # Phase 40: Post-Run Review Agent
 
 ---
 
@@ -323,5 +342,6 @@ Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to std
 | phase-36: Remove Unused MANAGER.md | Complete | 1 | 1 |
 | phase-37: Add Phase Range Selection | Complete | 1 | 1 |
 | phase-38: Add Model Selection Flag | Complete | 1 | 1 |
-| phase-39: Fix Agent Spawn Failures | Pending | 3 | 0 |
-| **Total** | | **16** | **13** |
+| phase-39: Fix Agent Spawn Failures | Complete | 3 | 3 |
+| phase-40: Post-Run Review Agent | Pending | 6 | 0 |
+| **Total** | | **22** | **16** |

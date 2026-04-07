@@ -645,6 +645,67 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-40",
+      "number": "40",
+      "name": "Post-Run Review Agent",
+      "items": [
+        {
+          "id": "phase-40-item-1",
+          "name": "Add run-tracking state",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.impl-1"
+          ]
+        },
+        {
+          "id": "phase-40-item-2",
+          "name": "Create log gathering module",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.impl-2"
+          ]
+        },
+        {
+          "id": "phase-40-item-3",
+          "name": "Add RunReview agent kind",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.impl-3"
+          ]
+        },
+        {
+          "id": "phase-40-item-4",
+          "name": "Wire orchestrator integration and exit code",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.impl-4"
+          ]
+        },
+        {
+          "id": "phase-40-item-5",
+          "name": "Tests for log gathering and parser",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.test-1"
+          ]
+        },
+        {
+          "id": "phase-40-item-6",
+          "name": "Review post-run review feature",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-40.feat-run-review.review"
+          ]
+        }
+      ]
     }
   ]
 }
