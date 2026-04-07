@@ -360,6 +360,8 @@ pub enum AgentType {
     Review,
     /// Fix agent.
     Fix,
+    /// Post-run review agent (audits logs after a run completes).
+    RunReview,
 }
 
 #[cfg(test)]

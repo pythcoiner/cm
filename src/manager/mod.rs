@@ -184,6 +184,10 @@ pub struct Manager {
     manager_state: ManagerState,
     /// Shutdown flag for graceful termination.
     shutdown_flag: Arc<AtomicBool>,
+    /// When the current run started (runtime-only, not persisted).
+    run_started_at: chrono::DateTime<Utc>,
+    /// Phase IDs touched during this run (runtime-only, not persisted).
+    touched_phase_ids: Vec<String>,
 }
 
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
@@ -240,6 +244,8 @@ impl Manager {
             phase_logger,
             manager_state: ManagerState::Idle,
             shutdown_flag,
+            run_started_at: Utc::now(),
+            touched_phase_ids: Vec::new(),
         })
     }
 
@@ -637,6 +643,11 @@ impl Manager {
     pub fn execute_phase(&mut self, phase_id: &str) -> Result<PhaseOutcome, ManagerError> {
         info!("Executing phase: {phase_id}");
         emit_cm(&format!("Executing phase: {phase_id}"));
+
+        // Track phases touched during this run (runtime-only state)
+        if !self.touched_phase_ids.contains(&phase_id.to_string()) {
+            self.touched_phase_ids.push(phase_id.to_string());
+        }
 
         // Get all pending tasks in this phase BEFORE marking as in progress
         let pending_tasks: Vec<Task> = self
@@ -1791,6 +1802,108 @@ impl Manager {
         }
 
         Ok(hash)
+    }
+
+    /// Run the post-run review agent.
+    ///
+    /// Gathers logs for all phases touched during this run, spawns a RunReview
+    /// agent, prints its report to stdout, and saves the report to `.cm/reports/`.
+    ///
+    /// Returns `true` if the review agent found issues, `false` if clean.
+    /// Never panics — all errors are logged as warnings and treated as no-issues.
+    pub fn run_post_run_review(&self) -> bool {
+        if self.touched_phase_ids.is_empty() {
+            println!("No phases were executed this run.");
+            return false;
+        }
+
+        let cm_dir = match self.config.state_path.parent() {
+            Some(d) => d.to_path_buf(),
+            None => {
+                warn!("run_post_run_review: could not determine .cm directory");
+                return false;
+            }
+        };
+
+        // Gather phase logs
+        let logs = crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids);
+        let formatted = crate::review::format_logs_for_prompt(&logs);
+
+        // Build prompt
+        let prompt = crate::agent::PromptBuilder::build_run_review_prompt(
+            &self.run_started_at,
+            &formatted,
+        );
+
+        // Spawn agent
+        let handle = match self.agent_spawner.spawn(&prompt, "run-review", "RUN_REVIEW") {
+            Ok(h) => h,
+            Err(e) => {
+                warn!("run_post_run_review: failed to spawn agent: {e}");
+                return false;
+            }
+        };
+
+        let output = match handle.wait() {
+            Ok(o) => o,
+            Err(e) => {
+                warn!("run_post_run_review: agent error: {e}");
+                return false;
+            }
+        };
+
+        // Parse response — extract result text from streaming/legacy JSON
+        let result_text = match Self::extract_run_review_text(&output.stdout) {
+            Some(t) => t,
+            None => output.stdout.clone(),
+        };
+
+        let (report_text, response) =
+            crate::agent::ResponseParser::parse_run_review_response(&result_text);
+
+        // Print report verbatim to stdout
+        println!("{report_text}");
+
+        // Save report to .cm/reports/run-<timestamp>.md
+        let reports_dir = cm_dir.join("reports");
+        if let Err(e) = std::fs::create_dir_all(&reports_dir) {
+            warn!("run_post_run_review: failed to create reports directory: {e}");
+        } else {
+            let timestamp = self.run_started_at.format("%Y%m%dT%H%M%SZ");
+            let report_path = reports_dir.join(format!("run-{timestamp}.md"));
+            if let Err(e) = std::fs::write(&report_path, &output.stdout) {
+                warn!("run_post_run_review: failed to save report to {report_path:?}: {e}");
+            } else {
+                info!("run_post_run_review: report saved to {report_path:?}");
+            }
+        }
+
+        response.has_issues
+    }
+
+    /// Extract the result text from agent stdout (streaming or legacy format).
+    fn extract_run_review_text(raw: &str) -> Option<String> {
+        let trimmed = raw.trim();
+        if trimmed.starts_with('[') {
+            // Streaming format — find "result" event
+            let events: Vec<serde_json::Value> =
+                serde_json::from_str(trimmed).ok()?;
+            for event in &events {
+                if event.get("type").and_then(|v| v.as_str()) == Some("result") {
+                    if let Some(r) = event.get("result").and_then(|v| v.as_str()) {
+                        return Some(r.to_string());
+                    }
+                }
+            }
+            None
+        } else {
+            // Legacy format
+            #[derive(serde::Deserialize)]
+            struct LegacyOutput { result: String }
+            serde_json::from_str::<LegacyOutput>(trimmed)
+                .ok()
+                .map(|o| o.result)
+        }
     }
 
     /// Get the current HEAD commit hash.

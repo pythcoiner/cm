@@ -36,7 +36,7 @@ The `tasks.json` file is the source of truth for task state. Markdown files (TAS
           "context": {
             "files_to_read": ["src/relevant/file.rs"]
           },
-          "plan_file": ".cm/plans/plan-1.md",
+          "plan_file": ".cm/plans/plan-1.task-1.md",
           "roadmap_item_id": "item-1"
         }
       ]
@@ -89,7 +89,7 @@ The `tasks.json` file is the source of truth for task state. Markdown files (TAS
 | status | TaskStatus | Yes | "pending", "in_progress", "completed", or "deferred" |
 | depends_on | string[] | No | IDs of tasks this depends on |
 | context | TaskContext | Yes | Context for the agent |
-| plan_file | string | Yes | Path to plan file (e.g., ".cm/plans/plan-1.md") |
+| plan_file | string | Yes | Path to per-task plan file (e.g., ".cm/plans/plan-1.task-1.md") |
 | attempts | TaskAttempt[] | No | Execution history |
 | roadmap_item_id | string | No | ID of linked roadmap item (for roadmap sync) |
 
@@ -121,24 +121,25 @@ For features/fixes, use descriptive names:
 
 ## Plan Files
 
-Plan files contain the detailed instructions for agents. They are stored separately from `tasks.json` to keep the JSON clean and allow for richer markdown content.
+Plan files contain the detailed instructions for agents. They are stored separately from `tasks.json` to keep the JSON clean and allow for richer markdown content. **Each task must have its own dedicated plan file** — never point multiple tasks to the same file, as this causes prompt bloat and review failures.
 
 ### Location
 
-Store plan files at: `.cm/plans/plan-{number}.md`
+Store plan files at: `.cm/plans/plan-{phase}.task-{task}.md`
 
 Examples:
-- `.cm/plans/plan-1.md` - Plan for all tasks in phase 1
-- `.cm/plans/plan-2.md` - Plan for all tasks in phase 2
+- `.cm/plans/plan-1.task-1.md` - Plan for task 1 in phase 1
+- `.cm/plans/plan-1.task-2.md` - Plan for task 2 in phase 1
+- `.cm/plans/plan-2.task-1.md` - Plan for task 1 in phase 2
 
 ### Referencing
 
-Each task must have a `plan_file` field pointing to its plan file:
+Each task must have a `plan_file` field pointing to its own plan file:
 
 ```json
 {
   "id": "phase-1.task-1",
-  "plan_file": ".cm/plans/plan-1.md",
+  "plan_file": ".cm/plans/plan-1.task-1.md",
   ...
 }
 ```

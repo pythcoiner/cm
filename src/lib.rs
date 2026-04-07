@@ -33,3 +33,6 @@ pub mod config;
 
 /// Embedded command files for cm init.
 pub mod command;
+
+/// Post-run log gathering for the review agent.
+pub mod review;

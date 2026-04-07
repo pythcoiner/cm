@@ -848,6 +848,48 @@ impl PromptBuilder {
 
         prompt
     }
+
+    /// Build a prompt for the post-run review agent.
+    ///
+    /// The agent receives concatenated phase logs and must produce a markdown
+    /// report followed by a trailing JSON verdict line.
+    ///
+    /// # Arguments
+    ///
+    /// * `run_started_at` - When the run started (for context)
+    /// * `phase_logs` - Concatenated log content from all touched phases
+    pub fn build_run_review_prompt(
+        run_started_at: &chrono::DateTime<chrono::Utc>,
+        phase_logs: &str,
+    ) -> String {
+        let mut prompt = String::new();
+
+        prompt.push_str("# Run Review Agent\n\n");
+        prompt.push_str("You are a post-run auditor. Review the following execution logs from a cm run\n");
+        prompt.push_str(&format!(
+            "started at {}.\n\n",
+            run_started_at.format("%Y-%m-%dT%H:%M:%SZ")
+        ));
+
+        prompt.push_str("## Instructions\n\n");
+        prompt.push_str("- Identify any errors, build failures, deferred phases, or unresolved review issues.\n");
+        prompt.push_str("- Look for orchestration bugs, tasks marked completed when they should not be, and missing edge cases.\n");
+        prompt.push_str("- Report your findings as a markdown document.\n");
+        prompt.push_str("- At the end of your response, include a JSON block with this exact structure:\n\n");
+        prompt.push_str("```json\n{\"has_issues\": true}\n```\n\n");
+        prompt.push_str("or\n\n");
+        prompt.push_str("```json\n{\"has_issues\": false}\n```\n\n");
+        prompt.push_str("If any issues are found, use `true`. If the run looks clean, use `false`.\n\n");
+
+        prompt.push_str("## Phase Logs\n\n");
+        if phase_logs.is_empty() {
+            prompt.push_str("(No phase logs available.)\n");
+        } else {
+            prompt.push_str(phase_logs);
+        }
+
+        prompt
+    }
 }
 
 /// Extract unique file paths from review feedback issue locations.

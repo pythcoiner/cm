@@ -99,6 +99,18 @@ pub struct PlanAgentResponse {
     pub plan: Option<String>,
 }
 
+/// Response from the post-run review agent.
+///
+/// The agent prints a markdown report and then a trailing JSON line with this structure.
+#[derive(Debug, Clone, Deserialize)]
+pub struct RunReviewAgentResponse {
+    /// Whether the review agent found any issues.
+    pub has_issues: bool,
+    /// One-line summary of the review findings.
+    #[serde(default)]
+    pub summary: String,
+}
+
 /// Parses raw JSON output from Claude agents.
 ///
 /// The parser handles both well-formed JSON and gracefully handles
@@ -487,6 +499,35 @@ impl ResponseParser {
         None
     }
 
+    /// Parse the output from a RunReview agent.
+    ///
+    /// The agent produces a markdown report followed by a trailing JSON block.
+    /// Extracts the last `{...}` object in the output and parses it as
+    /// `RunReviewAgentResponse`. On any parse failure, returns `has_issues: true`
+    /// (fail-safe: unknown state is treated as issues found).
+    ///
+    /// Returns `(report_text, response)` where `report_text` is the markdown
+    /// portion (everything before the trailing JSON block).
+    pub fn parse_run_review_response(output: &str) -> (String, RunReviewAgentResponse) {
+        // Find the last '{' in the output — that's where the trailing JSON starts
+        if let Some(json_start) = output.rfind('{') {
+            let json_candidate = &output[json_start..];
+            if let Ok(resp) = serde_json::from_str::<RunReviewAgentResponse>(json_candidate) {
+                let report_text = output[..json_start].trim_end().to_string();
+                return (report_text, resp);
+            }
+        }
+
+        // Parse failed — conservative default: treat as issues found
+        (
+            output.to_string(),
+            RunReviewAgentResponse {
+                has_issues: true,
+                summary: "parse error".to_string(),
+            },
+        )
+    }
+
     /// Extract JSON from markdown code blocks.
     ///
     /// Looks for ```json or ``` code blocks and extracts the content.
@@ -790,5 +831,35 @@ mod tests {
 
         assert_eq!(response.verdict, None);
         assert!(response.issues.is_empty());
+    }
+
+    #[test]
+    fn test_parse_run_review_response_extracts_trailing_json() {
+        let output = "## Report\n\nSome markdown text.\n\n{\"has_issues\": true, \"summary\": \"build failed\"}";
+        let (report, result) = ResponseParser::parse_run_review_response(output);
+        assert!(result.has_issues);
+        assert_eq!(result.summary, "build failed");
+        assert!(report.contains("Some markdown text."));
+        assert!(!report.contains("has_issues"));
+    }
+
+    #[test]
+    fn test_parse_run_review_response_no_issues() {
+        let output = "All looks good.\n{\"has_issues\": false, \"summary\": \"clean run\"}";
+        let (_report, result) = ResponseParser::parse_run_review_response(output);
+        assert!(!result.has_issues);
+        assert_eq!(result.summary, "clean run");
+    }
+
+    #[test]
+    fn test_parse_run_review_response_parse_failure_defaults_to_issues() {
+        let (_report, result) = ResponseParser::parse_run_review_response("no json here at all");
+        assert!(result.has_issues); // conservative default
+    }
+
+    #[test]
+    fn test_parse_run_review_response_malformed_json_defaults_to_issues() {
+        let (_report, result) = ResponseParser::parse_run_review_response("some text {not valid json}");
+        assert!(result.has_issues);
     }
 }

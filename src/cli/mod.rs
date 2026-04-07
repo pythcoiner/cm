@@ -326,7 +326,15 @@ fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError
     info!("Run mode: executing all tasks from {:?}", cli.state);
     let config = build_manager_config(cli)?;
     let mut manager = Manager::new(config, shutdown_flag)?;
-    manager.run_interactive()?;
+    let run_result = manager.run_interactive();
+    let has_issues = manager.run_post_run_review();
+    if let Err(e) = run_result {
+        eprintln!("Run error: {e}");
+        std::process::exit(if has_issues { 2 } else { 1 });
+    }
+    if has_issues {
+        std::process::exit(2);
+    }
     Ok(())
 }
 
@@ -375,7 +383,15 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config, shutdown_flag)?;
-            manager.run()?;
+            let run_result = manager.run();
+            let has_issues = manager.run_post_run_review();
+            if let Err(e) = run_result {
+                eprintln!("Continue error: {e}");
+                std::process::exit(if has_issues { 2 } else { 1 });
+            }
+            if has_issues {
+                std::process::exit(2);
+            }
         }
         RecoveryAction::Rollback(checkpoint_id) => {
             // Restore from checkpoint and resume
@@ -392,7 +408,15 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config, shutdown_flag)?;
-            manager.run()?;
+            let run_result = manager.run();
+            let has_issues = manager.run_post_run_review();
+            if let Err(e) = run_result {
+                eprintln!("Continue error: {e}");
+                std::process::exit(if has_issues { 2 } else { 1 });
+            }
+            if has_issues {
+                std::process::exit(2);
+            }
         }
         RecoveryAction::Skip => {
             // Mark interrupted task as deferred and continue
@@ -416,7 +440,15 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let config = build_manager_config(cli)?;
 
             let mut manager = Manager::new(config, shutdown_flag)?;
-            manager.run()?;
+            let run_result = manager.run();
+            let has_issues = manager.run_post_run_review();
+            if let Err(e) = run_result {
+                eprintln!("Continue error: {e}");
+                std::process::exit(if has_issues { 2 } else { 1 });
+            }
+            if has_issues {
+                std::process::exit(2);
+            }
         }
     }
 
@@ -432,8 +464,15 @@ fn execute_step(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliErro
     let config = build_manager_config(cli)?;
 
     let mut manager = Manager::new(config, shutdown_flag)?;
-    manager.step()?;
-
+    let step_result = manager.step();
+    let has_issues = manager.run_post_run_review();
+    if let Err(e) = step_result {
+        eprintln!("Step error: {e}");
+        std::process::exit(if has_issues { 2 } else { 1 });
+    }
+    if has_issues {
+        std::process::exit(2);
+    }
     Ok(())
 }
 
