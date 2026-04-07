@@ -951,24 +951,29 @@ impl Manager {
             ));
         }
 
-        // Verify agent actually made file changes
-        if !self.check_git_changes()? {
-            warn!("Agent reported success but no file changes detected for phase {phase_id}");
-            for task in &pending_tasks {
-                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+        // Check whether the agent produced any file changes. An empty diff is
+        // not necessarily a failure: the work may have already been done by an
+        // earlier phase, or the phase may be verification-only (e.g. type:
+        // test). In that case we skip the commit and let build verification
+        // and the phase review cycle decide whether the phase is acceptable.
+        let implem_made_changes = self.check_git_changes()?;
+        if implem_made_changes {
+            // Commit IMPLEM agent changes for audit trail
+            match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
+                Ok(_) => {}
+                Err(e) => {
+                    warn!("Failed to commit PHASE_IMPLEM changes for {phase_id}: {e}");
+                }
             }
-            self.manager_state = ManagerState::Executing;
-            return Err(ManagerError::TaskNotRunnable(
-                format!("IMPLEM agent made no file changes for phase {phase_id}"),
+        } else {
+            warn!(
+                "Agent reported success but no file changes detected for phase {phase_id}; \
+                 deferring to build verification and phase review. Agent summary: {}",
+                response.message
+            );
+            emit_cm(&format!(
+                "PHASE_IMPLEM for {phase_id} produced no file changes; running build verification anyway"
             ));
-        }
-
-        // Commit IMPLEM agent changes for audit trail
-        match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
-            Ok(_) => {}
-            Err(e) => {
-                warn!("Failed to commit PHASE_IMPLEM changes for {phase_id}: {e}");
-            }
         }
 
         // Run build verification (if configured)
