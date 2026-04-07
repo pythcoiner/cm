@@ -20,7 +20,7 @@ use crate::state::{
 mod phase_logger;
 mod tee_writer;
 
-pub use phase_logger::{PhaseLogError, PhaseLogger, PruneStats};
+pub use phase_logger::{parse_log_timestamp, PhaseLogError, PhaseLogger, PruneStats};
 pub use tee_writer::{init_log_file, tee_eprintln, tee_print, tee_println, TeeWriter};
 
 /// Maximum length for prompts and responses before truncation.

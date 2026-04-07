@@ -1813,7 +1813,6 @@ impl Manager {
     /// Never panics — all errors are logged as warnings and treated as no-issues.
     pub fn run_post_run_review(&self) -> bool {
         if self.touched_phase_ids.is_empty() {
-            println!("No phases were executed this run.");
             return false;
         }
 
@@ -1826,8 +1825,12 @@ impl Manager {
         };
 
         // Gather phase logs
-        let logs = crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids);
-        let formatted = crate::review::format_logs_for_prompt(&logs);
+        let logs = crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids)
+            .unwrap_or_else(|_| vec![]);
+        let cm_log_window =
+            crate::review::gather_cm_log_since(&cm_dir, self.run_started_at);
+        let formatted =
+            crate::review::format_logs_for_prompt_with_cm_log(&logs, &cm_log_window);
 
         // Build prompt
         let prompt = crate::agent::PromptBuilder::build_run_review_prompt(
@@ -1871,7 +1874,7 @@ impl Manager {
         } else {
             let timestamp = self.run_started_at.format("%Y%m%dT%H%M%SZ");
             let report_path = reports_dir.join(format!("run-{timestamp}.md"));
-            if let Err(e) = std::fs::write(&report_path, &output.stdout) {
+            if let Err(e) = std::fs::write(&report_path, &report_text) {
                 warn!("run_post_run_review: failed to save report to {report_path:?}: {e}");
             } else {
                 info!("run_post_run_review: report saved to {report_path:?}");

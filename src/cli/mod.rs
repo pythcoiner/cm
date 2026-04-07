@@ -330,10 +330,10 @@ fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError
     let has_issues = manager.run_post_run_review();
     if let Err(e) = run_result {
         eprintln!("Run error: {e}");
-        std::process::exit(if has_issues { 2 } else { 1 });
+        std::process::exit(if has_issues { 1 } else { 2 });
     }
     if has_issues {
-        std::process::exit(2);
+        std::process::exit(1);
     }
     Ok(())
 }
@@ -387,10 +387,10 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
                 eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 2 } else { 1 });
+                std::process::exit(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(2);
+                std::process::exit(1);
             }
         }
         RecoveryAction::Rollback(checkpoint_id) => {
@@ -412,10 +412,10 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
                 eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 2 } else { 1 });
+                std::process::exit(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(2);
+                std::process::exit(1);
             }
         }
         RecoveryAction::Skip => {
@@ -444,10 +444,10 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
                 eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 2 } else { 1 });
+                std::process::exit(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(2);
+                std::process::exit(1);
             }
         }
     }
@@ -468,10 +468,10 @@ fn execute_step(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliErro
     let has_issues = manager.run_post_run_review();
     if let Err(e) = step_result {
         eprintln!("Step error: {e}");
-        std::process::exit(if has_issues { 2 } else { 1 });
+        std::process::exit(if has_issues { 1 } else { 2 });
     }
     if has_issues {
-        std::process::exit(2);
+        std::process::exit(1);
     }
     Ok(())
 }
