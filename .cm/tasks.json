@@ -6,7 +6,7 @@
     "created_at": "2026-01-25T12:00:00Z"
   },
   "global_context": {
-    "plan_summary": "Claude Code Manager (cm) is a Rust CLI tool that automates coordination between Claude agents for software development tasks. The manager mediates all agent communication through a strict IMPLEM \u2192 REVIEW \u2192 FIX cycle with context isolation. Supports crash recovery, real-time TUI monitoring, and deterministic markdown generation from JSON source of truth."
+    "plan_summary": "Claude Code Manager (cm) is a Rust CLI tool that automates coordination between Claude agents for software development tasks. The manager mediates all agent communication through a strict IMPLEM → REVIEW → FIX cycle with context isolation. Supports crash recovery, real-time TUI monitoring, and deterministic markdown generation from JSON source of truth."
   },
   "phases": [
     {
@@ -546,7 +546,7 @@
     {
       "id": "phase-39",
       "name": "Fix Agent Spawn Failures",
-      "plan": "Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX \u2014 switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases \u2014 revert tasks on error and stop execution.",
+      "plan": "Fix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.",
       "status": "completed",
       "tasks": [
         {
@@ -563,7 +563,7 @@
               "Bug: Agent spawn fails with 'Argument list too long (os error 7)' when prompt exceeds ARG_MAX",
               "Observed: Large prompts (100KB+) cause execve() to fail with E2BIG",
               "Expected: Agent should spawn successfully regardless of prompt size",
-              "Location: src/agent/mod.rs:104-123 \u2014 prompt passed as -p CLI argument"
+              "Location: src/agent/mod.rs:104-123 — prompt passed as -p CLI argument"
             ]
           },
           "plan_file": ".cm/plans/plan-39.md",
@@ -623,19 +623,20 @@
       "id": "phase-40",
       "name": "Post-Run Review Agent",
       "plan": "After every cm run (normal, Ctrl-C, or crash), spawn a review agent that inspects all logs from phases touched during the run, prints a markdown report to stdout verbatim, saves it to .cm/reports/, and exits non-zero if issues are found.",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-40.feat-run-review.impl-1",
           "name": "Add run-tracking state (run_started_at, touched_phases)",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [],
           "context": {
             "files_to_read": [
               "src/manager/state.rs",
               "src/manager/mod.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
@@ -646,7 +647,7 @@
           "id": "phase-40.feat-run-review.impl-2",
           "name": "Create src/review/mod.rs log gathering module",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-40.feat-run-review.impl-1"
           ],
@@ -655,7 +656,8 @@
               "src/log/phase_logger.rs",
               "src/log/file_logger.rs",
               "src/lib.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
@@ -666,7 +668,7 @@
           "id": "phase-40.feat-run-review.impl-3",
           "name": "Add RunReview agent kind, prompt, and response parser",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-40.feat-run-review.impl-2"
           ],
@@ -675,7 +677,8 @@
               "src/agent/mod.rs",
               "src/agent/prompt.rs",
               "src/agent/response.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
@@ -686,7 +689,7 @@
           "id": "phase-40.feat-run-review.impl-4",
           "name": "Wire run_post_run_review into orchestrator and propagate exit code",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-40.feat-run-review.impl-3"
           ],
@@ -695,7 +698,8 @@
               "src/manager/mod.rs",
               "src/cli/mod.rs",
               "src/main.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
@@ -706,7 +710,7 @@
           "id": "phase-40.feat-run-review.test-1",
           "name": "Tests for log gathering and trailing-JSON parser",
           "type": "test",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-40.feat-run-review.impl-4"
           ],
@@ -714,7 +718,8 @@
             "files_to_read": [
               "src/review/mod.rs",
               "src/agent/response.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
@@ -725,7 +730,7 @@
           "id": "phase-40.feat-run-review.review",
           "name": "Review post-run review feature",
           "type": "review",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-40.feat-run-review.impl-4",
             "phase-40.feat-run-review.test-1"
@@ -735,14 +740,16 @@
               "src/review/mod.rs",
               "src/manager/mod.rs",
               "src/agent/mod.rs"
-            ]
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-40.md",
           "attempts": [],
           "roadmap_item_id": "phase-40-item-6",
           "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     }
   ],
   "agent_history": [
@@ -1198,6 +1205,48 @@
       "agent_type": "review",
       "started_at": "2026-03-08T01:44:48.473470027Z",
       "completed_at": "2026-03-08T01:47:36.534230988Z",
+      "exit_status": 0
+    },
+    {
+      "id": "19b97e30-9d37-4f88-be7d-ece1d4792abe",
+      "task_id": "phase-40",
+      "agent_type": "plan",
+      "started_at": "2026-04-07T06:06:15.766747171Z",
+      "completed_at": "2026-04-07T06:08:46.275105701Z",
+      "exit_status": 0
+    },
+    {
+      "id": "2b85aa5b-7b81-4668-8e3e-db92e683d89b",
+      "task_id": "phase-40",
+      "agent_type": "implem",
+      "started_at": "2026-04-07T06:08:46.276303599Z",
+      "completed_at": "2026-04-07T06:16:24.314671470Z",
+      "exit_status": 0,
+      "commit_hash": "6f10863fe8f7c3dfdf77794e58fa79181e54d176"
+    },
+    {
+      "id": "dc123c8c-c2c3-449c-b255-ba16db66eca7",
+      "task_id": "phase-40",
+      "agent_type": "review",
+      "started_at": "2026-04-07T06:16:24.385275934Z",
+      "completed_at": "2026-04-07T06:18:13.713821778Z",
+      "exit_status": 0
+    },
+    {
+      "id": "a7ea331d-c5cc-485d-8499-f845559c5c56",
+      "task_id": "phase-40",
+      "agent_type": "fix",
+      "started_at": "2026-04-07T06:18:13.714116890Z",
+      "completed_at": "2026-04-07T06:21:07.670912599Z",
+      "exit_status": 0,
+      "commit_hash": "e7f8647091f654adbfd92bc1278b6f7ee17d2a20"
+    },
+    {
+      "id": "da89520d-33ca-4208-8e98-a8db2b43c851",
+      "task_id": "phase-40",
+      "agent_type": "review",
+      "started_at": "2026-04-07T06:21:07.735045768Z",
+      "completed_at": "2026-04-07T06:23:42.634396577Z",
       "exit_status": 0
     }
   ],
@@ -2086,7 +2135,7 @@
       "data": {
         "type": "agent_spawn",
         "agent_type": "plan",
-        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Fix Agent Spawn Failures\n\n## Initial Plan\n\nFix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX \u2014 switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases \u2014 revert tasks on error and stop execution.\n\n## Tasks in This Phase\n\n- **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg\n- **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error\n- **phase-39.review**: Review agent spawn fix and error handling\n\n"
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Fix Agent Spawn Failures\n\n## Initial Plan\n\nFix two bugs: (1) prompt passed via -p CLI arg exceeds ARG_MAX — switch to stdin, (2) spawn failures leave tasks InProgress causing forced completion of unimplemented phases — revert tasks on error and stop execution.\n\n## Tasks in This Phase\n\n- **phase-39.fix-stdin-prompt.impl-1**: Fix: Pass agent prompt via stdin instead of -p CLI arg\n- **phase-39.fix-error-handling.impl-2**: Fix: Revert task status on spawn failure and stop on phase error\n- **phase-39.review**: Review agent spawn fix and error handling\n\n"
       }
     },
     {
@@ -2210,6 +2259,141 @@
       "timestamp": "2026-03-08T01:47:36.534344256Z",
       "action": "task_complete",
       "task_id": "phase-39.review",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "b8ca2cbd-fbd4-4e36-a078-4c04a224b158",
+      "timestamp": "2026-04-07T06:06:15.766746399Z",
+      "action": "agent_spawn",
+      "task_id": "phase-40",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "plan",
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Post-Run Review Agent\n\n## Initial Plan\n\nAfter every cm run (normal, Ctrl-C, or crash), spawn a review agent that inspects all logs from phases touched during the run, prints a markdown report to stdout verbatim, saves it to .cm/reports/, and exits non-zero if issues are found.\n\n## Tasks in This Phase\n\n- **phase-40.feat-run-review.impl-1**: Add run-tracking state (run_started_at, touched_phases)\n- **phase-40.feat-run-review.impl-2**: Create src/review/mod.rs log gathering module\n- **phase-40.feat-run-review.impl-3**: Add RunReview agent kind, prompt, and response parser\n- **phase-40.feat-run-review.impl-4**: Wire run_post_run_review into orchestrator and propagate exit code\n- **phase-40.feat-run-review.test-1**: Tests for log gathering and trailing-JSON parser\n- **phase-40.feat-run-review.review**: Review post-run review featur\n\n... [truncated, 3 more bytes]"
+      }
+    },
+    {
+      "id": "9f92ec34-a9e4-4d8a-b8e4-43172a95421a",
+      "timestamp": "2026-04-07T06:08:46.276302819Z",
+      "action": "agent_spawn",
+      "task_id": "phase-40",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute tasks according to the specification provided by the manager.\n\nYou may be assigned:\n- **A single task** - implement one specific feature or fix\n- **Multiple tasks in a phase** - implement all tasks in a logical group, completing them in order\n\n## Your Responsibilities\n\n1. **Read the Task(s)**: Understand the exact requirements from each task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution(s)**: Write clean, focused code that solves each task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Complete All Tasks**: For multi-task phases, complete ALL tasks before returning\n6. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The task description(s) for this session\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project roadmap\n- Historical conversations\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block. The format depends on whether you're han\n\n... [truncated, 23883 more bytes]"
+      }
+    },
+    {
+      "id": "c8f1bd23-b2f3-4b91-947f-cd4182932ecb",
+      "timestamp": "2026-04-07T06:16:24.385274922Z",
+      "action": "agent_spawn",
+      "task_id": "phase-40",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 35905 more bytes]"
+      }
+    },
+    {
+      "id": "4c644aa3-63d5-4615-824a-8321045b8e30",
+      "timestamp": "2026-04-07T06:18:13.713833257Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "e30132dc-b1b0-4c31-a5ac-ae1621954eca",
+      "timestamp": "2026-04-07T06:18:13.714114449Z",
+      "action": "agent_spawn",
+      "task_id": "phase-40",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "# Fix Agent Instructions\n\nYou are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.\n\nYou may be fixing:\n- **A single task** - fix issues from one task's review\n- **Multiple tasks in a phase** - fix all issues found across a phase's review\n\n## Your Responsibilities\n\n1. **Understand Issues**: Carefully read ALL review feedback and understand what needs to be fixed\n2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems\n3. **Fix All Issues**: For phase reviews, address ALL issues across all tasks\n4. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality\n5. **Follow Conventions**: Adhere to the project's code style and architectural patterns\n6. **Verify Changes**: Test your fixes to ensure they resolve the issues\n\n## Review Issues Format\n\nReview issues are provided as formatted text sections in your prompt. Each issue contains:\n\n- **Issue ID** and severity level (e.g., \"Issue: issue-1 (high)\")\n- **Location**: File and line number reference\n- **Problem**: Description of what's wrong\n- **Suggested Fix**: How to resolve it\n\nExample of how issues appear:\n\n```\n### Issue: issue-1 (high)\n**Location:** src/lib.rs:42\n**Problem:** Missing error handling for file read\n**Suggested Fix:** Add proper Result handling with ? operator\n```\n\nYou should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.\n\n## Fix Guidelines\n\n- **Be Precise**: Only change what's necessary to fix the identified issues\n- **Preserve Intent**: Maintain the original functionality while correcting problems\n- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase\n- **Document Changes**: Use clear commit messages that explain what was fixed and why\n\n## Code Quality Standards\n\nAll fixes must:\n- Resolve the reported issues completely\n- Follow the project's code style guidelines\n- Pass build verific\n\n... [truncated, 7342 more bytes]"
+      }
+    },
+    {
+      "id": "58d4c1ea-9b66-48f6-898d-ee5fb7cc29cf",
+      "timestamp": "2026-04-07T06:21:07.735044754Z",
+      "action": "agent_spawn",
+      "task_id": "phase-40",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 42937 more bytes]"
+      }
+    },
+    {
+      "id": "24499a1d-0709-49e0-9068-dbbcbcba355b",
+      "timestamp": "2026-04-07T06:23:42.634406707Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "e5fca2d8-89a9-4db8-825f-70d22aec7bcc",
+      "timestamp": "2026-04-07T06:23:42.634527364Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.impl-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "fe003ac4-67e9-4a6b-97a6-c7047e2b0aae",
+      "timestamp": "2026-04-07T06:23:42.634548303Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.impl-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "3b435c89-852e-4cfd-b019-ff8bad77827d",
+      "timestamp": "2026-04-07T06:23:42.634567178Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.impl-3",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "512ae1c3-7579-4163-8599-b6789c2e31e7",
+      "timestamp": "2026-04-07T06:23:42.634582379Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.impl-4",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "cef70c78-46d9-4021-8d01-fb506c530b1f",
+      "timestamp": "2026-04-07T06:23:42.634594436Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.test-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "de82ca90-faf0-4e88-91a5-2c6184666768",
+      "timestamp": "2026-04-07T06:23:42.634610674Z",
+      "action": "task_complete",
+      "task_id": "phase-40.feat-run-review.review",
       "data": {
         "type": "task_complete",
         "status": "completed"

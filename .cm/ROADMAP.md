@@ -312,14 +312,14 @@ Status: **Complete** (3/3)
 
 ## Phase 40: Post-Run Review Agent
 
-Status: **Not Started** (0/6)
+Status: **Complete** (6/6)
 
-- [ ] Add run-tracking state
-- [ ] Create log gathering module
-- [ ] Add RunReview agent kind
-- [ ] Wire orchestrator integration and exit code
-- [ ] Tests for log gathering and parser
-- [ ] Review post-run review feature
+- [x] Add run-tracking state
+- [x] Create log gathering module
+- [x] Add RunReview agent kind
+- [x] Wire orchestrator integration and exit code
+- [x] Tests for log gathering and parser
+- [x] Review post-run review feature
 
 ---
 
@@ -361,5 +361,5 @@ Status: **Not Started** (0/6)
 | Phase 37: Add Phase Range Selection | Complete | 4/4 |
 | Phase 38: Add Model Selection Flag | Complete | 5/5 |
 | Phase 39: Fix Agent Spawn Failures | Complete | 3/3 |
-| Phase 40: Post-Run Review Agent | Not Started | 0/6 |
-| **Total** | | **70/76** |
+| Phase 40: Post-Run Review Agent | Complete | 6/6 |
+| **Total** | | **76/76** |
