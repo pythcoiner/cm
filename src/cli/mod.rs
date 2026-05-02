@@ -26,7 +26,7 @@ use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_
 /// Subcommands for the cm CLI.
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Initialize .claude/commands directory with cm, feat, fix, and end commands
+    /// Install Claude Code wizards and agent templates into the current repo
     Init {
         /// Overwrite existing command files
         #[arg(long)]
