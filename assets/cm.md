@@ -106,6 +106,7 @@ Wait for the user's response before proceeding.
 - Follow the **"show me the work"** philosophy: every phase produces a visible, demoable artifact a reviewer can run or inspect.
 - **80–300 LoC** is a guideline, not a hard cap. Going over is fine when the changeset is genuinely cohesive and would lose meaning if split. Past ~300 LoC it just gets harder for a reviewer to hold in context, so prefer splitting unless splitting hurts the work.
 - Phases must be independently reviewable — do not bundle unrelated concerns into one phase to "save a round-trip".
+- **Default to one task per phase.** When you generate `tasks.json` in Step 8, give each phase exactly one task unless the user has explicitly asked during the conversation for a phase to be split into multiple tasks (e.g., "separate task for tests", "split this phase into setup and integration"). Smaller, focused tasks produce better agent results — if a phase feels like it needs multiple tasks, that's usually a signal the *phase* should be split, not the task list inside it.
 
 Apply these rules whether the user proposes phases themselves or asks for a suggestion. If the user needs help, suggest a reasonable phase breakdown based on the project description and the rules above. If the user proposes phases that look too coarse (large grab-bags of unrelated work, or single phases that clearly exceed ~300 LoC of cohesive change), gently push back with a more granular split before generating files.
 
@@ -389,9 +390,7 @@ If **no**:
 
 **Goal:** [What this phase accomplishes]
 
-**Tasks:**
-- [Task 1]
-- [Task 2]
+**Task:** [Single task description]
 
 **Deliverables:**
 - [Deliverable 1]
@@ -808,13 +807,13 @@ Rust CLI that reads JSON, applies transformations, and outputs in multiple forma
 ## Phases
 
 ### Phase 1: Foundation
-- Initialize Cargo project with clap, serde, serde_json
-- Create basic CLI structure
+- Initialize Cargo project with clap, serde, serde_json and basic CLI scaffolding
 
-### Phase 2: Core Implementation
-- JSON parser module
-- Transformation operations
-- Error handling
+### Phase 2: JSON Parser
+- Implement JSON parsing with validation and error handling
+
+### Phase 3: Transformations
+- Implement filter, map, and aggregate operations on parsed JSON
 ```
 
 ### Example tasks.json

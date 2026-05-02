@@ -213,6 +213,7 @@ Tell the user the next step is to run `/end` to generate JSON files.
 - Follow the **"show me the work"** philosophy: every phase produces a visible, demoable artifact a reviewer can run or inspect.
 - **80–300 LoC** is a guideline, not a hard cap. Going over is fine when the changeset is genuinely cohesive and would lose meaning if split. Past ~300 LoC it just gets harder for a reviewer to hold in context, so prefer splitting unless splitting hurts the work.
 - Phases must be independently reviewable — do not bundle unrelated concerns into one phase to "save a round-trip".
+- **Default to one task per resulting child phase.** When you split, each new phase should contain exactly one task unless the user explicitly asks for a phase to keep multiple tasks. A phase that "needs" multiple tasks is usually a signal that the phase itself should be split further.
 
 ### When to Split a Phase
 

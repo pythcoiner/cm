@@ -119,23 +119,20 @@ Wait for the user's response before proceeding.
 
 **Ask the user:**
 
-> Let's break this feature into implementation tasks.
+> Let's confirm the implementation plan for this feature.
 >
-> I suggest the following breakdown:
+> By default this feature will be implemented as **a single task** within its phase — that produces the best agent results. I'll only break it into multiple tasks if you've asked for that explicitly (e.g., "separate the tests", "split into backend and frontend").
 >
-> 1. **[Task 1]** - [Description, estimated complexity]
-> 2. **[Task 2]** - [Description, estimated complexity]
-> 3. **[Task 3]** - [Description, estimated complexity]
-> ...
+> Proposed task: **[Single task description, sized at ~80–300 LoC]**
 >
-> Each task should be:
+> The task should be:
 > - Completable in a single agent session
 > - Independently testable
 > - Have clear success criteria
 > - **A minimal meaningful changeset** — one reviewable commit producing a visible, demoable artifact ("show me the work")
-> - Sized at ~80–300 LoC as a guideline (not a hard cap — go over when the work is genuinely cohesive and would lose meaning if split; past ~300 LoC it just gets harder for a reviewer to hold in context)
+> - Sized at ~80–300 LoC as a guideline (go over when the work is genuinely cohesive and would lose meaning if split)
 >
-> Would you like to modify this breakdown?
+> Want me to split this into multiple tasks, or does the single-task plan work?
 
 Wait for the user's response before proceeding.
 
