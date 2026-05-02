@@ -5,6 +5,8 @@
 //! execution modes (run, continue, step, status, validate).
 
 mod init;
+mod token;
+mod update_pricing;
 
 use std::fs;
 use std::path::PathBuf;
@@ -29,6 +31,30 @@ pub enum Command {
         /// Overwrite existing command files
         #[arg(long)]
         force: bool,
+    },
+    /// Show Claude Code token usage and estimated API cost
+    Token {
+        /// Aggregate across all projects instead of just the current one
+        #[arg(long)]
+        global: bool,
+
+        /// Daily breakdown by date
+        #[arg(long, group = "bucket")]
+        daily: bool,
+
+        /// Weekly breakdown by ISO week
+        #[arg(long, group = "bucket")]
+        weekly: bool,
+
+        /// Monthly breakdown
+        #[arg(long, group = "bucket")]
+        monthly: bool,
+    },
+    /// Refresh `[pricing.*]` in `.cm/config.toml` from LiteLLM's public dataset
+    UpdatePricing {
+        /// Print what would change without modifying the file
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -80,6 +106,14 @@ pub enum CliError {
     /// Phase log error.
     #[error("phase log error: {0}")]
     PhaseLogError(#[from] crate::log::PhaseLogError),
+
+    /// Token subcommand error.
+    #[error("token error: {0}")]
+    TokenError(#[from] token::TokenError),
+
+    /// Update-pricing subcommand error.
+    #[error("update-pricing error: {0}")]
+    UpdatePricingError(#[from] update_pricing::UpdatePricingError),
 }
 
 /// Claude Code Manager - Automated agent coordination for software development.
@@ -201,6 +235,28 @@ pub fn run() -> Result<(), CliError> {
     if let Some(ref command) = cli.command {
         return match command {
             Command::Init { force } => init::execute_init(*force),
+            Command::Token {
+                global,
+                daily,
+                weekly,
+                monthly,
+            } => {
+                let bucket = match (daily, weekly, monthly) {
+                    (true, _, _) => Some(token::BucketMode::Daily),
+                    (_, true, _) => Some(token::BucketMode::Weekly),
+                    (_, _, true) => Some(token::BucketMode::Monthly),
+                    _ => None,
+                };
+                token::execute_token(token::TokenOpts {
+                    global: *global,
+                    bucket,
+                })
+                .map_err(CliError::from)
+            }
+            Command::UpdatePricing { dry_run } => update_pricing::execute_update_pricing(
+                update_pricing::UpdatePricingOpts { dry_run: *dry_run },
+            )
+            .map_err(CliError::from),
         };
     }
 

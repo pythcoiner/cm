@@ -16,3 +16,25 @@
 # If empty or not specified, build verification is skipped entirely
 # Example: ["cargo build", "cargo clippy"]
 # build_commands = []
+
+# Pricing overrides for `cm token` (USD per million tokens).
+# Lookup order: exact model key → family substring → hardcoded default.
+# Run `cm update-pricing` to refresh this section from LiteLLM's public dataset.
+#
+# [pricing.opus]
+# input = 15.0
+# output = 75.0
+# cache_write = 18.75
+# cache_read = 1.50
+#
+# [pricing.sonnet]
+# input = 3.0
+# output = 15.0
+# cache_write = 3.75
+# cache_read = 0.30
+#
+# [pricing.haiku]
+# input = 0.8
+# output = 4.0
+# cache_write = 1.0
+# cache_read = 0.08

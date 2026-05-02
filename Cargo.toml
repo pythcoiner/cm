@@ -30,6 +30,13 @@ env_logger = "0.11"
 # Signal handling
 ctrlc = "3.4"
 
+# Home directory resolution (used by `cm token`)
+dirs = "5"
+
+# HTTP client + format-preserving TOML editing (used by `cm update-pricing`)
+ureq = { version = "2", features = ["json"] }
+toml_edit = "0.22"
+
 [dev-dependencies]
 tempfile = "3"
 assert_cmd = "2"

@@ -4,6 +4,7 @@
 //! to specify default values for model, max_cycles, working_dir, and
 //! build_commands in a config file instead of command-line arguments.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,22 @@ pub enum ConfigError {
     ParseError(#[from] toml::de::Error),
 }
 
+/// Per-model pricing table, in USD per million tokens.
+///
+/// Used by `cm token` to estimate the API-equivalent cost of recorded
+/// Claude Code usage. Refreshed by the `/update-pricing` slash command.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PriceTable {
+    /// Cost of regular input tokens, $/1M.
+    pub input: f64,
+    /// Cost of output tokens, $/1M.
+    pub output: f64,
+    /// Cost of cache-creation (write) input tokens, $/1M.
+    pub cache_write: f64,
+    /// Cost of cache-read input tokens, $/1M.
+    pub cache_read: f64,
+}
+
 /// Configuration file structure.
 ///
 /// All fields are optional. Missing fields will use default values.
@@ -37,6 +54,12 @@ pub enum ConfigError {
 /// max_cycles = 5
 /// working_dir = "."
 /// build_commands = ["cargo build", "cargo clippy"]
+///
+/// [pricing."claude-opus-4-7"]
+/// input = 15.0
+/// output = 75.0
+/// cache_write = 18.75
+/// cache_read = 1.50
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
@@ -55,6 +78,15 @@ pub struct ConfigFile {
     /// Example: ["cargo build", "cargo clippy"]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub build_commands: Option<Vec<String>>,
+
+    /// Per-model pricing overrides used by `cm token`.
+    ///
+    /// Keys are either exact model identifiers (e.g. `claude-opus-4-7`) or
+    /// family substrings (`opus`, `sonnet`, `haiku`). Lookup tries exact
+    /// match first, then falls back to a substring match against the
+    /// reported model name. If no entry matches, hardcoded defaults apply.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pricing: Option<HashMap<String, PriceTable>>,
 }
 
 impl ConfigFile {
@@ -106,6 +138,7 @@ impl ConfigFile {
             && self.max_cycles.is_none()
             && self.working_dir.is_none()
             && self.build_commands.is_none()
+            && self.pricing.is_none()
     }
 }
 
@@ -236,10 +269,55 @@ max_cycles = 3
             max_cycles: Some(5),
             working_dir: None,
             build_commands: None,
+            pricing: None,
         };
 
         let toml_str = toml::to_string_pretty(&config).unwrap();
         assert!(toml_str.contains("model = \"test-model\""));
         assert!(toml_str.contains("max_cycles = 5"));
+    }
+
+    #[test]
+    fn test_config_file_pricing_overrides_round_trip() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.toml");
+
+        let content = r#"
+[pricing."claude-opus-4-7"]
+input = 15.0
+output = 75.0
+cache_write = 18.75
+cache_read = 1.50
+
+[pricing.sonnet]
+input = 3.0
+output = 15.0
+cache_write = 3.75
+cache_read = 0.30
+"#;
+
+        std::fs::write(&config_path, content).unwrap();
+        let config = ConfigFile::load(&config_path).unwrap();
+        let pricing = config
+            .pricing
+            .as_ref()
+            .expect("pricing section should be parsed");
+
+        let opus = pricing
+            .get("claude-opus-4-7")
+            .expect("exact-model entry");
+        assert!((opus.input - 15.0).abs() < f64::EPSILON);
+        assert!((opus.output - 75.0).abs() < f64::EPSILON);
+        assert!((opus.cache_write - 18.75).abs() < f64::EPSILON);
+        assert!((opus.cache_read - 1.50).abs() < f64::EPSILON);
+
+        let sonnet = pricing.get("sonnet").expect("family entry");
+        assert!((sonnet.input - 3.0).abs() < f64::EPSILON);
+
+        // Re-serialize and re-parse to ensure the table survives a round trip.
+        let toml_str = toml::to_string_pretty(&config).unwrap();
+        assert!(toml_str.contains("[pricing"));
+        let reparsed: ConfigFile = toml::from_str(&toml_str).unwrap();
+        assert!(reparsed.pricing.is_some());
     }
 }
