@@ -132,6 +132,8 @@ Wait for the user's response before proceeding.
 > - Completable in a single agent session
 > - Independently testable
 > - Have clear success criteria
+> - **A minimal meaningful changeset** — one reviewable commit producing a visible, demoable artifact ("show me the work")
+> - Sized at ~80–300 LoC as a guideline (not a hard cap — go over when the work is genuinely cohesive and would lose meaning if split; past ~300 LoC it just gets harder for a reviewer to hold in context)
 >
 > Would you like to modify this breakdown?
 

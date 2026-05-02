@@ -53,6 +53,7 @@ For each phase, evaluate:
 - Current scope and complexity
 - Number and size of tasks
 - Dependencies between tasks
+- **Estimated changeset size in LoC** (rough order-of-magnitude — used to drive split recommendations against the sizing rules below)
 - Whether it can be meaningfully split
 
 **Present analysis:**
@@ -61,6 +62,7 @@ For each phase, evaluate:
 >
 > **Phase 1: [phase-name]**
 > - Current tasks: [N]
+> - Estimated LoC: ~[X] (rough)
 > - Complexity: [low/medium/high]
 > - Recommendation: [Keep as-is / Split into N sub-phases]
 > - Suggested split: [Brief description of how to split]
@@ -205,13 +207,23 @@ Tell the user the next step is to run `/end` to generate JSON files.
 
 ## Phase Split Guidelines
 
+### Phase sizing rules (apply when proposing or evaluating a split)
+
+- Each phase is a **minimal meaningful changeset** — one reviewable commit, not a sprint.
+- Follow the **"show me the work"** philosophy: every phase produces a visible, demoable artifact a reviewer can run or inspect.
+- **80–300 LoC** is a guideline, not a hard cap. Going over is fine when the changeset is genuinely cohesive and would lose meaning if split. Past ~300 LoC it just gets harder for a reviewer to hold in context, so prefer splitting unless splitting hurts the work.
+- Phases must be independently reviewable — do not bundle unrelated concerns into one phase to "save a round-trip".
+
 ### When to Split a Phase
 
 Split when:
-- Phase has more than 5-7 tasks
-- Tasks span multiple components
-- Tasks have complex interdependencies
+- Estimated changeset clearly exceeds ~300 LoC of cohesive change, and a reviewer would struggle to hold it in context
+- Phase bundles unrelated concerns that could be reviewed independently
+- Tasks span multiple components or layers that could ship separately
+- Tasks have complex interdependencies that obscure what's being demonstrated
 - Phase scope is too broad to track easily
+
+Conversely, do **not** split when the work is genuinely one cohesive change — splitting an integral changeset into artificial slices makes review harder, not easier.
 
 ### How to Split
 

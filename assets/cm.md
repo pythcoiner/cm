@@ -100,7 +100,14 @@ Wait for the user's response before proceeding.
 > - What gets built
 > - Dependencies on other phases
 
-If the user needs help, suggest a reasonable phase breakdown based on the project description.
+**Phase sizing rules (apply when proposing or evaluating a breakdown):**
+
+- Each phase is a **minimal meaningful changeset** — one reviewable commit, not a sprint.
+- Follow the **"show me the work"** philosophy: every phase produces a visible, demoable artifact a reviewer can run or inspect.
+- **80–300 LoC** is a guideline, not a hard cap. Going over is fine when the changeset is genuinely cohesive and would lose meaning if split. Past ~300 LoC it just gets harder for a reviewer to hold in context, so prefer splitting unless splitting hurts the work.
+- Phases must be independently reviewable — do not bundle unrelated concerns into one phase to "save a round-trip".
+
+Apply these rules whether the user proposes phases themselves or asks for a suggestion. If the user needs help, suggest a reasonable phase breakdown based on the project description and the rules above. If the user proposes phases that look too coarse (large grab-bags of unrelated work, or single phases that clearly exceed ~300 LoC of cohesive change), gently push back with a more granular split before generating files.
 
 Wait for the user's response before proceeding.
 
