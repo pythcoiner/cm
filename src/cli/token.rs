@@ -20,19 +20,27 @@ use crate::config::{ConfigFile, PriceTable};
 
 /// Hardcoded fallback rates (USD per million tokens).
 ///
-/// Ported from `ccusage-statusline-rs/src/pricing.rs` fallback table; kept
-/// here so `cm token` works offline and out-of-the-box. Override via
-/// `.cm/config.toml` (`/update-pricing` keeps the file fresh).
+/// Reflects the current Claude 4.5 / 4.6 / 4.7 generation: Opus dropped from
+/// $15/$75 to $5/$25, and Haiku rose from Claude-3 levels ($0.8/$4) to the
+/// current Haiku 4 tier ($1/$5). Legacy models (Claude-3 Opus, Opus-4 / 4.1)
+/// are more expensive — refresh `.cm/config.toml` via `cm update-pricing` to
+/// pick up exact per-model rates from LiteLLM.
 const DEFAULT_RATES: &[(&str, [f64; 4])] = &[
     // family, [input, output, cache_write, cache_read] $/1M
-    ("opus", [15.0, 75.0, 18.75, 1.50]),
+    ("opus", [5.0, 25.0, 6.25, 0.50]),
     ("sonnet", [3.0, 15.0, 3.75, 0.30]),
-    ("haiku", [0.8, 4.0, 1.00, 0.08]),
+    ("haiku", [1.0, 5.0, 1.25, 0.10]),
 ];
 
 /// Family keys checked in order for substring fallback. Matches
 /// `DEFAULT_RATES` so behaviour is consistent.
 const FAMILY_KEYS: &[&str] = &["opus", "sonnet", "haiku"];
+
+/// Claude Code records some non-billable internal events (hook outputs,
+/// summaries, etc.) under this placeholder model name. These rows carry
+/// zero tokens but lack any pricing entry, so we drop them at parse time
+/// to keep totals clean and avoid spurious "unpriced model" footnotes.
+const SYNTHETIC_MODEL: &str = "<synthetic>";
 
 /// Errors produced by `cm token`.
 #[derive(Debug, Error)]
@@ -71,6 +79,10 @@ pub struct TokenOpts {
     /// Optional time-bucket grouping. When set, per-row breakdowns swap
     /// from per-model to per-bucket.
     pub bucket: Option<BucketMode>,
+    /// If `true`, emit a per-project total-cost breakdown sorted by
+    /// descending cost. Implies global scope; mutually exclusive with
+    /// `bucket`.
+    pub breakdown: bool,
 }
 
 /// Accumulated token counts.
@@ -133,6 +145,10 @@ pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
     let config = ConfigFile::load_default().ok().flatten().unwrap_or_default();
     let overrides = config.pricing.unwrap_or_default();
 
+    if opts.breakdown {
+        return run_breakdown(&projects, &overrides);
+    }
+
     // Determine scope and label.
     let (paths, label) = if opts.global {
         (collect_global_jsonl(&projects)?, "all projects".to_string())
@@ -149,12 +165,14 @@ pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
     let mut by_model: BTreeMap<String, UsageRow> = BTreeMap::new();
     let mut by_bucket: BTreeMap<String, UsageRow> = BTreeMap::new();
     let mut bucket_models: BTreeMap<String, BTreeMap<String, UsageRow>> = BTreeMap::new();
+    let mut earliest: Option<DateTime<Utc>> = None;
 
     for path in &paths {
         if let Err(err) = parse_jsonl(
             path,
             &mut seen,
             &mut by_model,
+            &mut earliest,
             opts.bucket.map(|m| (m, &mut by_bucket, &mut bucket_models)),
         ) {
             warn!("skipping {}: {err}", path.display());
@@ -163,9 +181,9 @@ pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
 
     // Render.
     if let Some(mode) = opts.bucket {
-        print_bucket_report(&label, &by_bucket, &bucket_models, &overrides, mode);
+        print_bucket_report(&label, &by_bucket, &bucket_models, &overrides, mode, earliest);
     } else {
-        print_flat_report(&label, &by_model, &overrides);
+        print_flat_report(&label, &by_model, &overrides, earliest);
     }
 
     Ok(())
@@ -248,6 +266,7 @@ fn parse_jsonl(
     path: &Path,
     seen: &mut HashSet<String>,
     by_model: &mut BTreeMap<String, UsageRow>,
+    earliest: &mut Option<DateTime<Utc>>,
     bucket_sink: Option<BucketSink<'_>>,
 ) -> Result<(), TokenError> {
     let file = File::open(path)?;
@@ -274,6 +293,12 @@ fn parse_jsonl(
         let Some(usage) = msg.usage else { continue };
         let Some(model) = msg.model else { continue };
 
+        // Drop Claude Code's internal `<synthetic>` placeholder before it
+        // can pollute dedup state, totals, or the earliest-timestamp tracker.
+        if model == SYNTHETIC_MODEL {
+            continue;
+        }
+
         // Dedup using msg_id:request_id (matches ccusage-statusline-rs).
         if let (Some(id), Some(req)) = (msg.id.as_deref(), entry.request_id.as_deref()) {
             let key = format!("{id}:{req}");
@@ -284,6 +309,18 @@ fn parse_jsonl(
 
         // Per-model accumulator (always populated; used as grand-total source).
         by_model.entry(model.clone()).or_default().add(&usage);
+
+        // Track earliest accepted timestamp for the "since" header line.
+        if let Some(ts) = entry
+            .timestamp
+            .as_deref()
+            .and_then(|t| DateTime::parse_from_rfc3339(t).ok())
+        {
+            let ts = ts.with_timezone(&Utc);
+            if earliest.is_none_or(|cur| ts < cur) {
+                *earliest = Some(ts);
+            }
+        }
 
         // Per-bucket accumulator.
         if let (Some(mode), Some(by_bucket), Some(bucket_models)) =
@@ -372,11 +409,15 @@ fn print_flat_report(
     label: &str,
     by_model: &BTreeMap<String, UsageRow>,
     overrides: &HashMap<String, PriceTable>,
+    earliest: Option<DateTime<Utc>>,
 ) {
     println!("Claude Code usage — {label}");
     if by_model.is_empty() {
         println!("  (no recorded usage)");
         return;
+    }
+    if let Some(ts) = earliest {
+        println!("  Since {}", ts.format("%Y-%m-%d"));
     }
 
     let model_w = by_model.keys().map(|s| s.len()).max().unwrap_or(0).max(8);
@@ -423,6 +464,7 @@ fn print_bucket_report(
     bucket_models: &BTreeMap<String, BTreeMap<String, UsageRow>>,
     overrides: &HashMap<String, PriceTable>,
     mode: BucketMode,
+    earliest: Option<DateTime<Utc>>,
 ) {
     let mode_label = match mode {
         BucketMode::Daily => "daily",
@@ -433,6 +475,9 @@ fn print_bucket_report(
     if by_bucket.is_empty() {
         println!("  (no recorded usage)");
         return;
+    }
+    if let Some(ts) = earliest {
+        println!("  Since {}", ts.format("%Y-%m-%d"));
     }
 
     let bucket_w = by_bucket.keys().map(|s| s.len()).max().unwrap_or(0).max(8);
@@ -472,6 +517,152 @@ fn print_bucket_report(
     );
 }
 
+/// One row of the `--breakdown` report: a single project's totals.
+struct BreakdownEntry {
+    /// Decoded project path (best-effort reverse of `project_slug`).
+    label: String,
+    /// Tokens summed across every model in this project.
+    totals: UsageRow,
+    /// Sum of priced models' cost. Excludes any model without rates.
+    cost: f64,
+    /// `true` if at least one model in the project lacks pricing.
+    has_unpriced: bool,
+}
+
+/// Walk every project under `projects` and print a per-project total-cost
+/// breakdown sorted by descending cost.
+fn run_breakdown(
+    projects: &Path,
+    overrides: &HashMap<String, PriceTable>,
+) -> Result<(), TokenError> {
+    let mut entries: Vec<BreakdownEntry> = Vec::new();
+    let mut earliest: Option<DateTime<Utc>> = None;
+    let mut grand_total = 0.0f64;
+
+    for entry in std::fs::read_dir(projects)? {
+        let entry = entry?;
+        let dir = entry.path();
+        if !dir.is_dir() {
+            continue;
+        }
+
+        let paths = collect_project_jsonl(&dir)?;
+        if paths.is_empty() {
+            continue;
+        }
+
+        let mut seen = HashSet::new();
+        let mut by_model: BTreeMap<String, UsageRow> = BTreeMap::new();
+        for path in &paths {
+            if let Err(err) = parse_jsonl(path, &mut seen, &mut by_model, &mut earliest, None) {
+                warn!("skipping {}: {err}", path.display());
+            }
+        }
+        if by_model.is_empty() {
+            continue;
+        }
+
+        let mut totals = UsageRow::default();
+        let mut cost_sum = 0.0f64;
+        let mut has_unpriced = false;
+        for (model, row) in &by_model {
+            totals.input = totals.input.saturating_add(row.input);
+            totals.output = totals.output.saturating_add(row.output);
+            totals.cache_write = totals.cache_write.saturating_add(row.cache_write);
+            totals.cache_read = totals.cache_read.saturating_add(row.cache_read);
+            match lookup_rates(model, overrides) {
+                Some(rates) => cost_sum += cost(&rates, row),
+                None => has_unpriced = true,
+            }
+        }
+
+        let slug = dir
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("")
+            .to_string();
+        let label = decode_project_label(&slug);
+        grand_total += cost_sum;
+        entries.push(BreakdownEntry {
+            label,
+            totals,
+            cost: cost_sum,
+            has_unpriced,
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        b.cost
+            .partial_cmp(&a.cost)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    print_breakdown_report(&entries, grand_total, earliest);
+    Ok(())
+}
+
+/// Best-effort reverse of `project_slug`: strip leading `-`, replace `-`
+/// with `/`. Lossy for paths whose original form contained a `.` segment
+/// (those come out with an extra `/` instead of `.`), but adequate for
+/// display.
+fn decode_project_label(slug: &str) -> String {
+    slug.trim_start_matches('-').replace('-', "/")
+}
+
+fn print_breakdown_report(
+    entries: &[BreakdownEntry],
+    grand_total: f64,
+    earliest: Option<DateTime<Utc>>,
+) {
+    println!("Claude Code usage — breakdown by project");
+    if entries.is_empty() {
+        println!("  (no recorded usage)");
+        return;
+    }
+    if let Some(ts) = earliest {
+        println!("  Since {}", ts.format("%Y-%m-%d"));
+    }
+
+    let label_w = entries
+        .iter()
+        .map(|e| e.label.len())
+        .max()
+        .unwrap_or(0)
+        .max(8);
+
+    for e in entries {
+        let cost_str = if e.has_unpriced {
+            format!("${:.2}*", e.cost)
+        } else {
+            format!("${:.2}", e.cost)
+        };
+        println!(
+            "  {:<label_w$}  in: {:<7} out: {:<7} cache_w: {:<7} cache_r: {:<7}  {}",
+            e.label,
+            format_tokens(e.totals.input),
+            format_tokens(e.totals.output),
+            format_tokens(e.totals.cache_write),
+            format_tokens(e.totals.cache_read),
+            cost_str,
+            label_w = label_w,
+        );
+    }
+
+    println!("  {:─<width$}", "", width = 70 + label_w);
+    println!(
+        "  {:<label_w$}{:>w$}  ${:.2}",
+        "total",
+        "",
+        grand_total,
+        label_w = label_w,
+        w = 70 - 6,
+    );
+
+    if entries.iter().any(|e| e.has_unpriced) {
+        println!("  * project contains tokens for an unpriced model — total is a lower bound");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -488,6 +679,11 @@ mod tests {
     #[test]
     fn project_slug_basic() {
         assert_eq!(project_slug(Path::new("/home/pyth/cm")), "-home-pyth-cm");
+    }
+
+    #[test]
+    fn decode_project_label_basic() {
+        assert_eq!(decode_project_label("-home-pyth-cm"), "home/pyth/cm");
     }
 
     #[test]
@@ -576,7 +772,8 @@ mod tests {
 
         let mut seen = HashSet::new();
         let mut by_model = BTreeMap::new();
-        parse_jsonl(&path, &mut seen, &mut by_model, None).unwrap();
+        let mut earliest: Option<DateTime<Utc>> = None;
+        parse_jsonl(&path, &mut seen, &mut by_model, &mut earliest, None).unwrap();
 
         let opus = by_model.get("claude-opus-4-7").unwrap();
         assert_eq!(opus.input, 100);
@@ -587,5 +784,60 @@ mod tests {
         assert_eq!(sonnet.output, 80);
 
         assert_eq!(by_model.len(), 2);
+
+        // Earliest timestamp tracked from accepted records.
+        let ts = earliest.expect("at least one timestamped record");
+        assert_eq!(ts.format("%Y-%m-%d").to_string(), "2026-05-02");
+    }
+
+    #[test]
+    fn parse_jsonl_drops_synthetic_model() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("session.jsonl");
+        // One real entry and one <synthetic> entry. The synthetic one
+        // should not appear in by_model and should not influence earliest.
+        let content = format!(
+            "{}\n{}\n",
+            r#"{"requestId":"r1","timestamp":"2026-05-02T12:00:00Z","message":{"id":"m1","model":"claude-opus-4-7","usage":{"input_tokens":10,"output_tokens":5,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}"#,
+            r#"{"requestId":"r2","timestamp":"2024-01-01T00:00:00Z","message":{"id":"m2","model":"<synthetic>","usage":{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}"#,
+        );
+        std::fs::write(&path, content).unwrap();
+
+        let mut seen = HashSet::new();
+        let mut by_model = BTreeMap::new();
+        let mut earliest: Option<DateTime<Utc>> = None;
+        parse_jsonl(&path, &mut seen, &mut by_model, &mut earliest, None).unwrap();
+
+        assert!(!by_model.contains_key("<synthetic>"));
+        assert_eq!(by_model.len(), 1);
+        // Synthetic entry's earlier 2024 timestamp must not pull `earliest` back.
+        let ts = earliest.expect("real entry sets earliest");
+        assert_eq!(ts.format("%Y-%m-%d").to_string(), "2026-05-02");
+    }
+
+    #[test]
+    fn parse_jsonl_tracks_earliest_across_records() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("session.jsonl");
+        let line = |id: &str, req: &str, ts: &str| {
+            format!(
+                r#"{{"requestId":"{req}","timestamp":"{ts}","message":{{"id":"{id}","model":"claude-opus-4-7","usage":{{"input_tokens":1,"output_tokens":1,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}}}}"#,
+            )
+        };
+        let content = format!(
+            "{}\n{}\n{}\n",
+            line("a", "1", "2026-04-15T10:00:00Z"),
+            line("b", "2", "2026-03-01T08:30:00Z"),
+            line("c", "3", "2026-05-02T12:00:00Z"),
+        );
+        std::fs::write(&path, content).unwrap();
+
+        let mut seen = HashSet::new();
+        let mut by_model = BTreeMap::new();
+        let mut earliest: Option<DateTime<Utc>> = None;
+        parse_jsonl(&path, &mut seen, &mut by_model, &mut earliest, None).unwrap();
+
+        let ts = earliest.expect("earliest should be set");
+        assert_eq!(ts.format("%Y-%m-%d").to_string(), "2026-03-01");
     }
 }

@@ -49,6 +49,10 @@ pub enum Command {
         /// Monthly breakdown
         #[arg(long, group = "bucket")]
         monthly: bool,
+
+        /// Per-project total spend, sorted from most to least costly
+        #[arg(long, conflicts_with = "bucket")]
+        breakdown: bool,
     },
     /// Refresh `[pricing.*]` in `.cm/config.toml` from LiteLLM's public dataset
     UpdatePricing {
@@ -240,6 +244,7 @@ pub fn run() -> Result<(), CliError> {
                 daily,
                 weekly,
                 monthly,
+                breakdown,
             } => {
                 let bucket = match (daily, weekly, monthly) {
                     (true, _, _) => Some(token::BucketMode::Daily),
@@ -250,6 +255,7 @@ pub fn run() -> Result<(), CliError> {
                 token::execute_token(token::TokenOpts {
                     global: *global,
                     bucket,
+                    breakdown: *breakdown,
                 })
                 .map_err(CliError::from)
             }
