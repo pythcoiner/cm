@@ -192,14 +192,17 @@ pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
 /// Convert a filesystem path into a Claude Code "project slug", matching
 /// the directory naming used under `~/.claude/projects/`.
 ///
-/// Empirically: every `/` and `.` is replaced by `-`. So
-/// `/home/pyth/cm` → `-home-pyth-cm` and
-/// `/home/pyth/.config/nvim` → `-home-pyth--config-nvim`.
+/// Empirically: `/`, `.`, and `_` are all replaced by `-`. So
+/// `/home/pyth/cm` → `-home-pyth-cm`,
+/// `/home/pyth/.config/nvim` → `-home-pyth--config-nvim`, and
+/// `/home/pyth/ws_infra` → `-home-pyth-ws-infra`.
+/// Note: this mapping is lossy — `/ws_infra`, `/ws-infra`, and `/ws/infra`
+/// all produce the same slug, mirroring Claude Code's own ambiguity.
 fn project_slug(path: &Path) -> String {
     let s = path.to_string_lossy();
     s.chars()
         .map(|c| match c {
-            '/' | '.' => '-',
+            '/' | '.' | '_' => '-',
             other => other,
         })
         .collect()
@@ -691,6 +694,19 @@ mod tests {
         assert_eq!(
             project_slug(Path::new("/home/pyth/.config/nvim")),
             "-home-pyth--config-nvim"
+        );
+    }
+
+    #[test]
+    fn project_slug_underscore() {
+        // Claude Code replaces `_` with `-`, mirroring `/` and `.`.
+        assert_eq!(
+            project_slug(Path::new("/home/pyth/ws_infra")),
+            "-home-pyth-ws-infra"
+        );
+        assert_eq!(
+            project_slug(Path::new("/home/pyth/ws_infra/fiat-oracle")),
+            "-home-pyth-ws-infra-fiat-oracle"
         );
     }
 
