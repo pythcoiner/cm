@@ -38,3 +38,11 @@
 # output = 4.0
 # cache_write = 1.0
 # cache_read = 0.08
+
+# am fleet monitor integration: while cm runs agents, it streams progress
+# and output over a Unix socket at <socket_dir>/cm-<pid>.sock.
+# Default: enabled = true, socket_dir resolved from AM_SOCKET_DIR env,
+# then [am] socket_dir below, then $XDG_RUNTIME_DIR/am.
+# [am]
+# enabled = true
+# socket_dir = "/tmp/am-sockets"

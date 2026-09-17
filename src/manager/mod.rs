@@ -209,6 +209,21 @@ fn emit_cm(msg: &str) {
     tee_eprintln(&format!("[{now} CM] {msg}"));
 }
 
+/// Send an am `progress` event for a phase-level agent or build step.
+fn emit_phase_progress(phase_id: &str, step: &str, cycle: Option<u32>, message: &str) {
+    crate::am::send_event(
+        crate::am::EventKind::Progress,
+        Some(&format!("{phase_id} {step}")),
+        message,
+        crate::am::EventFields {
+            phase: Some(phase_id.to_string()),
+            step: Some(step.to_string()),
+            cycle,
+            verdict: None,
+        },
+    );
+}
+
 impl Manager {
     /// Create a new Manager with the given configuration.
     ///
@@ -320,6 +335,7 @@ impl Manager {
             emit_cm(&format!("Selected phase: {phase_id}"));
 
             // Execute the phase (all pending tasks in one agent call)
+            self.am_started_phase = None;
             match self.execute_phase(&phase_id) {
                 Ok(PhaseOutcome::Completed) => {
                     info!("Phase {phase_id} completed successfully");
@@ -333,6 +349,7 @@ impl Manager {
                     let error_msg = format!("Phase {phase_id} failed: {e}");
                     error!("{error_msg}");
                     emit_cm(&format!("Phase {phase_id} failed: {e}"));
+                    self.emit_phase_failed(&phase_id, &e);
                     self.state
                         .log_records
                         .push(LogManager::create_error_record(&error_msg));
@@ -374,7 +391,10 @@ impl Manager {
             None => return Err(ManagerError::NoRunnableTasks),
         };
 
-        let _outcome = self.execute_phase(&phase_id)?;
+        self.am_started_phase = None;
+        let _outcome = self
+            .execute_phase(&phase_id)
+            .inspect_err(|e| self.emit_phase_failed(&phase_id, e))?;
         self.update_state()?;
 
         Ok(())
@@ -461,13 +481,18 @@ impl Manager {
         io::stdout()
             .flush()
             .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
+        crate::am::send_event(
+            crate::am::EventKind::NeedsAttention,
+            None,
+            "Select tasks: [s]ingle / [a]ll / [p]hase / [q]uit",
+            crate::am::EventFields::default(),
+        );
 
         let stdin = io::stdin();
         let mut line = String::new();
-        stdin
-            .lock()
-            .read_line(&mut line)
-            .map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
+        let read_result = stdin.lock().read_line(&mut line);
+        crate::am::send_event(crate::am::EventKind::Resolved, None, "", crate::am::EventFields::default());
+        read_result.map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
 
         let input = line.trim().to_lowercase();
         match input.as_str() {
@@ -593,6 +618,7 @@ impl Manager {
                 }
                 Some(_) => {
                     // Execute the phase
+                    self.am_started_phase = None;
                     match self.execute_phase(phase_id) {
                         Ok(PhaseOutcome::Completed) => {
                             tee_println(&format!("Phase '{phase_id}' completed."));
@@ -604,6 +630,7 @@ impl Manager {
                         }
                         Err(e) => {
                             tee_println(&format!("Phase '{phase_id}' failed: {e}"));
+                            self.emit_phase_failed(phase_id, &e);
                             // Continue with next phase
                         }
                     }
@@ -627,12 +654,24 @@ impl Manager {
 
         tee_println("");
         tee_println(&message);
+        crate::am::send_event(
+            crate::am::EventKind::NeedsAttention,
+            None,
+            &message,
+            crate::am::EventFields {
+                phase: Some(task_id.to_string()),
+                cycle: Some(cycles_completed),
+                ..Default::default()
+            },
+        );
         tee_print("Retry more cycles? [y/N/number]: ");
         let _ = io::stdout().flush();
 
         let stdin = io::stdin();
         let mut line = String::new();
-        if stdin.lock().read_line(&mut line).is_err() {
+        let read_ok = stdin.lock().read_line(&mut line).is_ok();
+        crate::am::send_event(crate::am::EventKind::Resolved, None, "", crate::am::EventFields::default());
+        if !read_ok {
             return None;
         }
 
@@ -649,6 +688,34 @@ impl Manager {
     // =========================================================================
     // Phase-level execution methods (all tasks in a phase with one agent call)
     // =========================================================================
+
+    /// Send the am `started` event for `phase_id`, unless it was already sent
+    /// during the current `execute_phase` attempt.
+    fn emit_phase_started(&mut self, phase_id: &str) {
+        if self.am_started_phase.as_deref() == Some(phase_id) {
+            return;
+        }
+        crate::am::send_event(
+            crate::am::EventKind::Started,
+            Some(phase_id),
+            &format!("Executing phase: {phase_id}"),
+            crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+        );
+        self.am_started_phase = Some(phase_id.to_string());
+    }
+
+    /// Send the am `failed` event for `phase_id`. Sends `started` first, so a
+    /// `failed` event is never observed without a preceding `started` for the
+    /// same attempt, even when the error happened before any `started` site.
+    fn emit_phase_failed(&mut self, phase_id: &str, err: &ManagerError) {
+        self.emit_phase_started(phase_id);
+        crate::am::send_event(
+            crate::am::EventKind::Failed,
+            Some(phase_id),
+            &format!("Phase {phase_id} failed: {err}"),
+            crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+        );
+    }
 
     /// Execute an entire phase: IMPLEM all tasks → BUILD → phase-level REVIEW cycle.
     ///
@@ -673,6 +740,7 @@ impl Manager {
 
         if pending_tasks.is_empty() {
             info!("No pending tasks in phase {phase_id}, checking completion");
+            self.emit_phase_started(phase_id);
             // Try normal completion check first
             self.check_phase_completion(phase_id)?;
 
@@ -680,9 +748,21 @@ impl Manager {
             let action = {
                 let phase = self.state.get_phase_mut(phase_id)?;
                 if phase.status == PhaseStatus::Completed {
+                    crate::am::send_event(
+                        crate::am::EventKind::Completed,
+                        Some(phase_id),
+                        &format!("Phase {phase_id} complete"),
+                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                    );
                     return Ok(PhaseOutcome::Completed);
                 }
                 if phase.status == PhaseStatus::Deferred {
+                    crate::am::send_event(
+                        crate::am::EventKind::Deferred,
+                        Some(phase_id),
+                        &format!("Phase {phase_id} has deferred tasks, marking phase Deferred"),
+                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                    );
                     return Ok(PhaseOutcome::Deferred);
                 }
                 // Re-check for pending tasks — check_phase_completion may have
@@ -713,6 +793,12 @@ impl Manager {
                 }
                 Some("deferred") => {
                     info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
+                    crate::am::send_event(
+                        crate::am::EventKind::Deferred,
+                        Some(phase_id),
+                        &format!("Phase {phase_id} has deferred tasks, marking phase Deferred"),
+                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                    );
                     return Ok(PhaseOutcome::Deferred);
                 }
                 _ => {
@@ -721,6 +807,12 @@ impl Manager {
                     );
                     let phase = self.state.get_phase_mut(phase_id)?;
                     phase.status = PhaseStatus::Completed;
+                    crate::am::send_event(
+                        crate::am::EventKind::Completed,
+                        Some(phase_id),
+                        &format!("Phase {phase_id} complete"),
+                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                    );
                     return Ok(PhaseOutcome::Completed);
                 }
             }
@@ -728,6 +820,7 @@ impl Manager {
 
         // Mark phase as in progress only if there's actual work to do
         self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
+        self.emit_phase_started(phase_id);
 
         emit_cm(&format!("Phase {} has {} pending tasks", phase_id, pending_tasks.len()));
 
@@ -770,6 +863,7 @@ impl Manager {
 
         info!("Spawning PLAN agent for {phase_id}");
         emit_cm(&format!("Spawning PLAN agent for {phase_id}"));
+        emit_phase_progress(phase_id, "PHASE_PLAN", None, &format!("Spawning PLAN agent for {phase_id}"));
 
         // Log prompt to phase logger
         let _ = self.phase_logger.log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
@@ -875,6 +969,7 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.manager_state = ManagerState::WaitingForAgent;
+        emit_phase_progress(phase_id, "PHASE_IMPLEM", None, &format!("Spawning IMPLEM agent for {phase_id}"));
         let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")
             .inspect_err(|_| {
                 for task in &pending_tasks {
@@ -1004,6 +1099,7 @@ impl Manager {
         // Run build verification (if configured)
         self.manager_state = ManagerState::Verifying;
         if !self.config.build_commands.is_empty() {
+            emit_phase_progress(phase_id, "BUILD", None, &format!("Verifying build for {phase_id}"));
             let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
             if let Err(e) = build_result {
@@ -1064,6 +1160,16 @@ impl Manager {
                 }
                 self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
                 self.clear_phase_implem_completion(phase_id);
+                crate::am::send_event(
+                    crate::am::EventKind::Completed,
+                    Some(phase_id),
+                    &format!("Phase {phase_id} complete"),
+                    crate::am::EventFields {
+                        phase: Some(phase_id.to_string()),
+                        verdict: Some(Verdict::Approved),
+                        ..Default::default()
+                    },
+                );
                 Ok(PhaseOutcome::Completed)
             }
             Verdict::NeedsFixes => {
@@ -1079,6 +1185,16 @@ impl Manager {
                 }
                 self.state.mark_phase_status(phase_id, PhaseStatus::Deferred)?;
                 self.clear_phase_implem_completion(phase_id);
+                crate::am::send_event(
+                    crate::am::EventKind::Deferred,
+                    Some(phase_id),
+                    &reason,
+                    crate::am::EventFields {
+                        phase: Some(phase_id.to_string()),
+                        verdict: Some(Verdict::NeedsFixes),
+                        ..Default::default()
+                    },
+                );
                 Ok(PhaseOutcome::Deferred)
             }
         }
@@ -1152,6 +1268,12 @@ impl Manager {
                 commit_hash: None,
             });
 
+            emit_phase_progress(
+                phase_id,
+                "PHASE_REVIEW",
+                Some(cycle + 1),
+                &format!("Phase review cycle {}/{} for {}", cycle + 1, max_cycles, phase_id),
+            );
             let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")
                 .inspect_err(|_| {
                     for task in pending_tasks {
@@ -1291,6 +1413,12 @@ impl Manager {
                         commit_hash: None,
                     });
 
+                    emit_phase_progress(
+                        phase_id,
+                        "PHASE_FIX",
+                        Some(cycle + 1),
+                        &format!("Spawning FIX agent for {phase_id} (cycle {})", cycle + 1),
+                    );
                     let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
                         .inspect_err(|_| {
                             for task in pending_tasks {
@@ -1333,6 +1461,12 @@ impl Manager {
                     // build (mirrors PHASE_IMPLEM gating).
                     self.manager_state = ManagerState::Verifying;
                     if !self.config.build_commands.is_empty() {
+                        emit_phase_progress(
+                            phase_id,
+                            "BUILD",
+                            Some(cycle + 1),
+                            &format!("Verifying build for {phase_id} (cycle {})", cycle + 1),
+                        );
                         if let Err(e) = self.build_verifier.verify_commands(&self.config.build_commands) {
                             let last_err_msg = match &e {
                                 BuildError::CommandFailed { stderr, .. } => stderr.clone(),
@@ -1414,6 +1548,12 @@ impl Manager {
             });
 
             emit_cm(&format!("Spawning FIX agent for build error in {phase_id}"));
+            emit_phase_progress(
+                phase_id,
+                "PHASE_FIX",
+                Some(cycle + 1),
+                &format!("Spawning FIX agent for build error in {phase_id}"),
+            );
             let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
                 .inspect_err(|_| {
                     for task in pending_tasks {
@@ -1443,6 +1583,12 @@ impl Manager {
             }
 
             // Re-verify build
+            emit_phase_progress(
+                phase_id,
+                "BUILD",
+                Some(cycle + 1),
+                &format!("Verifying build for {phase_id} (cycle {})", cycle + 1),
+            );
             match self.build_verifier.verify_commands(&self.config.build_commands) {
                 Ok(()) => {
                     emit_cm(&format!("Build PASSED after fix cycle {} for {}", cycle + 1, phase_id));
@@ -1888,10 +2034,23 @@ impl Manager {
         );
 
         // Spawn agent
+        crate::am::send_event(
+            crate::am::EventKind::Progress,
+            Some("run-review RUN_REVIEW"),
+            "Spawning run review agent",
+            crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+        );
         let handle = match self.agent_spawner.spawn(&prompt, "run-review", "RUN_REVIEW") {
             Ok(h) => h,
             Err(e) => {
-                warn!("run_post_run_review: failed to spawn agent: {e}");
+                let msg = format!("run_post_run_review: failed to spawn agent: {e}");
+                warn!("{msg}");
+                crate::am::send_event(
+                    crate::am::EventKind::Failed,
+                    Some("run-review RUN_REVIEW"),
+                    &msg,
+                    crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                );
                 return false;
             }
         };
@@ -1899,7 +2058,14 @@ impl Manager {
         let output = match handle.wait() {
             Ok(o) => o,
             Err(e) => {
-                warn!("run_post_run_review: agent error: {e}");
+                let msg = format!("run_post_run_review: agent error: {e}");
+                warn!("{msg}");
+                crate::am::send_event(
+                    crate::am::EventKind::Failed,
+                    Some("run-review RUN_REVIEW"),
+                    &msg,
+                    crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                );
                 return false;
             }
         };
@@ -1914,7 +2080,7 @@ impl Manager {
             crate::agent::ResponseParser::parse_run_review_response(&result_text);
 
         // Print report verbatim to stdout
-        println!("{report_text}");
+        tee_println(&report_text);
 
         // Save report to .cm/reports/run-<timestamp>.md
         let reports_dir = cm_dir.join("reports");
@@ -1928,6 +2094,22 @@ impl Manager {
             } else {
                 info!("run_post_run_review: report saved to {report_path:?}");
             }
+        }
+
+        if response.has_issues {
+            crate::am::send_event(
+                crate::am::EventKind::Failed,
+                Some("run-review RUN_REVIEW"),
+                "Run review: issues found",
+                crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+            );
+        } else {
+            crate::am::send_event(
+                crate::am::EventKind::Completed,
+                Some("run-review RUN_REVIEW"),
+                "Run review: no issues found",
+                crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+            );
         }
 
         response.has_issues

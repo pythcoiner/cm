@@ -20,6 +20,29 @@ This document describes the configuration options for `cm` (Claude Code Manager)
 | `max_cycles` | Integer | `5` | Maximum attempts per task before deferring |
 | `log_path` | String | `".cm/LOG.md"` | (Deprecated - no longer used) |
 | `working_dir` | String | Current directory | Working directory for build verification |
+| `[am] enabled` | Boolean | `true` | Whether the am fleet monitor socket integration is on |
+| `[am] socket_dir` | String | (see resolution order) | Directory to create the am socket in |
+
+## am Fleet Monitor Integration
+
+While cm runs agents, it listens on a Unix socket and streams NDJSON frames
+(output lines and orchestration events) to any connected `am` fleet monitor
+client. The socket is created at `<dir>/cm-<pid>.sock`.
+
+`<dir>` is resolved in this order:
+
+1. `AM_SOCKET_DIR` environment variable, if set and non-empty;
+2. `[am] socket_dir` in the config file;
+3. `$XDG_RUNTIME_DIR/am`, if `XDG_RUNTIME_DIR` is set and non-empty.
+
+If none resolves, or `[am] enabled = false`, the integration is off and cm
+behaves exactly as if the socket did not exist.
+
+```toml
+[am]
+enabled = true
+socket_dir = "/tmp/am-sockets"
+```
 
 ## Example Configuration
 

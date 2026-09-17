@@ -17,9 +17,9 @@ use clap::{Parser, Subcommand, ValueEnum};
 use log::{debug, info, warn};
 use thiserror::Error;
 
-use crate::config::{ConfigError, ConfigFile};
+use crate::config::{AmConfig, ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
-use crate::log::{init_log_file, TeeWriter};
+use crate::log::{init_log_file, tee_eprintln, TeeWriter};
 use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
 use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
 
@@ -294,7 +294,49 @@ pub fn run() -> Result<(), CliError> {
         Err(e) => warn!("Claude Code Manager finished with error: {e}"),
     }
 
+    crate::am::shutdown();
+
     result
+}
+
+/// Exit the process after removing the am socket file, if the am integration
+/// was started. Use this instead of `std::process::exit` in every mode that
+/// may have started the socket, so a normal CLI exit never leaves it behind.
+fn exit_process(code: i32) -> ! {
+    crate::am::shutdown();
+    std::process::exit(code);
+}
+
+/// Resolve the am socket directory.
+///
+/// Order: `AM_SOCKET_DIR` env var if set and non-empty, else `[am] socket_dir`
+/// in the config file, else `$XDG_RUNTIME_DIR/am` if `XDG_RUNTIME_DIR` is set
+/// and non-empty. Returns `None` (integration off) when `[am] enabled` is
+/// `Some(false)`, or when nothing resolves.
+fn resolve_am_socket_dir(
+    file: Option<&AmConfig>,
+    env: impl Fn(&str) -> Option<String>,
+) -> Option<PathBuf> {
+    if let Some(am) = file {
+        if am.enabled == Some(false) {
+            return None;
+        }
+    }
+
+    if let Some(dir) = env("AM_SOCKET_DIR").filter(|s| !s.is_empty()) {
+        return Some(PathBuf::from(dir));
+    }
+
+    if let Some(dir) = file.and_then(|am| am.socket_dir.clone()) {
+        return Some(dir);
+    }
+
+    if let Some(runtime_dir) = env("XDG_RUNTIME_DIR").filter(|s| !s.is_empty()) {
+        return Some(PathBuf::from(runtime_dir).join("am"));
+    }
+
+    warn!("am: no socket dir (set AM_SOCKET_DIR or XDG_RUNTIME_DIR), integration off");
+    None
 }
 
 /// Build a ManagerConfig by merging config file and CLI arguments.
@@ -331,6 +373,7 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
     let mut config = ManagerConfig::new(cli.state.clone());
 
     // 3. Apply config file values (if present)
+    let mut am_config: Option<AmConfig> = None;
     if let Some(cf) = config_file {
         if let Some(model) = cf.model {
             // Validate model value from config file
@@ -350,7 +393,11 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
         if let Some(build_commands) = cf.build_commands {
             config = config.build_commands(build_commands);
         }
+        am_config = cf.am;
     }
+
+    let am_socket_dir = resolve_am_socket_dir(am_config.as_ref(), |key| std::env::var(key).ok());
+    config = config.am_socket_dir(am_socket_dir);
 
     // 4. Apply CLI overrides (highest precedence)
     if let Some(model_choice) = cli.model {
@@ -387,15 +434,16 @@ fn build_manager_config(cli: &Cli) -> Result<ManagerConfig, CliError> {
 fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError> {
     info!("Run mode: executing all tasks from {:?}", cli.state);
     let config = build_manager_config(cli)?;
+    crate::am::start(config.am_socket_dir.as_deref());
     let mut manager = Manager::new(config, shutdown_flag)?;
     let run_result = manager.run_interactive();
     let has_issues = manager.run_post_run_review();
     if let Err(e) = run_result {
-        eprintln!("Run error: {e}");
-        std::process::exit(if has_issues { 1 } else { 2 });
+        tee_eprintln(&format!("Run error: {e}"));
+        exit_process(if has_issues { 1 } else { 2 });
     }
     if has_issues {
-        std::process::exit(1);
+        exit_process(1);
     }
     Ok(())
 }
@@ -443,16 +491,17 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
 
             // Now run with the cleaned state
             let config = build_manager_config(cli)?;
+            crate::am::start(config.am_socket_dir.as_deref());
 
             let mut manager = Manager::new(config, shutdown_flag)?;
             let run_result = manager.run();
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
-                eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 1 } else { 2 });
+                tee_eprintln(&format!("Continue error: {e}"));
+                exit_process(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(1);
+                exit_process(1);
             }
         }
         RecoveryAction::Rollback(checkpoint_id) => {
@@ -468,16 +517,17 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
 
             // Now run with the restored state
             let config = build_manager_config(cli)?;
+            crate::am::start(config.am_socket_dir.as_deref());
 
             let mut manager = Manager::new(config, shutdown_flag)?;
             let run_result = manager.run();
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
-                eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 1 } else { 2 });
+                tee_eprintln(&format!("Continue error: {e}"));
+                exit_process(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(1);
+                exit_process(1);
             }
         }
         RecoveryAction::Skip => {
@@ -500,16 +550,17 @@ fn execute_continue(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), Cli
 
             // Now run with the remaining tasks
             let config = build_manager_config(cli)?;
+            crate::am::start(config.am_socket_dir.as_deref());
 
             let mut manager = Manager::new(config, shutdown_flag)?;
             let run_result = manager.run();
             let has_issues = manager.run_post_run_review();
             if let Err(e) = run_result {
-                eprintln!("Continue error: {e}");
-                std::process::exit(if has_issues { 1 } else { 2 });
+                tee_eprintln(&format!("Continue error: {e}"));
+                exit_process(if has_issues { 1 } else { 2 });
             }
             if has_issues {
-                std::process::exit(1);
+                exit_process(1);
             }
         }
     }
@@ -524,16 +575,17 @@ fn execute_step(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliErro
     info!("Step mode: executing one task from {:?}", cli.state);
 
     let config = build_manager_config(cli)?;
+    crate::am::start(config.am_socket_dir.as_deref());
 
     let mut manager = Manager::new(config, shutdown_flag)?;
     let step_result = manager.step();
     let has_issues = manager.run_post_run_review();
     if let Err(e) = step_result {
-        eprintln!("Step error: {e}");
-        std::process::exit(if has_issues { 1 } else { 2 });
+        tee_eprintln(&format!("Step error: {e}"));
+        exit_process(if has_issues { 1 } else { 2 });
     }
     if has_issues {
-        std::process::exit(1);
+        exit_process(1);
     }
     Ok(())
 }
@@ -1383,6 +1435,53 @@ mod tests {
 
         let config = result.unwrap();
         assert_eq!(config.model, "sonnet");
+    }
+
+    fn env_map(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
+        let pairs: Vec<(String, String)> =
+            pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        move |key: &str| pairs.iter().find(|(k, _)| k == key).map(|(_, v)| v.clone())
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_env_set() {
+        let dir = resolve_am_socket_dir(None, env_map(&[("AM_SOCKET_DIR", "/tmp/from-env")]));
+        assert_eq!(dir, Some(PathBuf::from("/tmp/from-env")));
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_file_set() {
+        let am = AmConfig { enabled: None, socket_dir: Some(PathBuf::from("/tmp/from-file")) };
+        let dir = resolve_am_socket_dir(Some(&am), env_map(&[]));
+        assert_eq!(dir, Some(PathBuf::from("/tmp/from-file")));
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_xdg_only() {
+        let dir = resolve_am_socket_dir(None, env_map(&[("XDG_RUNTIME_DIR", "/run/user/1000")]));
+        assert_eq!(dir, Some(PathBuf::from("/run/user/1000/am")));
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_nothing_set() {
+        let dir = resolve_am_socket_dir(None, env_map(&[]));
+        assert_eq!(dir, None);
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_empty_env_falls_through() {
+        let dir = resolve_am_socket_dir(
+            None,
+            env_map(&[("AM_SOCKET_DIR", ""), ("XDG_RUNTIME_DIR", "/run/user/1000")]),
+        );
+        assert_eq!(dir, Some(PathBuf::from("/run/user/1000/am")));
+    }
+
+    #[test]
+    fn test_resolve_am_socket_dir_disabled_with_env_set() {
+        let am = AmConfig { enabled: Some(false), socket_dir: None };
+        let dir = resolve_am_socket_dir(Some(&am), env_map(&[("AM_SOCKET_DIR", "/tmp/from-env")]));
+        assert_eq!(dir, None);
     }
 
     #[test]

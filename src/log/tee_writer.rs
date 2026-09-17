@@ -8,6 +8,8 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
+use crate::am::{send_output, send_output_line, Stream};
+
 /// Global log file for tee output.
 static LOG_FILE: OnceLock<Mutex<File>> = OnceLock::new();
 
@@ -68,6 +70,7 @@ fn write_to_log_raw(s: &str) {
 pub fn tee_println(s: &str) {
     println!("{s}");
     write_to_log(s);
+    send_output(Stream::Stdout, format!("{s}\n").as_bytes());
 }
 
 /// Print to stdout without newline and mirror to log file.
@@ -75,6 +78,7 @@ pub fn tee_print(s: &str) {
     print!("{s}");
     let _ = io::stdout().flush();
     write_to_log_raw(s);
+    send_output_line(Stream::Stdout, s.as_bytes());
 }
 
 /// Print to stderr and mirror to log file.
@@ -83,6 +87,7 @@ pub fn tee_print(s: &str) {
 pub fn tee_eprintln(s: &str) {
     eprintln!("{s}");
     write_to_log(s);
+    send_output(Stream::Stderr, format!("{s}\n").as_bytes());
 }
 
 /// A writer that tees output to both the original destination and the log file.
@@ -121,6 +126,9 @@ impl Write for TeeWriter {
                 let _ = file.write_all(&buf[..written]);
             }
         }
+
+        let stream = if self.use_stderr { Stream::Stderr } else { Stream::Stdout };
+        send_output(stream, &buf[..written]);
 
         Ok(written)
     }

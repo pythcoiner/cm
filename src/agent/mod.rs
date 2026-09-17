@@ -329,15 +329,16 @@ fn run_agent_thread(
             Ok(Some(status)) => {
                 let duration = start.elapsed();
 
-                // Clear progress line and print completion
+                // Erase the progress ticker line (terminal only), then print
+                // the clean completion line through tee so cm.log and the am
+                // socket get it too.
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                eprintln!(
-                    "\r[{} {}] {} completed in {}s              ",
-                    now,
-                    agent_label,
-                    task_id,
+                eprint!("\r{:80}\r", "");
+                std::io::stderr().flush().ok();
+                crate::log::tee_eprintln(&format!(
+                    "[{now} {agent_label}] {task_id} completed in {}s",
                     duration.as_secs()
-                );
+                ));
 
                 // Collect output from reader threads
                 let stdout = stdout_thread
