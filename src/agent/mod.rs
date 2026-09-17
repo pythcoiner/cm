@@ -41,6 +41,10 @@ pub enum AgentError {
     /// Failed to parse the agent response.
     #[error("failed to parse response: {0}")]
     ParseError(String),
+
+    /// The claude CLI flagged its result as an error (e.g. usage limit reached).
+    #[error("claude CLI reported an error: {0}")]
+    CliError(String),
 }
 
 /// Output from an agent execution.
@@ -242,6 +246,7 @@ impl AgentHandle {
     /// Returns an error if:
     /// - The agent is interrupted (`AgentError::Interrupted`)
     /// - Output cannot be read (`AgentError::OutputError`)
+    /// - The claude CLI flagged its result as an error (`AgentError::CliError`)
     pub fn wait(mut self) -> Result<AgentOutput, AgentError> {
         let handle = self
             .thread_handle
@@ -348,6 +353,10 @@ fn run_agent_thread(
                     .map(|t| t.join().unwrap_or_default())
                     .unwrap_or_default();
 
+                if let Some(msg) = response::ResponseParser::extract_cli_error(&stdout) {
+                    return Err(AgentError::CliError(msg));
+                }
+
                 // Extract session_id from stdout if available
                 let session_id = response::ResponseParser::extract_session_id(&stdout);
 
@@ -396,6 +405,12 @@ mod tests {
 
         let err = AgentError::ParseError("invalid json".to_string());
         assert!(err.to_string().contains("invalid json"));
+
+        let err = AgentError::CliError("You've hit your limit".to_string());
+        assert_eq!(
+            err.to_string(),
+            "claude CLI reported an error: You've hit your limit"
+        );
     }
 
     #[test]

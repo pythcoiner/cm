@@ -177,6 +177,22 @@ impl ResponseParser {
         None
     }
 
+    /// Extract the error message when the claude CLI flags its result with `is_error`.
+    ///
+    /// The CLI reports failures such as usage limits (`api_error_status: 429`) as a
+    /// normal-looking result whose text is the error, e.g. "You've hit your limit".
+    pub fn extract_cli_error(raw_json: &str) -> Option<String> {
+        let value: serde_json::Value = serde_json::from_str(raw_json.trim()).ok()?;
+        let result = match &value {
+            serde_json::Value::Array(events) => events.iter().find(|e| e["type"] == "result")?,
+            other => other,
+        };
+        if result["is_error"] != true {
+            return None;
+        }
+        Some(result["result"].as_str().unwrap_or_default().to_string())
+    }
+
     /// Parse raw JSON output from claude CLI into an AgentResponse.
     ///
     /// The parser handles two formats:
@@ -735,6 +751,40 @@ mod tests {
         let raw = r#"[{"type":"system","session_id":"abc-123-def"},{"type":"result","result":"done"}]"#;
         let session_id = ResponseParser::extract_session_id(raw);
         assert_eq!(session_id, Some("abc-123-def".to_string()));
+    }
+
+    #[test]
+    fn test_extract_cli_error_usage_limit_streaming() {
+        let raw = r#"[
+            {"type":"system","subtype":"init","session_id":"2c79e526-965b-4a24-a715-d193b618c2b9"},
+            {"type":"assistant","message":{"model":"<synthetic>","content":[{"type":"text","text":"You've hit your limit · resets 11:10am (America/New_York)"}]}},
+            {"type":"result","subtype":"success","is_error":true,"api_error_status":429,"result":"You've hit your limit · resets 11:10am (America/New_York)","session_id":"2c79e526-965b-4a24-a715-d193b618c2b9"}
+        ]"#;
+
+        assert_eq!(
+            ResponseParser::extract_cli_error(raw),
+            Some("You've hit your limit · resets 11:10am (America/New_York)".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_cli_error_legacy_format() {
+        let raw = r#"{"type":"result","is_error":true,"result":"You've hit your limit","session_id":"abc"}"#;
+
+        assert_eq!(
+            ResponseParser::extract_cli_error(raw),
+            Some("You've hit your limit".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_cli_error_none_on_success() {
+        let streaming = r#"[{"type":"system","session_id":"abc"},{"type":"result","is_error":false,"result":"done"}]"#;
+        let legacy = r#"{"result":"done","session_id":"abc"}"#;
+
+        assert_eq!(ResponseParser::extract_cli_error(streaming), None);
+        assert_eq!(ResponseParser::extract_cli_error(legacy), None);
+        assert_eq!(ResponseParser::extract_cli_error("not json"), None);
     }
 
     #[test]
