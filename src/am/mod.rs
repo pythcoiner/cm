@@ -327,8 +327,9 @@ fn accept_loop(listener: UnixListener, inner: Arc<Mutex<Inner>>) {
     }
 }
 
-/// Write the `state` frame, then the output backlog in order, to a new client.
-/// On success the stream joins the live client list; on any write failure it is dropped.
+/// Register the stream as a live client, then write the `state` frame and the output
+/// backlog in order. A write failure here is not fatal: the client stays registered and
+/// is pruned like any other on the next broadcast, same as a client that disconnects later.
 fn accept_client(guard: &mut Inner, mut stream: UnixStream) {
     let state_frame = Frame::State {
         source: SOURCE,
@@ -337,20 +338,18 @@ fn accept_client(guard: &mut Inner, mut stream: UnixStream) {
         attention: guard.attention.as_ref().map(|_| true),
         attention_message: guard.attention.clone(),
     };
-    if !write_frame(&mut stream, &state_frame) {
-        return;
-    }
-
-    for line in &guard.backlog {
-        let frame = Frame::Output {
-            source: SOURCE,
-            pid: std::process::id(),
-            seq: line.seq,
-            stream: line.stream,
-            text: line.text.clone(),
-        };
-        if !write_frame(&mut stream, &frame) {
-            return;
+    if write_frame(&mut stream, &state_frame) {
+        for line in &guard.backlog {
+            let frame = Frame::Output {
+                source: SOURCE,
+                pid: std::process::id(),
+                seq: line.seq,
+                stream: line.stream,
+                text: line.text.clone(),
+            };
+            if !write_frame(&mut stream, &frame) {
+                break;
+            }
         }
     }
 

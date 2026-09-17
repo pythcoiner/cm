@@ -755,13 +755,13 @@
       "id": "phase-41",
       "name": "am Producer Socket",
       "plan": "While cm runs agents, listen on <dir>/cm-<pid>.sock (dir from AM_SOCKET_DIR, [am] socket_dir, or $XDG_RUNTIME_DIR/am) and stream NDJSON frames to connected clients: a copy of every stdout/stderr line, typed events at orchestration steps and stdin prompts, and a state plus output backlog replay on connect. Never block cm on a client.",
-      "status": "pending",
+      "status": "in_progress",
       "tasks": [
         {
           "id": "phase-41.feat-am.impl-1",
           "name": "Add [am] config section and socket dir resolution",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [],
           "context": {
             "files_to_read": [
@@ -782,7 +782,7 @@
           "id": "phase-41.feat-am.impl-2",
           "name": "Create src/am/mod.rs producer socket module and wire start/shutdown",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-41.feat-am.impl-1"
           ],
@@ -805,7 +805,7 @@
           "id": "phase-41.feat-am.impl-3",
           "name": "Copy stdout/stderr lines to the am socket via tee",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-41.feat-am.impl-2"
           ],
@@ -828,7 +828,7 @@
           "id": "phase-41.feat-am.impl-4",
           "name": "Emit am events at orchestration sites and stdin prompts",
           "type": "implement",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-41.feat-am.impl-3"
           ],
@@ -848,7 +848,7 @@
           "id": "phase-41.feat-am.test-1",
           "name": "Tests for am frames, replay, client handling and config",
           "type": "test",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-41.feat-am.impl-4"
           ],
@@ -869,7 +869,7 @@
           "id": "phase-41.feat-am.review",
           "name": "Review am producer socket feature",
           "type": "review",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "phase-41.feat-am.impl-4",
             "phase-41.feat-am.test-1"
@@ -889,7 +889,9 @@
           "review_cycles_completed": 0
         }
       ],
-      "review_cycles_completed": 0
+      "review_cycles_completed": 1,
+      "baseline_commit": "52100c408410f7809a38b9de17fc9693a96528de",
+      "implem_completed_at": "2026-09-17T13:08:34.316708787Z"
     }
   ],
   "agent_history": [
@@ -1388,6 +1390,40 @@
       "started_at": "2026-04-07T06:21:07.735045768Z",
       "completed_at": "2026-04-07T06:23:42.634396577Z",
       "exit_status": 0
+    },
+    {
+      "id": "d4062f2b-415c-4475-aea8-d0d6651a8071",
+      "task_id": "phase-41",
+      "agent_type": "plan",
+      "started_at": "2026-09-17T12:56:00.716882799Z",
+      "completed_at": "2026-09-17T12:56:13.853838059Z",
+      "exit_status": 0
+    },
+    {
+      "id": "2f4ee37d-1fc5-401a-b013-a66ead82a710",
+      "task_id": "phase-41",
+      "agent_type": "implem",
+      "started_at": "2026-09-17T12:56:13.856250979Z",
+      "completed_at": "2026-09-17T13:08:34.290523543Z",
+      "exit_status": 0,
+      "commit_hash": "d5df65cb06776b2ecd691051995028333e9b47c0"
+    },
+    {
+      "id": "9beec391-2e16-4d65-9189-f8e1be877c82",
+      "task_id": "phase-41",
+      "agent_type": "review",
+      "started_at": "2026-09-17T13:08:34.324951533Z",
+      "completed_at": "2026-09-17T13:10:08.714950465Z",
+      "exit_status": 0
+    },
+    {
+      "id": "334f1423-b55b-47b8-9c19-f363e23d9eb4",
+      "task_id": "phase-41",
+      "agent_type": "fix",
+      "started_at": "2026-09-17T13:10:08.716174086Z",
+      "completed_at": "2026-09-17T13:24:13.624371356Z",
+      "exit_status": 0,
+      "commit_hash": "bcee7144d1cfd31c86502e2575829ad94ff951e9"
     }
   ],
   "log_records": [
@@ -2537,6 +2573,60 @@
       "data": {
         "type": "task_complete",
         "status": "completed"
+      }
+    },
+    {
+      "id": "fe0cf8b1-8c00-4956-85d9-43de5f3082c6",
+      "timestamp": "2026-09-17T12:56:00.716880654Z",
+      "action": "agent_spawn",
+      "task_id": "phase-41",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "plan",
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your job is to **review** an implementation plan and decide whether it needs to be expanded. **Most plans do not.** Returning `null` is the success path — it means the plan was already good enough for the implementer to act on.\n\nYou are **not** here to rewrite, restructure, or restate plans. You are here to detect a real, named gap, and only fill it if one exists.\n\n## Workflow\n\n### Step 1 — Review (always cheap)\n\nIn **1–3 sentences**, state your verdict:\n\n- **Sufficient** — the implementer can act on this plan without further questions. *Stop and emit `{\"plan\": null}`.*\n- **Needs expansion** — name the **specific** gap (e.g. \"step 2 doesn't say which file to edit\", \"error handling for the network failure case is unspecified and the behavior matters\", \"ordering between the migration and the deploy is ambiguous\").\n\nIf you cannot name a specific gap, the plan is sufficient. \"Could be more thorough\" is not a gap.\n\n### Step 2 — Output\n\n- If verdict is **sufficient**: emit `{\"plan\": null}` immediately. Do not write a detailed plan. Do not restate the original plan.\n- If verdict is **needs expansion**: write a detailed plan that fills the named gap, then emit it as the JSON `plan` field.\n\n## When the plan is sufficient (return `null`)\n\n- A competent implementer could execute it without further questions, **even if the plan is short**.\n- File paths and changes are explicitly specified for the work that needs them.\n- The phase is small-scoped (one file, one function, one bugfix) and the plan covers that scope.\n- The phase came from an upstream `/split` or `/expand` step that already broke the work down — assume the granularity is intentional and the plan is already at implementer level.\n- Steps are ordered, or order doesn't matter.\n\n**Default to this branch.** Most phases — especially small-scoped ones and phases produced by an upstream split/expand step — fall here.\n\n## When to expand (return a det\n\n... [truncated, 2415 more bytes]"
+      }
+    },
+    {
+      "id": "6fdb620f-07da-45a5-87dd-eec43e9da891",
+      "timestamp": "2026-09-17T12:56:13.856249507Z",
+      "action": "agent_spawn",
+      "task_id": "phase-41",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute tasks according to the specification provided by the manager.\n\nYou may be assigned:\n- **A single task** - implement one specific feature or fix\n- **Multiple tasks in a phase** - implement all tasks in a logical group, completing them in order\n\n## Your Responsibilities\n\n1. **Read the Task(s)**: Understand the exact requirements from each task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution(s)**: Write clean, focused code that solves each task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Complete All Tasks**: For multi-task phases, complete ALL tasks before returning\n6. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The task description(s) for this session\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project roadmap\n- Historical conversations\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block. The format depends on whether you're han\n\n... [truncated, 29626 more bytes]"
+      }
+    },
+    {
+      "id": "5111afa8-fcb7-42d4-8621-5d91b9629856",
+      "timestamp": "2026-09-17T13:08:34.324950200Z",
+      "action": "agent_spawn",
+      "task_id": "phase-41",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 98068 more bytes]"
+      }
+    },
+    {
+      "id": "7d511b63-9362-457a-bae1-f39495b0ef4c",
+      "timestamp": "2026-09-17T13:10:08.714954593Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "a4b8a619-ab60-40bd-a65f-3f69a770db20",
+      "timestamp": "2026-09-17T13:10:08.716173024Z",
+      "action": "agent_spawn",
+      "task_id": "phase-41",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "# Fix Agent Instructions\n\nYou are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.\n\nYou may be fixing:\n- **A single task** - fix issues from one task's review\n- **Multiple tasks in a phase** - fix all issues found across a phase's review\n\n## Your Responsibilities\n\n1. **Understand Issues**: Carefully read ALL review feedback and understand what needs to be fixed\n2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems\n3. **Fix All Issues**: For phase reviews, address ALL issues across all tasks\n4. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality\n5. **Follow Conventions**: Adhere to the project's code style and architectural patterns\n6. **Verify Changes**: Test your fixes to ensure they resolve the issues\n\n## Review Issues Format\n\nReview issues are provided as formatted text sections in your prompt. Each issue contains:\n\n- **Issue ID** and severity level (e.g., \"Issue: issue-1 (high)\")\n- **Location**: File and line number reference\n- **Problem**: Description of what's wrong\n- **Suggested Fix**: How to resolve it\n\nExample of how issues appear:\n\n```\n### Issue: issue-1 (high)\n**Location:** src/lib.rs:42\n**Problem:** Missing error handling for file read\n**Suggested Fix:** Add proper Result handling with ? operator\n```\n\nYou should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.\n\n## Fix Guidelines\n\n- **Be Precise**: Only change what's necessary to fix the identified issues\n- **Preserve Intent**: Maintain the original functionality while correcting problems\n- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase\n- **Document Changes**: Use clear commit messages that explain what was fixed and why\n\n## Code Quality Standards\n\nAll fixes must:\n- Resolve the reported issues completely\n- Follow the project's code style guidelines\n- Pass build verific\n\n... [truncated, 8386 more bytes]"
       }
     }
   ]

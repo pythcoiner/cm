@@ -1800,6 +1800,7 @@ impl Manager {
         }
 
         emit_cm(&format!("Phase {phase_id} complete, verifying build..."));
+        emit_phase_progress(phase_id, "BUILD", None, &format!("Verifying build for {phase_id}"));
         let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
 
         match build_result {
