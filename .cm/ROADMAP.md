@@ -325,14 +325,14 @@ Status: **Complete** (6/6)
 
 ## Phase 41: am Producer Socket
 
-Status: **Not Started** (0/6)
+Status: **Complete** (6/6)
 
-- [ ] Add [am] config and socket dir resolution
-- [ ] Create producer socket module
-- [ ] Copy stdout/stderr to the socket
-- [ ] Emit events at orchestration sites
-- [ ] Tests for am socket and config
-- [ ] Review am producer socket feature
+- [x] Add [am] config and socket dir resolution
+- [x] Create producer socket module
+- [x] Copy stdout/stderr to the socket
+- [x] Emit events at orchestration sites
+- [x] Tests for am socket and config
+- [x] Review am producer socket feature
 
 ---
 
@@ -375,5 +375,5 @@ Status: **Not Started** (0/6)
 | Phase 38: Add Model Selection Flag | Complete | 5/5 |
 | Phase 39: Fix Agent Spawn Failures | Complete | 3/3 |
 | Phase 40: Post-Run Review Agent | Complete | 6/6 |
-| Phase 41: am Producer Socket | Not Started | 0/6 |
-| **Total** | | **76/82** |
+| Phase 41: am Producer Socket | Complete | 6/6 |
+| **Total** | | **82/82** |

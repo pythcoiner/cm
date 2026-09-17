@@ -715,7 +715,7 @@
         {
           "id": "phase-41-item-1",
           "name": "Add [am] config and socket dir resolution",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.impl-1"
@@ -724,7 +724,7 @@
         {
           "id": "phase-41-item-2",
           "name": "Create producer socket module",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.impl-2"
@@ -733,7 +733,7 @@
         {
           "id": "phase-41-item-3",
           "name": "Copy stdout/stderr to the socket",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.impl-3"
@@ -742,7 +742,7 @@
         {
           "id": "phase-41-item-4",
           "name": "Emit events at orchestration sites",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.impl-4"
@@ -751,7 +751,7 @@
         {
           "id": "phase-41-item-5",
           "name": "Tests for am socket and config",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.test-1"
@@ -760,7 +760,7 @@
         {
           "id": "phase-41-item-6",
           "name": "Review am producer socket feature",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-41.feat-am.review"
