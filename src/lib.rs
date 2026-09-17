@@ -6,6 +6,9 @@
 // Module declarations - placeholder modules until implementation
 // These will be expanded into separate files/directories as implementation progresses
 
+/// Producer socket for the am fleet monitor.
+pub mod am;
+
 /// Main orchestration loop, state machine, and crash recovery.
 pub mod manager;
 

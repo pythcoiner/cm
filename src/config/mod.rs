@@ -42,6 +42,20 @@ pub struct PriceTable {
     pub cache_read: f64,
 }
 
+/// Configuration for the `am` fleet monitor integration.
+///
+/// All fields are optional; missing fields fall back to their documented
+/// defaults (`enabled` defaults to `true`, `socket_dir` participates in the
+/// directory resolution order described in `CONFIG.md`).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AmConfig {
+    /// Whether the am socket integration is on. Defaults to `true`.
+    pub enabled: Option<bool>,
+    /// Directory to create the am socket in.
+    pub socket_dir: Option<PathBuf>,
+}
+
 /// Configuration file structure.
 ///
 /// All fields are optional. Missing fields will use default values.
@@ -87,6 +101,10 @@ pub struct ConfigFile {
     /// reported model name. If no entry matches, hardcoded defaults apply.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pricing: Option<HashMap<String, PriceTable>>,
+
+    /// Configuration for the `am` fleet monitor integration.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub am: Option<AmConfig>,
 }
 
 impl ConfigFile {
@@ -139,6 +157,7 @@ impl ConfigFile {
             && self.working_dir.is_none()
             && self.build_commands.is_none()
             && self.pricing.is_none()
+            && self.am.is_none()
     }
 }
 
@@ -270,6 +289,7 @@ max_cycles = 3
             working_dir: None,
             build_commands: None,
             pricing: None,
+            am: None,
         };
 
         let toml_str = toml::to_string_pretty(&config).unwrap();
@@ -319,5 +339,36 @@ cache_read = 0.30
         assert!(toml_str.contains("[pricing"));
         let reparsed: ConfigFile = toml::from_str(&toml_str).unwrap();
         assert!(reparsed.pricing.is_some());
+    }
+
+    #[test]
+    fn test_config_file_am_section_parses() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.toml");
+
+        let content = r#"
+[am]
+enabled = false
+socket_dir = "/tmp/am-sockets"
+"#;
+
+        std::fs::write(&config_path, content).unwrap();
+        let config = ConfigFile::load(&config_path).unwrap();
+        let am = config.am.as_ref().expect("am section should be parsed");
+        assert_eq!(am.enabled, Some(false));
+        assert_eq!(am.socket_dir, Some(PathBuf::from("/tmp/am-sockets")));
+    }
+
+    #[test]
+    fn test_config_file_is_empty_false_when_only_am_set() {
+        let config = ConfigFile {
+            model: None,
+            max_cycles: None,
+            working_dir: None,
+            build_commands: None,
+            pricing: None,
+            am: Some(AmConfig { enabled: Some(true), socket_dir: None }),
+        };
+        assert!(!config.is_empty());
     }
 }

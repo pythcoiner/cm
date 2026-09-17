@@ -750,6 +750,146 @@
         }
       ],
       "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-41",
+      "name": "am Producer Socket",
+      "plan": "While cm runs agents, listen on <dir>/cm-<pid>.sock (dir from AM_SOCKET_DIR, [am] socket_dir, or $XDG_RUNTIME_DIR/am) and stream NDJSON frames to connected clients: a copy of every stdout/stderr line, typed events at orchestration steps and stdin prompts, and a state plus output backlog replay on connect. Never block cm on a client.",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-41.feat-am.impl-1",
+          "name": "Add [am] config section and socket dir resolution",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "src/config/mod.rs",
+              "src/manager/mod.rs",
+              "src/cli/mod.rs",
+              "CONFIG.md",
+              "assets/templates/config.toml"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-1",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-41.feat-am.impl-2",
+          "name": "Create src/am/mod.rs producer socket module and wire start/shutdown",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-41.feat-am.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/lib.rs",
+              "src/log/tee_writer.rs",
+              "src/cli/mod.rs",
+              "src/manager/recovery.rs",
+              "src/state/tasks.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-2",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-41.feat-am.impl-3",
+          "name": "Copy stdout/stderr lines to the am socket via tee",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-41.feat-am.impl-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/log/tee_writer.rs",
+              "src/log/mod.rs",
+              "src/agent/mod.rs",
+              "src/manager/mod.rs",
+              "src/cli/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-3",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-41.feat-am.impl-4",
+          "name": "Emit am events at orchestration sites and stdin prompts",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [
+            "phase-41.feat-am.impl-3"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/manager/mod.rs",
+              "src/am/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-4",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-41.feat-am.test-1",
+          "name": "Tests for am frames, replay, client handling and config",
+          "type": "test",
+          "status": "pending",
+          "depends_on": [
+            "phase-41.feat-am.impl-4"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/am/mod.rs",
+              "src/config/mod.rs",
+              "src/cli/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-5",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-41.feat-am.review",
+          "name": "Review am producer socket feature",
+          "type": "review",
+          "status": "pending",
+          "depends_on": [
+            "phase-41.feat-am.impl-4",
+            "phase-41.feat-am.test-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "src/am/mod.rs",
+              "src/log/tee_writer.rs",
+              "src/manager/mod.rs",
+              "src/cli/mod.rs"
+            ],
+            "prior_review_issues": []
+          },
+          "plan_file": ".cm/plans/plan-41.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-41-item-6",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0
     }
   ],
   "agent_history": [

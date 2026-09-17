@@ -115,6 +115,9 @@ pub struct ManagerConfig {
     /// Build commands to run for verification.
     /// If empty, build verification is skipped.
     pub build_commands: Vec<String>,
+    /// Directory to create the am fleet monitor socket in.
+    /// `None` means the am integration is off.
+    pub am_socket_dir: Option<PathBuf>,
 }
 
 impl ManagerConfig {
@@ -135,6 +138,7 @@ impl ManagerConfig {
             model: "sonnet".to_string(),
             max_cycles: 5,
             build_commands: Vec::new(),
+            am_socket_dir: None,
         }
     }
 
@@ -159,6 +163,12 @@ impl ManagerConfig {
     /// Set the build commands.
     pub fn build_commands(mut self, commands: Vec<String>) -> Self {
         self.build_commands = commands;
+        self
+    }
+
+    /// Set the am fleet monitor socket directory. `None` means the integration is off.
+    pub fn am_socket_dir(mut self, dir: Option<PathBuf>) -> Self {
+        self.am_socket_dir = dir;
         self
     }
 }
@@ -188,6 +198,9 @@ pub struct Manager {
     run_started_at: chrono::DateTime<Utc>,
     /// Phase IDs touched during this run (runtime-only, not persisted).
     touched_phase_ids: Vec<String>,
+    /// Phase ID for which an am `started` event was already sent in the current
+    /// `execute_phase` attempt (runtime-only, not persisted).
+    am_started_phase: Option<String>,
 }
 
 /// Emit a timestamped [CM] message to stderr for orchestration visibility.
@@ -246,6 +259,7 @@ impl Manager {
             shutdown_flag,
             run_started_at: Utc::now(),
             touched_phase_ids: Vec::new(),
+            am_started_phase: None,
         })
     }
 
