@@ -7,10 +7,25 @@ use std::fs;
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use thiserror::Error;
 
 use crate::log::parse_log_timestamp;
+
+/// Upper bound on the formatted review input embedded in the prompt.
+pub const MAX_REVIEW_INPUT_BYTES: usize = 300_000;
+
+/// Prefix of the review input when older content was cut to fit the cap.
+const TRUNCATION_MARKER: &str = "[earlier review input truncated]\n";
+
+/// Timestamp format of phase log entry headers.
+const PHASE_LOG_TIMESTAMP_FORMAT: &str = "%Y-%m-%d %H:%M:%S%.3f UTC";
+
+/// Width of the `=` lines framing each phase log entry header.
+const PHASE_LOG_SEPARATOR_WIDTH: usize = 80;
+
+/// Start of the raw JSON block closing a phase log RESPONSE entry.
+const RAW_RESPONSE_MARKER: &str = "<details>";
 
 /// Errors that can occur during review log gathering.
 #[derive(Debug, Error)]
@@ -26,17 +41,88 @@ pub struct PhaseLogContent {
     pub content: String, // empty string if file not found
 }
 
-/// Gather log files for the given phase IDs from `.cm/logs/<phase_id>.log`.
+/// Kind of a phase log entry.
+#[derive(Debug, PartialEq)]
+enum EntryKind {
+    Prompt,
+    Response,
+}
+
+/// Header line of a phase log entry.
+struct EntryHeader {
+    timestamp: DateTime<Utc>,
+    kind: EntryKind,
+}
+
+/// Parse `[<timestamp> UTC] PROMPT: ...` or `[<timestamp> UTC] RESPONSE: ...`.
+fn parse_entry_header(line: &str) -> Option<EntryHeader> {
+    let (timestamp, tail) = line.strip_prefix('[')?.split_once("] ")?;
+    let timestamp = NaiveDateTime::parse_from_str(timestamp, PHASE_LOG_TIMESTAMP_FORMAT)
+        .ok()?
+        .and_utc();
+    let kind = match tail.split_once(": ")?.0 {
+        "PROMPT" => EntryKind::Prompt,
+        "RESPONSE" => EntryKind::Response,
+        _ => return None,
+    };
+    Some(EntryHeader { timestamp, kind })
+}
+
+/// Keep the phase log entries written at or after `since`.
 ///
+/// PROMPT entries are reduced to their header, RESPONSE entries lose their raw JSON block.
+fn filter_phase_log(content: &str, since: DateTime<Utc>) -> String {
+    let separator = "=".repeat(PHASE_LOG_SEPARATOR_WIDTH);
+    let mut output = Vec::new();
+    let mut keep_body = false;
+
+    for line in content.lines() {
+        match parse_entry_header(line) {
+            Some(header) => {
+                let kept = header.timestamp >= since;
+                if kept {
+                    output.push(line);
+                }
+                keep_body = kept && header.kind == EntryKind::Response;
+            }
+            None if line.starts_with(RAW_RESPONSE_MARKER) => keep_body = false,
+            None if keep_body && line != separator => output.push(line),
+            None => {}
+        }
+    }
+
+    output.join("\n")
+}
+
+/// Keep the most recent `max_bytes` of `input`, cut at a line start when possible.
+fn truncate_to_tail(input: String, max_bytes: usize) -> String {
+    if input.len() <= max_bytes {
+        return input;
+    }
+    let budget = max_bytes.saturating_sub(TRUNCATION_MARKER.len());
+    let mut start = input.len() - budget;
+    while !input.is_char_boundary(start) {
+        start += 1;
+    }
+    if let Some(newline) = input[start..].find('\n') {
+        start += newline + 1;
+    }
+    format!("{TRUNCATION_MARKER}{}", &input[start..])
+}
+
+/// Gather this run's entries from `.cm/logs/<phase_id>.log` for the given phase IDs.
+///
+/// Only entries written at or after `since` are kept, see `filter_phase_log`.
 /// Missing log files silently return empty content — graceful degradation.
 pub fn gather_phase_logs(
     cm_dir: &Path,
     phase_ids: &[String],
+    since: DateTime<Utc>,
 ) -> Result<Vec<PhaseLogContent>, ReviewError> {
     let mut result = Vec::with_capacity(phase_ids.len());
     for id in phase_ids {
         let log_path = cm_dir.join("logs").join(format!("{id}.log"));
-        let content = fs::read_to_string(&log_path).unwrap_or_default();
+        let content = filter_phase_log(&fs::read_to_string(&log_path).unwrap_or_default(), since);
         result.push(PhaseLogContent {
             phase_id: id.clone(),
             log_path,
@@ -101,6 +187,8 @@ pub fn format_logs_for_prompt(logs: &[PhaseLogContent]) -> String {
 }
 
 /// Format gathered phase logs and append the cm.log window as a final section.
+///
+/// The result is capped to `MAX_REVIEW_INPUT_BYTES`, keeping the most recent content.
 pub fn format_logs_for_prompt_with_cm_log(logs: &[PhaseLogContent], cm_log_window: &str) -> String {
     let mut parts = format_logs_for_prompt(logs);
     if !cm_log_window.is_empty() {
@@ -111,7 +199,7 @@ pub fn format_logs_for_prompt_with_cm_log(logs: &[PhaseLogContent], cm_log_windo
         parts.push_str(cm_log_window);
         parts.push('\n');
     }
-    parts
+    truncate_to_tail(parts, MAX_REVIEW_INPUT_BYTES)
 }
 
 #[cfg(test)]
@@ -119,11 +207,32 @@ mod tests {
     use super::*;
     use std::fs;
 
+    const PROMPT_HEADER: &str = "[2025-01-01 10:00:00.000 UTC] PROMPT: IMPLEM for phase-1";
+    const RESPONSE_HEADER: &str =
+        "[2025-01-01 10:00:05.000 UTC] RESPONSE: IMPLEM for phase-1 (Duration: 5s, Exit Code: 0)";
+    const RESPONSE_BODY: &str = "\n## Assistant Messages\n\nAll done.\n\n## Parsed Result\n\n**Status:** Success\n\n---\n\n<details>\n<summary>Raw Response (click to expand)</summary>\n\n```json\n{\"result\":\"raw json\"}\n```\n\n</details>\n";
+
+    fn log_entry(header: &str, body: &str) -> String {
+        let separator = "=".repeat(PHASE_LOG_SEPARATOR_WIDTH);
+        format!("{separator}\n{header}\n{separator}\n\n{body}\n")
+    }
+
+    fn since(ts: &str) -> DateTime<Utc> {
+        chrono::NaiveDateTime::parse_from_str(ts, "%Y-%m-%d %H:%M:%S%.3f")
+            .unwrap()
+            .and_utc()
+    }
+
     #[test]
     fn test_gather_phase_logs_missing_files() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("logs")).unwrap();
-        let logs = gather_phase_logs(dir.path(), &["phase-1".to_string()]).unwrap();
+        let logs = gather_phase_logs(
+            dir.path(),
+            &["phase-1".to_string()],
+            since("2025-01-01 00:00:00.000"),
+        )
+        .unwrap();
         assert_eq!(logs.len(), 1);
         assert!(logs[0].content.is_empty());
     }
@@ -132,17 +241,34 @@ mod tests {
     fn test_gather_phase_logs_present() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("logs")).unwrap();
-        fs::write(dir.path().join("logs/phase-1.log"), "log content").unwrap();
-        let logs = gather_phase_logs(dir.path(), &["phase-1".to_string()]).unwrap();
-        assert_eq!(logs[0].content, "log content");
+        fs::write(
+            dir.path().join("logs/phase-1.log"),
+            log_entry(PROMPT_HEADER, "prompt body"),
+        )
+        .unwrap();
+        let logs = gather_phase_logs(
+            dir.path(),
+            &["phase-1".to_string()],
+            since("2025-01-01 00:00:00.000"),
+        )
+        .unwrap();
+        assert_eq!(logs[0].content, PROMPT_HEADER);
     }
 
     #[test]
     fn test_gather_phase_logs_multiple() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("logs")).unwrap();
-        fs::write(dir.path().join("logs/phase-1.log"), "content A").unwrap();
-        fs::write(dir.path().join("logs/phase-2.log"), "content B").unwrap();
+        fs::write(
+            dir.path().join("logs/phase-1.log"),
+            log_entry(PROMPT_HEADER, "content A"),
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("logs/phase-2.log"),
+            log_entry(RESPONSE_HEADER, "content B"),
+        )
+        .unwrap();
         let logs = gather_phase_logs(
             dir.path(),
             &[
@@ -150,12 +276,135 @@ mod tests {
                 "phase-2".to_string(),
                 "phase-3".to_string(),
             ],
+            since("2025-01-01 00:00:00.000"),
         )
         .unwrap();
         assert_eq!(logs.len(), 3);
-        assert_eq!(logs[0].content, "content A");
-        assert_eq!(logs[1].content, "content B");
+        assert_eq!(logs[0].content, PROMPT_HEADER);
+        assert_eq!(logs[1].content, format!("{RESPONSE_HEADER}\n\ncontent B"));
         assert!(logs[2].content.is_empty());
+    }
+
+    #[test]
+    fn test_filter_phase_log_drops_entries_before_since() {
+        let old_prompt = "[2025-01-01 09:59:59.999 UTC] PROMPT: IMPLEM for phase-1";
+        let old_response =
+            "[2025-01-01 09:59:59.999 UTC] RESPONSE: IMPLEM for phase-1 (Duration: 1s, Exit Code: 0)";
+        let content = [
+            log_entry(old_prompt, "old prompt"),
+            log_entry(old_response, "old response"),
+            log_entry(PROMPT_HEADER, "new prompt"),
+        ]
+        .concat();
+
+        let result = filter_phase_log(&content, since("2025-01-01 10:00:00.000"));
+        assert_eq!(result, PROMPT_HEADER);
+    }
+
+    #[test]
+    fn test_filter_phase_log_all_before_since_is_empty() {
+        let content = log_entry(RESPONSE_HEADER, RESPONSE_BODY);
+
+        let result = filter_phase_log(&content, since("2025-01-01 10:00:05.001"));
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_filter_phase_log_drops_prompt_body() {
+        let content = log_entry(
+            PROMPT_HEADER,
+            "diff --git a/src/lib.rs b/src/lib.rs\n+fn huge() {}",
+        );
+
+        let result = filter_phase_log(&content, since("2025-01-01 00:00:00.000"));
+        assert_eq!(result, PROMPT_HEADER);
+    }
+
+    #[test]
+    fn test_filter_phase_log_drops_raw_response() {
+        let content = [
+            log_entry(PROMPT_HEADER, "prompt body"),
+            log_entry(RESPONSE_HEADER, RESPONSE_BODY),
+        ]
+        .concat();
+
+        let result = filter_phase_log(&content, since("2025-01-01 00:00:00.000"));
+        assert_eq!(
+            result,
+            format!(
+                "{PROMPT_HEADER}\n{RESPONSE_HEADER}\n\n\n## Assistant Messages\n\nAll done.\n\n## Parsed Result\n\n**Status:** Success\n\n---\n"
+            )
+        );
+        assert!(!result.contains("raw json"));
+    }
+
+    #[test]
+    fn test_parse_entry_header() {
+        assert!(
+            parse_entry_header("[2025-01-01 10:00:00.000] PROMPT: IMPLEM for phase-1").is_none()
+        );
+        assert!(parse_entry_header("[2025-01-01 10:00:00.000 UTC] NOTE: something").is_none());
+        assert!(parse_entry_header("## Assistant Messages").is_none());
+
+        let header = parse_entry_header(RESPONSE_HEADER).unwrap();
+        assert_eq!(header.kind, EntryKind::Response);
+        assert_eq!(header.timestamp, since("2025-01-01 10:00:05.000"));
+    }
+
+    #[test]
+    fn test_truncate_to_tail_under_cap_unchanged() {
+        let input = "line 1\nline 2\n".to_string();
+        assert_eq!(truncate_to_tail(input.clone(), input.len()), input);
+    }
+
+    #[test]
+    fn test_truncate_to_tail_cuts_at_line_start() {
+        let input = "aaaa\nbbbb\ncccc\n".to_string();
+
+        let result = truncate_to_tail(input, TRUNCATION_MARKER.len() + 7);
+        assert_eq!(result, format!("{TRUNCATION_MARKER}cccc\n"));
+    }
+
+    #[test]
+    fn test_truncate_to_tail_cuts_at_char_boundary() {
+        let input = "\u{e9}\u{e9}\u{e9}\u{e9}\u{e9}".to_string();
+
+        let result = truncate_to_tail(input, TRUNCATION_MARKER.len() + 3);
+        assert_eq!(result, format!("{TRUNCATION_MARKER}\u{e9}"));
+    }
+
+    #[test]
+    fn test_format_logs_with_cm_log_caps_input() {
+        let logs = vec![PhaseLogContent {
+            phase_id: "phase-1".into(),
+            log_path: PathBuf::new(),
+            content: "phase content".into(),
+        }];
+        let cm_log = (0..40_000)
+            .map(|i| format!("cm.log line {i:05}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        let result = format_logs_for_prompt_with_cm_log(&logs, &cm_log);
+        assert!(result.len() <= MAX_REVIEW_INPUT_BYTES);
+        assert!(result.starts_with(&format!("{TRUNCATION_MARKER}cm.log line ")));
+        assert!(result.ends_with("cm.log line 39999\n"));
+        assert!(!result.contains("## Phase: phase-1"));
+    }
+
+    #[test]
+    fn test_format_logs_with_cm_log_under_cap_not_truncated() {
+        let logs = vec![PhaseLogContent {
+            phase_id: "phase-1".into(),
+            log_path: PathBuf::new(),
+            content: "phase content".into(),
+        }];
+
+        let result = format_logs_for_prompt_with_cm_log(&logs, "cm.log line");
+        assert_eq!(
+            result,
+            "## Phase: phase-1\n\nphase content\n\n---\n\n===== cm.log (run window) =====\ncm.log line\n"
+        );
     }
 
     #[test]

@@ -2301,8 +2301,9 @@ impl Manager {
         };
 
         // Gather phase logs
-        let logs = crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids)
-            .unwrap_or_else(|_| vec![]);
+        let logs =
+            crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids, self.run_started_at)
+                .unwrap_or_else(|_| vec![]);
         let cm_log_window = crate::review::gather_cm_log_since(&cm_dir, self.run_started_at);
         let formatted = crate::review::format_logs_for_prompt_with_cm_log(&logs, &cm_log_window);
 

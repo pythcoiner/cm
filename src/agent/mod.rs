@@ -3,7 +3,7 @@
 //! This module provides functionality for spawning Claude agents as subprocesses,
 //! building prompts with task-specific context, and parsing JSON responses.
 
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -48,6 +48,10 @@ pub enum AgentError {
     /// The claude CLI flagged its result as an error (e.g. usage limit reached).
     #[error("claude CLI reported an error: {0}")]
     CliError(String),
+
+    /// Failed to write the prompt to the agent's stdin.
+    #[error("failed to write prompt to stdin: {0}")]
+    PromptWriteFailed(String),
 }
 
 /// Output from an agent execution.
@@ -104,60 +108,17 @@ impl AgentSpawner {
         task_id: &str,
         agent_label: &str,
     ) -> Result<AgentHandle, AgentError> {
-        let stop_flag = Arc::new(AtomicBool::new(false));
-        let started_at = Utc::now();
-        let task_id_owned = task_id.to_string();
-        let prompt_owned = prompt.to_string();
-        let model_owned = self.model.clone();
-        let stop_flag_clone = stop_flag.clone();
-        let agent_label_owned = agent_label.to_string();
-
-        // Spawn the child process
-        let mut child = Command::new("claude")
-            .args([
-                "--print",
-                "--output-format",
-                "json",
-                "--model",
-                &model_owned,
-                "--dangerously-skip-permissions",
-            ])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| {
-                if e.kind() == std::io::ErrorKind::NotFound {
-                    AgentError::CliNotFound
-                } else {
-                    AgentError::SpawnFailed(e.to_string())
-                }
-            })?;
-
-        // Write prompt to stdin then close it so claude sees EOF
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
-                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {e}"))
-            })?;
-        }
-
-        // Run the process in a separate thread
-        let task_id_for_thread = task_id_owned.clone();
-        let thread_handle = thread::spawn(move || {
-            run_agent_thread(
-                &mut child,
-                stop_flag_clone,
-                &task_id_for_thread,
-                &agent_label_owned,
-            )
-        });
-
-        Ok(AgentHandle {
-            thread_handle: Some(thread_handle),
-            stop_flag,
-            task_id: task_id_owned,
-            started_at,
-        })
+        let args = [
+            "--print",
+            "--output-format",
+            "json",
+            "--model",
+            self.model.as_str(),
+            "--dangerously-skip-permissions",
+        ]
+        .map(String::from)
+        .to_vec();
+        self.start(args, prompt, task_id, agent_label)
     }
 
     /// Spawn a new agent process that continues an existing conversation.
@@ -178,50 +139,41 @@ impl AgentSpawner {
         task_id: &str,
         agent_label: &str,
     ) -> Result<AgentHandle, AgentError> {
+        let args = [
+            "--print",
+            "--continue",
+            session_id,
+            "--output-format",
+            "json",
+            "--dangerously-skip-permissions",
+        ]
+        .map(String::from)
+        .to_vec();
+        self.start(args, prompt, task_id, agent_label)
+    }
+
+    /// Spawn the claude process with `args` and run it in a separate thread.
+    fn start(
+        &self,
+        args: Vec<String>,
+        prompt: &str,
+        task_id: &str,
+        agent_label: &str,
+    ) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
-        let task_id_owned = task_id.to_string();
-        let prompt_owned = prompt.to_string();
-        let session_id_owned = session_id.to_string();
+        let mut child = spawn_claude(&args)?;
+        let prompt_writer = write_prompt(&mut child, prompt.to_string());
+
         let stop_flag_clone = stop_flag.clone();
+        let task_id_owned = task_id.to_string();
         let agent_label_owned = agent_label.to_string();
-
-        // Spawn the child process with --continue flag
-        let mut child = Command::new("claude")
-            .args([
-                "--print",
-                "--continue",
-                &session_id_owned,
-                "--output-format",
-                "json",
-                "--dangerously-skip-permissions",
-            ])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| {
-                if e.kind() == std::io::ErrorKind::NotFound {
-                    AgentError::CliNotFound
-                } else {
-                    AgentError::SpawnFailed(e.to_string())
-                }
-            })?;
-
-        // Write prompt to stdin then close it so claude sees EOF
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(prompt_owned.as_bytes()).map_err(|e| {
-                AgentError::SpawnFailed(format!("Failed to write prompt to stdin: {e}"))
-            })?;
-        }
-
-        // Run the process in a separate thread
-        let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
             run_agent_thread(
                 &mut child,
+                prompt_writer,
                 stop_flag_clone,
-                &task_id_for_thread,
+                &task_id_owned,
                 &agent_label_owned,
             )
         });
@@ -229,7 +181,7 @@ impl AgentSpawner {
         Ok(AgentHandle {
             thread_handle: Some(thread_handle),
             stop_flag,
-            task_id: task_id_owned,
+            task_id: task_id.to_string(),
             started_at,
         })
     }
@@ -265,6 +217,7 @@ impl AgentHandle {
     /// - The agent is interrupted (`AgentError::Interrupted`)
     /// - Output cannot be read (`AgentError::OutputError`)
     /// - The claude CLI flagged its result as an error (`AgentError::CliError`)
+    /// - The prompt could not be written to stdin (`AgentError::PromptWriteFailed`)
     pub fn wait(mut self) -> Result<AgentOutput, AgentError> {
         let handle = self
             .thread_handle
@@ -296,9 +249,46 @@ impl AgentHandle {
     }
 }
 
+/// Spawn the claude CLI with `args` and piped stdio.
+fn spawn_claude(args: &[String]) -> Result<Child, AgentError> {
+    Command::new("claude")
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| {
+            if e.kind() == io::ErrorKind::NotFound {
+                AgentError::CliNotFound
+            } else {
+                AgentError::SpawnFailed(e.to_string())
+            }
+        })
+}
+
+/// Write the prompt on its own thread so an early claude exit cannot block or fail the spawn.
+fn write_prompt(child: &mut Child, prompt: String) -> Option<JoinHandle<io::Result<()>>> {
+    child
+        .stdin
+        .take()
+        .map(|mut stdin| thread::spawn(move || stdin.write_all(prompt.as_bytes())))
+}
+
+/// Wait for the prompt writer thread and report a failed write.
+fn join_prompt_writer(prompt_writer: Option<JoinHandle<io::Result<()>>>) -> Result<(), AgentError> {
+    match prompt_writer.map(JoinHandle::join) {
+        None | Some(Ok(Ok(()))) => Ok(()),
+        Some(Ok(Err(e))) => Err(AgentError::PromptWriteFailed(e.to_string())),
+        Some(Err(_)) => Err(AgentError::OutputError(
+            "prompt writer thread panicked".to_string(),
+        )),
+    }
+}
+
 /// Run the agent in a thread, handling interruption.
 fn run_agent_thread(
     child: &mut Child,
+    prompt_writer: Option<JoinHandle<io::Result<()>>>,
     stop_flag: Arc<AtomicBool>,
     task_id: &str,
     agent_label: &str,
@@ -372,6 +362,7 @@ fn run_agent_thread(
                 if let Some(msg) = response::ResponseParser::extract_cli_error(&stdout) {
                     return Err(AgentError::CliError(msg));
                 }
+                join_prompt_writer(prompt_writer)?;
 
                 // Extract session_id from stdout if available
                 let session_id = response::ResponseParser::extract_session_id(&stdout);
@@ -427,6 +418,31 @@ mod tests {
             err.to_string(),
             "claude CLI reported an error: You've hit your limit"
         );
+
+        let err = AgentError::PromptWriteFailed("Broken pipe (os error 32)".to_string());
+        assert_eq!(
+            err.to_string(),
+            "failed to write prompt to stdin: Broken pipe (os error 32)"
+        );
+    }
+
+    #[test]
+    fn test_join_prompt_writer_ok() {
+        assert!(join_prompt_writer(None).is_ok());
+
+        let writer = thread::spawn(|| Ok(()));
+        assert!(join_prompt_writer(Some(writer)).is_ok());
+    }
+
+    #[test]
+    fn test_join_prompt_writer_failed_write() {
+        let writer =
+            thread::spawn(|| Err(io::Error::new(io::ErrorKind::BrokenPipe, "broken pipe")));
+
+        match join_prompt_writer(Some(writer)) {
+            Err(AgentError::PromptWriteFailed(msg)) => assert_eq!(msg, "broken pipe"),
+            other => panic!("expected PromptWriteFailed, got {other:?}"),
+        }
     }
 
     #[test]
