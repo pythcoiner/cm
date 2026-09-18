@@ -484,7 +484,9 @@ mod tests {
     fn test_load_roadmap_auto_generates_subitem_ids() {
         let mut file = NamedTempFile::new().unwrap();
         // JSON without sub-item IDs (old format)
-        writeln!(file, r#"{{
+        writeln!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -501,7 +503,9 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let roadmap = load_roadmap(file.path()).unwrap();
 

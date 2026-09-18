@@ -50,7 +50,10 @@ mod tests {
     fn test_manager_state_display() {
         assert_eq!(ManagerState::Idle.to_string(), "Idle");
         assert_eq!(ManagerState::Executing.to_string(), "Executing");
-        assert_eq!(ManagerState::WaitingForAgent.to_string(), "Waiting for Agent");
+        assert_eq!(
+            ManagerState::WaitingForAgent.to_string(),
+            "Waiting for Agent"
+        );
         assert_eq!(ManagerState::Verifying.to_string(), "Verifying");
     }
 

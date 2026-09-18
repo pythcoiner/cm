@@ -225,10 +225,7 @@ max_cycles = 3
 
         let config = ConfigFile::load(&config_path).unwrap();
 
-        assert_eq!(
-            config.model,
-            Some("claude-sonnet-4-5-20250929".to_string())
-        );
+        assert_eq!(config.model, Some("claude-sonnet-4-5-20250929".to_string()));
         assert_eq!(config.max_cycles, Some(3));
         assert!(config.working_dir.is_none());
     }
@@ -323,9 +320,7 @@ cache_read = 0.30
             .as_ref()
             .expect("pricing section should be parsed");
 
-        let opus = pricing
-            .get("claude-opus-4-7")
-            .expect("exact-model entry");
+        let opus = pricing.get("claude-opus-4-7").expect("exact-model entry");
         assert!((opus.input - 15.0).abs() < f64::EPSILON);
         assert!((opus.output - 75.0).abs() < f64::EPSILON);
         assert!((opus.cache_write - 18.75).abs() < f64::EPSILON);
@@ -367,7 +362,10 @@ socket_dir = "/tmp/am-sockets"
             working_dir: None,
             build_commands: None,
             pricing: None,
-            am: Some(AmConfig { enabled: Some(true), socket_dir: None }),
+            am: Some(AmConfig {
+                enabled: Some(true),
+                socket_dir: None,
+            }),
         };
         assert!(!config.is_empty());
     }

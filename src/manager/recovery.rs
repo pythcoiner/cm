@@ -138,9 +138,7 @@ impl RecoveryManager {
 
         fs::write(&checkpoint_path, content)?;
 
-        info!(
-            "Created checkpoint {checkpoint_id} at {checkpoint_path:?}"
-        );
+        info!("Created checkpoint {checkpoint_id} at {checkpoint_path:?}");
 
         Ok(checkpoint_id)
     }
@@ -489,9 +487,7 @@ impl Default for ShutdownHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{
-        GlobalContext, Phase, PhaseStatus, Project, Task, TaskContext, TaskType,
-    };
+    use crate::state::{GlobalContext, Phase, PhaseStatus, Project, Task, TaskContext, TaskType};
     use tempfile::TempDir;
 
     fn create_test_state() -> TasksState {

@@ -239,7 +239,9 @@ impl PhaseLogger {
         }
 
         // Raw response in collapsible section
-        content.push_str("\n---\n\n<details>\n<summary>Raw Response (click to expand)</summary>\n\n```json\n");
+        content.push_str(
+            "\n---\n\n<details>\n<summary>Raw Response (click to expand)</summary>\n\n```json\n",
+        );
         content.push_str(response);
         content.push_str("\n```\n\n</details>\n\n");
 
@@ -303,10 +305,7 @@ impl PhaseLogger {
 /// Prune a single log file, removing entries older than the cutoff.
 ///
 /// Lines with unparseable timestamps are kept (conservative approach).
-fn prune_log_file(
-    path: &Path,
-    cutoff: chrono::DateTime<Utc>,
-) -> Result<PruneStats, PhaseLogError> {
+fn prune_log_file(path: &Path, cutoff: chrono::DateTime<Utc>) -> Result<PruneStats, PhaseLogError> {
     let reader = BufReader::new(File::open(path)?);
     let mut kept_lines = Vec::new();
     let mut removed_count = 0;
@@ -326,10 +325,7 @@ fn prune_log_file(
     let kept_count = kept_lines.len();
 
     // Rewrite the file with only kept lines
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(path)?;
+    let mut file = OpenOptions::new().write(true).truncate(true).open(path)?;
     for line in &kept_lines {
         writeln!(file, "{line}")?;
     }
@@ -423,10 +419,7 @@ mod tests {
     fn test_extract_phase_id_with_decimal() {
         assert_eq!(extract_phase_id("phase-0.5.task-1"), Some("phase-0.5"));
         assert_eq!(extract_phase_id("phase-1.2.task-3"), Some("phase-1.2"));
-        assert_eq!(
-            extract_phase_id("phase-10.5.task-10"),
-            Some("phase-10.5")
-        );
+        assert_eq!(extract_phase_id("phase-10.5.task-10"), Some("phase-10.5"));
     }
 
     #[test]
@@ -535,7 +528,14 @@ mod tests {
             .log_prompt("phase-1.task-1", "IMPLEM", "First prompt")
             .unwrap();
         logger
-            .log_response("phase-1.task-1", "IMPLEM", "First response", 10, Some(0), None)
+            .log_response(
+                "phase-1.task-1",
+                "IMPLEM",
+                "First response",
+                10,
+                Some(0),
+                None,
+            )
             .unwrap();
         logger
             .log_prompt("phase-1.task-2", "IMPLEM", "Second prompt")
@@ -608,7 +608,7 @@ mod tests {
                     .log_prompt(
                         "phase-1.task-1",
                         "IMPLEM",
-                        &format!("Prompt from thread {}", i),
+                        &format!("Prompt from thread {i}"),
                     )
                     .unwrap();
             }));
@@ -678,25 +678,13 @@ mod tests {
         // Write old entries directly with past timestamps (format matches parse_log_timestamp)
         let phase1_log = logs_dir.join("phase-1.log");
         let mut file1 = File::create(&phase1_log).unwrap();
-        writeln!(
-            file1,
-            "[2020-01-01 00:00:00.000] Old line 1"
-        )
-        .unwrap();
-        writeln!(
-            file1,
-            "[2020-01-01 00:00:01.000] Old line 2"
-        )
-        .unwrap();
+        writeln!(file1, "[2020-01-01 00:00:00.000] Old line 1").unwrap();
+        writeln!(file1, "[2020-01-01 00:00:01.000] Old line 2").unwrap();
         drop(file1);
 
         let phase2_log = logs_dir.join("phase-2.log");
         let mut file2 = File::create(&phase2_log).unwrap();
-        writeln!(
-            file2,
-            "[2020-01-01 00:00:00.000] Old line 3"
-        )
-        .unwrap();
+        writeln!(file2, "[2020-01-01 00:00:00.000] Old line 3").unwrap();
         drop(file2);
 
         let stats = PhaseLogger::prune_all(&logs_dir).unwrap();

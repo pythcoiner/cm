@@ -138,7 +138,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the task\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not complete the task\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -227,7 +229,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not complete the review\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -271,10 +275,15 @@ impl PromptBuilder {
         // Issues to fix
         prompt.push_str("### Issues to Fix\n\n");
         if issues.is_empty() {
-            prompt.push_str("No specific issues provided. Review the code and fix any problems.\n\n");
+            prompt
+                .push_str("No specific issues provided. Review the code and fix any problems.\n\n");
         } else {
             for issue in issues {
-                prompt.push_str(&format!("#### Issue: {} ({})\n\n", issue.id, issue.severity_str()));
+                prompt.push_str(&format!(
+                    "#### Issue: {} ({})\n\n",
+                    issue.id,
+                    issue.severity_str()
+                ));
                 prompt.push_str(&format!("**Location:** {}\n\n", issue.location));
                 prompt.push_str(&format!("**Problem:** {}\n\n", issue.problem));
                 prompt.push_str(&format!("**Suggested Fix:** {}\n\n", issue.suggested_fix));
@@ -314,7 +323,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not fix the issues\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -365,8 +376,11 @@ impl PromptBuilder {
 
         // Review criteria
         prompt.push_str("### Review Criteria\n\n");
-        prompt.push_str("1. **Correctness**: Do the changes correctly implement the requested task?\n");
-        prompt.push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
+        prompt.push_str(
+            "1. **Correctness**: Do the changes correctly implement the requested task?\n",
+        );
+        prompt
+            .push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
         prompt.push_str("3. **Error handling**: Are errors handled appropriately?\n");
         prompt.push_str("4. **Style**: Does the code follow the project's style conventions?\n");
         prompt.push_str("5. **Completeness**: Are all requirements addressed?\n\n");
@@ -413,7 +427,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not complete the review\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -491,7 +507,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not fix the issues\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -632,7 +650,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"success\",\n");
-        prompt.push_str("  \"summary\": \"Brief description of what you did for the entire phase\",\n");
+        prompt.push_str(
+            "  \"summary\": \"Brief description of what you did for the entire phase\",\n",
+        );
         prompt.push_str("  \"tasks_completed\": [\n");
         prompt.push_str("    {\n");
         prompt.push_str("      \"task_id\": \"phase-X.task-Y\",\n");
@@ -647,7 +667,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the tasks\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not complete the tasks\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -694,7 +716,10 @@ impl PromptBuilder {
         prompt.push_str("\n\n---\n\n");
 
         // Phase context
-        prompt.push_str(&format!("## Phase Review: {} ({})\n\n", phase.name, phase.id));
+        prompt.push_str(&format!(
+            "## Phase Review: {} ({})\n\n",
+            phase.name, phase.id
+        ));
         prompt.push_str(&format!(
             "This phase contains **{} tasks**. Review all changes together.\n\n",
             phase.tasks.len()
@@ -738,8 +763,11 @@ impl PromptBuilder {
 
         // Review criteria
         prompt.push_str("### Review Criteria\n\n");
-        prompt.push_str("1. **Correctness**: Do the changes correctly implement all requested tasks?\n");
-        prompt.push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
+        prompt.push_str(
+            "1. **Correctness**: Do the changes correctly implement all requested tasks?\n",
+        );
+        prompt
+            .push_str("2. **Code quality**: Is the code clean, well-structured, and idiomatic?\n");
         prompt.push_str("3. **Error handling**: Are errors handled appropriately?\n");
         prompt.push_str("4. **Style**: Does the code follow the project's style conventions?\n");
         prompt.push_str("5. **Completeness**: Are all phase requirements addressed?\n\n");
@@ -768,7 +796,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not complete the review\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not complete the review\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -808,11 +838,14 @@ impl PromptBuilder {
         ));
 
         // Reference to plan file (don't embed full plan to keep prompt focused)
-        prompt.push_str("If you need context about the original implementation plan, read: `.cm/PLAN.md`\n\n");
+        prompt.push_str(
+            "If you need context about the original implementation plan, read: `.cm/PLAN.md`\n\n",
+        );
 
         // Review feedback
         prompt.push_str("### Review Feedback\n\n");
-        prompt.push_str("The following issues were found during phase review. Fix all of them:\n\n");
+        prompt
+            .push_str("The following issues were found during phase review. Fix all of them:\n\n");
         prompt.push_str(review_feedback);
         prompt.push_str("\n\n");
 
@@ -842,7 +875,9 @@ impl PromptBuilder {
         prompt.push_str("```json\n");
         prompt.push_str("{\n");
         prompt.push_str("  \"status\": \"failed\",\n");
-        prompt.push_str("  \"error\": \"Detailed explanation of why you could not fix the issues\"\n");
+        prompt.push_str(
+            "  \"error\": \"Detailed explanation of why you could not fix the issues\"\n",
+        );
         prompt.push_str("}\n");
         prompt.push_str("```\n");
 
@@ -865,7 +900,9 @@ impl PromptBuilder {
         let mut prompt = String::new();
 
         prompt.push_str("# Run Review Agent\n\n");
-        prompt.push_str("You are a post-run auditor. Review the following execution logs from a cm run\n");
+        prompt.push_str(
+            "You are a post-run auditor. Review the following execution logs from a cm run\n",
+        );
         prompt.push_str(&format!(
             "started at {}.\n\n",
             run_started_at.format("%Y-%m-%dT%H:%M:%SZ")
@@ -875,11 +912,15 @@ impl PromptBuilder {
         prompt.push_str("- Identify any errors, build failures, deferred phases, or unresolved review issues.\n");
         prompt.push_str("- Look for orchestration bugs, tasks marked completed when they should not be, and missing edge cases.\n");
         prompt.push_str("- Report your findings as a markdown document.\n");
-        prompt.push_str("- At the end of your response, include a JSON block with this exact structure:\n\n");
+        prompt.push_str(
+            "- At the end of your response, include a JSON block with this exact structure:\n\n",
+        );
         prompt.push_str("```json\n{\"has_issues\": true}\n```\n\n");
         prompt.push_str("or\n\n");
         prompt.push_str("```json\n{\"has_issues\": false}\n```\n\n");
-        prompt.push_str("If any issues are found, use `true`. If the run looks clean, use `false`.\n\n");
+        prompt.push_str(
+            "If any issues are found, use `true`. If the run looks clean, use `false`.\n\n",
+        );
 
         prompt.push_str("## Phase Logs\n\n");
         if phase_logs.is_empty() {
@@ -950,7 +991,7 @@ mod tests {
         // Use system temp directory to avoid polluting project directory
         let temp_dir = std::env::temp_dir().join("cm-tests");
         fs::create_dir_all(&temp_dir).expect("Failed to create temp directory for test");
-        let plan_file = temp_dir.join(format!("plan-{}.md", unique_id));
+        let plan_file = temp_dir.join(format!("plan-{unique_id}.md"));
         fs::write(&plan_file, "Implement the foo function that does bar")
             .expect("Failed to write plan file for test");
 
@@ -1276,5 +1317,4 @@ Found 2 issues
         // Should deduplicate
         assert_eq!(files, vec!["src/main.rs"]);
     }
-
 }

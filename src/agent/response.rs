@@ -129,7 +129,6 @@ struct ClaudeJsonOutput {
     session_id: Option<String>,
 }
 
-
 /// Structure for extracting structured info from the agent's JSON response.
 #[derive(Debug, Deserialize, Default)]
 #[allow(dead_code)]
@@ -455,7 +454,8 @@ impl ResponseParser {
             if let Some(end) = text.rfind('}') {
                 if end > start {
                     let potential_json = &text[start..=end];
-                    if let Ok(parsed) = serde_json::from_str::<ReviewAgentResponse>(potential_json) {
+                    if let Ok(parsed) = serde_json::from_str::<ReviewAgentResponse>(potential_json)
+                    {
                         return Some(parsed);
                     }
                 }
@@ -676,7 +676,10 @@ mod tests {
 
         let response = ResponseParser::parse(raw).unwrap();
 
-        assert_eq!(response.message, "This is the full response text with all details.");
+        assert_eq!(
+            response.message,
+            "This is the full response text with all details."
+        );
     }
 
     #[test]
@@ -748,7 +751,8 @@ mod tests {
 
     #[test]
     fn test_extract_session_id_from_streaming() {
-        let raw = r#"[{"type":"system","session_id":"abc-123-def"},{"type":"result","result":"done"}]"#;
+        let raw =
+            r#"[{"type":"system","session_id":"abc-123-def"},{"type":"result","result":"done"}]"#;
         let session_id = ResponseParser::extract_session_id(raw);
         assert_eq!(session_id, Some("abc-123-def".to_string()));
     }
@@ -810,7 +814,10 @@ mod tests {
         let response = ResponseParser::parse(raw).unwrap();
 
         assert_eq!(response.status, AgentStatus::Failed);
-        assert_eq!(response.message, "Missing dependency: serde is not in Cargo.toml");
+        assert_eq!(
+            response.message,
+            "Missing dependency: serde is not in Cargo.toml"
+        );
         assert!(response.files_created.is_empty());
     }
 
@@ -909,7 +916,8 @@ mod tests {
 
     #[test]
     fn test_parse_run_review_response_malformed_json_defaults_to_issues() {
-        let (_report, result) = ResponseParser::parse_run_review_response("some text {not valid json}");
+        let (_report, result) =
+            ResponseParser::parse_run_review_response("some text {not valid json}");
         assert!(result.has_issues);
     }
 }

@@ -101,10 +101,7 @@ pub fn format_logs_for_prompt(logs: &[PhaseLogContent]) -> String {
 }
 
 /// Format gathered phase logs and append the cm.log window as a final section.
-pub fn format_logs_for_prompt_with_cm_log(
-    logs: &[PhaseLogContent],
-    cm_log_window: &str,
-) -> String {
+pub fn format_logs_for_prompt_with_cm_log(logs: &[PhaseLogContent], cm_log_window: &str) -> String {
     let mut parts = format_logs_for_prompt(logs);
     if !cm_log_window.is_empty() {
         if !parts.is_empty() {
@@ -148,7 +145,11 @@ mod tests {
         fs::write(dir.path().join("logs/phase-2.log"), "content B").unwrap();
         let logs = gather_phase_logs(
             dir.path(),
-            &["phase-1".to_string(), "phase-2".to_string(), "phase-3".to_string()],
+            &[
+                "phase-1".to_string(),
+                "phase-2".to_string(),
+                "phase-3".to_string(),
+            ],
         )
         .unwrap();
         assert_eq!(logs.len(), 3);
@@ -208,7 +209,7 @@ mod tests {
     #[test]
     fn test_cm_log_all_too_old_returns_empty() {
         let dir = tempfile::tempdir().unwrap();
-        let lines = vec![
+        let lines = [
             make_log_line("2024-01-01 10:00:00.000", "old line 1"),
             make_log_line("2024-01-01 10:00:01.000", "old line 2"),
         ];
@@ -228,7 +229,7 @@ mod tests {
     #[test]
     fn test_cm_log_boundary_line_included() {
         let dir = tempfile::tempdir().unwrap();
-        let lines = vec![
+        let lines = [
             make_log_line("2025-01-01 10:00:00.000", "before"),
             make_log_line("2025-01-01 10:00:01.000", "boundary"),
             make_log_line("2025-01-01 10:00:02.000", "after"),
@@ -252,7 +253,7 @@ mod tests {
     fn test_cm_log_continuation_lines_kept() {
         let dir = tempfile::tempdir().unwrap();
         // continuation line has no timestamp
-        let lines = vec![
+        let lines = [
             make_log_line("2024-01-01 10:00:00.000", "old line"),
             "  continuation of old line".to_string(),
             make_log_line("2025-06-01 10:00:00.000", "new line"),

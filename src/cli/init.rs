@@ -10,9 +10,9 @@ use log::info;
 use super::CliError;
 use crate::command::{
     ACTIONS_TEMPLATE, CLONE_COMMAND, CM_COMMAND, CONFIG_TEMPLATE, END_COMMAND, EXPAND_COMMAND,
-    FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE, IMPLEMENTER_TEMPLATE, PLAN_TEMPLATE,
-    PLANNER_TEMPLATE, REVIEWER_TEMPLATE, RUN_COMMAND, SCHEMA_TEMPLATE, SPLIT_COMMAND,
-    STRUCTURE_TEMPLATE, TASK_PLAN_TEMPLATE,
+    FEAT_COMMAND, FIX_COMMAND, FIX_TEMPLATE, IMPLEMENTER_TEMPLATE, PLANNER_TEMPLATE, PLAN_TEMPLATE,
+    REVIEWER_TEMPLATE, RUN_COMMAND, SCHEMA_TEMPLATE, SPLIT_COMMAND, STRUCTURE_TEMPLATE,
+    TASK_PLAN_TEMPLATE,
 };
 
 /// Command file definition.
@@ -224,9 +224,7 @@ fn ensure_gitignore_entry(base_dir: &Path) -> Result<(), CliError> {
     };
 
     // Check if entry already exists (as a complete line)
-    let already_present = content
-        .lines()
-        .any(|line| line.trim() == entry);
+    let already_present = content.lines().any(|line| line.trim() == entry);
 
     if already_present {
         return Ok(());
@@ -317,11 +315,7 @@ mod tests {
 
         for command in COMMANDS {
             let file_path = commands_dir.join(format!("{}.md", command.name));
-            assert!(
-                file_path.exists(),
-                "Expected {}.md to exist",
-                command.name
-            );
+            assert!(file_path.exists(), "Expected {}.md to exist", command.name);
             let content = fs::read_to_string(&file_path).unwrap();
             assert_eq!(content, command.content);
         }
@@ -468,11 +462,7 @@ mod tests {
 
         for template in TEMPLATES {
             let file_path = cm_dir.join(template.path);
-            assert!(
-                file_path.exists(),
-                "Expected {} to exist",
-                template.path
-            );
+            assert!(file_path.exists(), "Expected {} to exist", template.path);
             let content = fs::read_to_string(&file_path).unwrap();
             assert_eq!(content, template.content);
         }

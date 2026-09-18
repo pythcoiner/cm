@@ -25,7 +25,9 @@ pub fn generate_tasks_md(state: &TasksState) -> String {
 
     // Title
     output.push_str(&format!("# {} - Tasks\n\n", state.project.name));
-    output.push_str("This document shows phase plans and task status. Generated from tasks.json.\n\n");
+    output.push_str(
+        "This document shows phase plans and task status. Generated from tasks.json.\n\n",
+    );
 
     // Phases
     for phase in &state.phases {
@@ -47,7 +49,11 @@ fn format_phase(phase: &Phase) -> String {
     output.push_str(&format!("## {}: {}\n\n", phase.id, phase.name));
 
     // Phase status
-    let completed_tasks = phase.tasks.iter().filter(|t| t.status == TaskStatus::Completed).count();
+    let completed_tasks = phase
+        .tasks
+        .iter()
+        .filter(|t| t.status == TaskStatus::Completed)
+        .count();
     let total_tasks = phase.tasks.len();
     let status_str = match phase.status {
         PhaseStatus::Completed => "Complete",
@@ -87,16 +93,13 @@ fn format_task(task: &Task) -> String {
     };
 
     // Load plan from file and get first line as summary
-    let plan_content = fs::read_to_string(&task.plan_file)
-        .unwrap_or_else(|_| "(plan file missing)".to_string());
+    let plan_content =
+        fs::read_to_string(&task.plan_file).unwrap_or_else(|_| "(plan file missing)".to_string());
     let summary = plan_content.lines().next().unwrap_or(&plan_content);
 
     format!(
         "- {} **{}**: {} - {}\n",
-        status_icon,
-        task.id,
-        task.name,
-        summary
+        status_icon, task.id, task.name, summary
     )
 }
 
@@ -112,7 +115,11 @@ fn generate_summary_table(state: &TasksState) -> String {
     let mut total_completed = 0;
 
     for phase in &state.phases {
-        let completed = phase.tasks.iter().filter(|t| t.status == TaskStatus::Completed).count();
+        let completed = phase
+            .tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Completed)
+            .count();
         let total = phase.tasks.len();
         total_tasks += total;
         total_completed += completed;
@@ -159,7 +166,7 @@ mod tests {
 
     fn create_test_task(id: &str, name: &str, status: TaskStatus) -> Task {
         // Create plan file for test
-        let plan_file = format!(".cm/plans/plan-test-{}.md", id);
+        let plan_file = format!(".cm/plans/plan-test-{id}.md");
         let plan_dir = Path::new(".cm/plans");
         if !plan_dir.exists() {
             fs::create_dir_all(plan_dir).ok();
@@ -214,8 +221,16 @@ mod tests {
                     "Setup",
                     PhaseStatus::Completed,
                     vec![
-                        create_test_task("phase-1.task-1", "Create structure", TaskStatus::Completed),
-                        create_test_task("phase-1.task-2", "Add dependencies", TaskStatus::Completed),
+                        create_test_task(
+                            "phase-1.task-1",
+                            "Create structure",
+                            TaskStatus::Completed,
+                        ),
+                        create_test_task(
+                            "phase-1.task-2",
+                            "Add dependencies",
+                            TaskStatus::Completed,
+                        ),
                     ],
                 ),
                 create_test_phase(
@@ -273,7 +288,11 @@ mod tests {
             "phase-1",
             "Setup",
             PhaseStatus::InProgress,
-            vec![create_test_task("phase-1.task-1", "Do stuff", TaskStatus::Pending)],
+            vec![create_test_task(
+                "phase-1.task-1",
+                "Do stuff",
+                TaskStatus::Pending,
+            )],
         );
         phase.plan = "## Objective\n\nSet up the project structure.".to_string();
 

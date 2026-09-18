@@ -142,7 +142,10 @@ struct Usage {
 /// Top-level entry point for the subcommand.
 pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
     let projects = projects_dir()?;
-    let config = ConfigFile::load_default().ok().flatten().unwrap_or_default();
+    let config = ConfigFile::load_default()
+        .ok()
+        .flatten()
+        .unwrap_or_default();
     let overrides = config.pricing.unwrap_or_default();
 
     if opts.breakdown {
@@ -181,7 +184,14 @@ pub fn execute_token(opts: TokenOpts) -> Result<(), TokenError> {
 
     // Render.
     if let Some(mode) = opts.bucket {
-        print_bucket_report(&label, &by_bucket, &bucket_models, &overrides, mode, earliest);
+        print_bucket_report(
+            &label,
+            &by_bucket,
+            &bucket_models,
+            &overrides,
+            mode,
+            earliest,
+        );
     } else {
         print_flat_report(&label, &by_model, &overrides, earliest);
     }
@@ -714,10 +724,7 @@ mod tests {
     fn lookup_exact_beats_family_beats_default() {
         let mut overrides: HashMap<String, PriceTable> = HashMap::new();
         overrides.insert("opus".to_string(), rt(1.0, 2.0, 3.0, 4.0));
-        overrides.insert(
-            "claude-opus-4-7".to_string(),
-            rt(11.0, 22.0, 33.0, 44.0),
-        );
+        overrides.insert("claude-opus-4-7".to_string(), rt(11.0, 22.0, 33.0, 44.0));
 
         // Exact match wins.
         let r = lookup_rates("claude-opus-4-7", &overrides).unwrap();

@@ -20,8 +20,13 @@ use thiserror::Error;
 use crate::config::{AmConfig, ConfigError, ConfigFile};
 use crate::generate::{generate_roadmap_md, generate_tasks_md, write_md_file, GenerateError};
 use crate::log::{init_log_file, tee_eprintln, TeeWriter};
-use crate::manager::{Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler};
-use crate::state::{load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError, TaskStatus, TasksState};
+use crate::manager::{
+    Manager, ManagerConfig, ManagerError, RecoveryAction, RecoveryManager, ShutdownHandler,
+};
+use crate::state::{
+    load_roadmap, load_state, save_roadmap, save_state, validate_all, PhaseStatus, StateError,
+    TaskStatus, TasksState,
+};
 
 /// Subcommands for the cm CLI.
 #[derive(Debug, Subcommand)]
@@ -102,7 +107,6 @@ pub enum CliError {
     #[error("background thread panicked")]
     ThreadError,
 
-
     /// Markdown generation error.
     #[error("generate error: {0}")]
     GenerateError(#[from] GenerateError),
@@ -179,7 +183,6 @@ pub struct Cli {
     #[arg(long, value_name = "DIR")]
     pub working_dir: Option<PathBuf>,
 
-
     /// Perform comprehensive sanity check on JSON files.
     #[arg(long)]
     pub sanity_check: bool,
@@ -209,10 +212,7 @@ pub fn run() -> Result<(), CliError> {
 
     // Initialize log file early (before any logging)
     // Determine .cm directory from state path
-    let cm_dir = cli
-        .state
-        .parent()
-        .unwrap_or(std::path::Path::new(".cm"));
+    let cm_dir = cli.state.parent().unwrap_or(std::path::Path::new(".cm"));
     if let Err(e) = init_log_file(cm_dir) {
         eprintln!("Warning: failed to initialize log file: {e}");
     }
@@ -259,10 +259,12 @@ pub fn run() -> Result<(), CliError> {
                 })
                 .map_err(CliError::from)
             }
-            Command::UpdatePricing { dry_run } => update_pricing::execute_update_pricing(
-                update_pricing::UpdatePricingOpts { dry_run: *dry_run },
-            )
-            .map_err(CliError::from),
+            Command::UpdatePricing { dry_run } => {
+                update_pricing::execute_update_pricing(update_pricing::UpdatePricingOpts {
+                    dry_run: *dry_run,
+                })
+                .map_err(CliError::from)
+            }
         };
     }
 
@@ -448,7 +450,6 @@ fn execute_run(cli: &Cli, shutdown_flag: Arc<AtomicBool>) -> Result<(), CliError
     Ok(())
 }
 
-
 /// Execute the continue mode.
 ///
 /// Resumes from interrupted state, using recovery manager to determine
@@ -616,13 +617,14 @@ fn print_status(state: &TasksState) {
         .iter()
         .filter(|p| p.status == crate::state::PhaseStatus::Completed)
         .count();
-    println!(
-        "Phase progress: {completed_phases}/{total_phases} phases complete"
-    );
+    println!("Phase progress: {completed_phases}/{total_phases} phases complete");
 
     // Current phase and task
     if let Some(current_phase) = state.current_phase() {
-        println!("Current phase: {} ({})", current_phase.name, current_phase.id);
+        println!(
+            "Current phase: {} ({})",
+            current_phase.name, current_phase.id
+        );
 
         if let Some(current_task) = state.current_task() {
             println!("Current task: {} ({})", current_task.name, current_task.id);
@@ -875,7 +877,16 @@ fn execute_regenerate(cli: &Cli) -> Result<(), CliError> {
 
     let tasks_content = generate_tasks_md(&state);
     write_md_file(&tasks_content, &tasks_md_path)?;
-    let completed_tasks: usize = state.phases.iter().map(|p| p.tasks.iter().filter(|t| t.status == crate::state::TaskStatus::Completed).count()).sum();
+    let completed_tasks: usize = state
+        .phases
+        .iter()
+        .map(|p| {
+            p.tasks
+                .iter()
+                .filter(|t| t.status == crate::state::TaskStatus::Completed)
+                .count()
+        })
+        .sum();
     let total_tasks: usize = state.phases.iter().map(|p| p.tasks.len()).sum();
     println!(
         "Regenerated: {:?} ({} phases, {}/{} tasks)",
@@ -898,10 +909,7 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
     info!("Sanity check mode: validating .cm directory");
 
     // Determine the .cm directory from the state path
-    let cm_dir = cli
-        .state
-        .parent()
-        .unwrap_or(std::path::Path::new(".cm"));
+    let cm_dir = cli.state.parent().unwrap_or(std::path::Path::new(".cm"));
 
     let result = validate_all(cm_dir);
 
@@ -928,7 +936,10 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
         println!("Sanity check passed - all JSON files are valid");
         Ok(())
     } else {
-        println!("Sanity check failed - {} error(s) found", result.errors.len());
+        println!(
+            "Sanity check failed - {} error(s) found",
+            result.errors.len()
+        );
         Err(CliError::ValidationFailed(format!(
             "sanity check failed with {} error(s)",
             result.errors.len()
@@ -940,10 +951,7 @@ fn execute_sanity_check(cli: &Cli) -> Result<(), CliError> {
 ///
 /// Prunes all phase log entries older than 24 hours.
 fn execute_prune(cli: &Cli) -> Result<(), CliError> {
-    let cm_dir = cli
-        .state
-        .parent()
-        .unwrap_or(std::path::Path::new("."));
+    let cm_dir = cli.state.parent().unwrap_or(std::path::Path::new("."));
 
     let logs_dir = cm_dir.join("logs");
 
@@ -1043,10 +1051,7 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
     println!("  - {task_count} task(s) reset");
 
     // Reset roadmap.json items linked to this phase
-    let cm_dir = cli
-        .state
-        .parent()
-        .unwrap_or(std::path::Path::new("."));
+    let cm_dir = cli.state.parent().unwrap_or(std::path::Path::new("."));
     let roadmap_json_path = cm_dir.join("roadmap.json");
 
     if roadmap_json_path.exists() && !roadmap_item_ids.is_empty() {
@@ -1098,9 +1103,7 @@ fn execute_reset(cli: &Cli) -> Result<(), CliError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{
-        GlobalContext, Phase, PhaseStatus, Project, Task, TaskContext, TaskType,
-    };
+    use crate::state::{GlobalContext, Phase, PhaseStatus, Project, Task, TaskContext, TaskType};
 
     fn create_test_state() -> TasksState {
         // Note: plan_file paths are placeholders - these tests don't read plan files
@@ -1228,7 +1231,6 @@ mod tests {
         assert_eq!(cli.state, PathBuf::from(".cm/tasks.json"));
     }
 
-
     #[test]
     fn test_cli_parse_continue() {
         let cli = Cli::parse_from(["cm", "--continue"]);
@@ -1337,11 +1339,16 @@ mod tests {
     fn test_cli_parse_all_options() {
         let cli = Cli::parse_from([
             "cm",
-            "--config", "/path/to/config.toml",
-            "--state", "/path/to/tasks.json",
-            "--model", "opus",
-            "--max-cycles", "10",
-            "--working-dir", "/home/user/project",
+            "--config",
+            "/path/to/config.toml",
+            "--state",
+            "/path/to/tasks.json",
+            "--model",
+            "opus",
+            "--max-cycles",
+            "10",
+            "--working-dir",
+            "/home/user/project",
             "--verbose",
         ]);
 
@@ -1367,10 +1374,14 @@ mod tests {
     fn test_build_manager_config_cli_overrides() {
         let cli = Cli::parse_from([
             "cm",
-            "--state", "/tmp/tasks.json",
-            "--model", "opus",
-            "--max-cycles", "10",
-            "--working-dir", "/custom/dir",
+            "--state",
+            "/tmp/tasks.json",
+            "--model",
+            "opus",
+            "--max-cycles",
+            "10",
+            "--working-dir",
+            "/custom/dir",
         ]);
         let config = build_manager_config(&cli).unwrap();
 
@@ -1398,8 +1409,10 @@ mod tests {
 
         let cli = Cli::parse_from([
             "cm",
-            "--config", config_path.to_str().unwrap(),
-            "--state", "/tmp/tasks.json",
+            "--config",
+            config_path.to_str().unwrap(),
+            "--state",
+            "/tmp/tasks.json",
         ]);
 
         let result = build_manager_config(&cli);
@@ -1426,8 +1439,10 @@ mod tests {
 
         let cli = Cli::parse_from([
             "cm",
-            "--config", config_path.to_str().unwrap(),
-            "--state", "/tmp/tasks.json",
+            "--config",
+            config_path.to_str().unwrap(),
+            "--state",
+            "/tmp/tasks.json",
         ]);
 
         let result = build_manager_config(&cli);
@@ -1438,8 +1453,10 @@ mod tests {
     }
 
     fn env_map(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
-        let pairs: Vec<(String, String)> =
-            pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        let pairs: Vec<(String, String)> = pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect();
         move |key: &str| pairs.iter().find(|(k, _)| k == key).map(|(_, v)| v.clone())
     }
 
@@ -1451,7 +1468,10 @@ mod tests {
 
     #[test]
     fn test_resolve_am_socket_dir_file_set() {
-        let am = AmConfig { enabled: None, socket_dir: Some(PathBuf::from("/tmp/from-file")) };
+        let am = AmConfig {
+            enabled: None,
+            socket_dir: Some(PathBuf::from("/tmp/from-file")),
+        };
         let dir = resolve_am_socket_dir(Some(&am), env_map(&[]));
         assert_eq!(dir, Some(PathBuf::from("/tmp/from-file")));
     }
@@ -1479,7 +1499,10 @@ mod tests {
 
     #[test]
     fn test_resolve_am_socket_dir_disabled_with_env_set() {
-        let am = AmConfig { enabled: Some(false), socket_dir: None };
+        let am = AmConfig {
+            enabled: Some(false),
+            socket_dir: None,
+        };
         let dir = resolve_am_socket_dir(Some(&am), env_map(&[("AM_SOCKET_DIR", "/tmp/from-env")]));
         assert_eq!(dir, None);
     }
@@ -1497,8 +1520,10 @@ mod tests {
 
         let cli = Cli::parse_from([
             "cm",
-            "--config", config_path.to_str().unwrap(),
-            "--state", "/tmp/tasks.json",
+            "--config",
+            config_path.to_str().unwrap(),
+            "--state",
+            "/tmp/tasks.json",
         ]);
 
         let result = build_manager_config(&cli);

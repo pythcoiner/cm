@@ -13,17 +13,18 @@ use log::{debug, error, info, warn};
 use thiserror::Error;
 use uuid::Uuid;
 
-
 use crate::agent::{AgentError, AgentSpawner, PromptBuilder, ResponseParser};
 use crate::build::{BuildError, BuildVerifier, GitRunner};
+use crate::generate::generate_roadmap_md;
 use crate::generate::{write_md_file, GenerateError};
-use crate::log::{tee_eprintln, tee_print, tee_println, LogError, LogManager, PhaseLogger, PhaseLogError};
+use crate::log::{
+    tee_eprintln, tee_print, tee_println, LogError, LogManager, PhaseLogError, PhaseLogger,
+};
 use crate::state::{
     load_roadmap, load_state, save_roadmap, save_state, AgentInvocation, AgentStatus, AgentType,
     PhaseStatus, RoadmapState, StateError, Task, TaskContext, TaskStatus, TaskType, TasksState,
     Verdict,
 };
-use crate::generate::generate_roadmap_md;
 
 mod recovery;
 mod state;
@@ -127,9 +128,7 @@ impl ManagerConfig {
     ///
     /// * `state_path` - Path to the tasks.json file
     pub fn new(state_path: PathBuf) -> Self {
-        let parent = state_path
-            .parent()
-            .unwrap_or(std::path::Path::new("."));
+        let parent = state_path.parent().unwrap_or(std::path::Path::new("."));
         Self {
             state_path: state_path.clone(),
             roadmap_path: parent.join("roadmap.json"),
@@ -240,13 +239,19 @@ impl Manager {
     /// Returns an error if:
     /// - The state file cannot be loaded
     /// - The state file is invalid
-    pub fn new(config: ManagerConfig, shutdown_flag: Arc<AtomicBool>) -> Result<Self, ManagerError> {
+    pub fn new(
+        config: ManagerConfig,
+        shutdown_flag: Arc<AtomicBool>,
+    ) -> Result<Self, ManagerError> {
         let state = load_state(&config.state_path)?;
         let agent_spawner = AgentSpawner::new(config.model.clone());
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
 
         // Initialize phase logger
-        let cm_dir = config.state_path.parent().unwrap_or(std::path::Path::new("."));
+        let cm_dir = config
+            .state_path
+            .parent()
+            .unwrap_or(std::path::Path::new("."));
         let phase_logger = PhaseLogger::new(cm_dir)?;
 
         // Load roadmap if available
@@ -261,7 +266,10 @@ impl Manager {
             }
         };
 
-        info!("Manager initialized with state from {:?}", config.state_path);
+        info!(
+            "Manager initialized with state from {:?}",
+            config.state_path
+        );
 
         Ok(Self {
             config,
@@ -376,7 +384,6 @@ impl Manager {
         Ok(())
     }
 
-
     /// Execute a single step (one phase) and return.
     ///
     /// In phase-based mode, this executes all pending tasks in the next
@@ -450,7 +457,13 @@ impl Manager {
             } else {
                 ""
             };
-            tee_println(&format!("  {}. {} - {}{}", i + 1, task.id, task.name, blocked));
+            tee_println(&format!(
+                "  {}. {} - {}{}",
+                i + 1,
+                task.id,
+                task.name,
+                blocked
+            ));
         }
         if pending.len() > 10 {
             tee_println(&format!("  ... and {} more", pending.len() - 10));
@@ -491,7 +504,12 @@ impl Manager {
         let stdin = io::stdin();
         let mut line = String::new();
         let read_result = stdin.lock().read_line(&mut line);
-        crate::am::send_event(crate::am::EventKind::Resolved, None, "", crate::am::EventFields::default());
+        crate::am::send_event(
+            crate::am::EventKind::Resolved,
+            None,
+            "",
+            crate::am::EventFields::default(),
+        );
         read_result.map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
 
         let input = line.trim().to_lowercase();
@@ -500,7 +518,10 @@ impl Manager {
             "a" | "all" => Ok(TaskSelection::All),
             "q" | "quit" | "" => Ok(TaskSelection::Quit),
             _ if input.starts_with("p ") || input.starts_with("phase ") => {
-                let nums_part = input.strip_prefix("p ").or_else(|| input.strip_prefix("phase ")).unwrap();
+                let nums_part = input
+                    .strip_prefix("p ")
+                    .or_else(|| input.strip_prefix("phase "))
+                    .unwrap();
                 let phase_ids: Vec<String> = nums_part
                     .split_whitespace()
                     .flat_map(|token| {
@@ -523,10 +544,14 @@ impl Manager {
                             };
                             // Validate range
                             if start > end {
-                                tee_println(&format!("Invalid range: {start}-{end} (start must be <= end)"));
+                                tee_println(&format!(
+                                    "Invalid range: {start}-{end} (start must be <= end)"
+                                ));
                                 return vec![];
                             }
-                            (start..=end).map(|n| format!("phase-{n}")).collect::<Vec<_>>()
+                            (start..=end)
+                                .map(|n| format!("phase-{n}"))
+                                .collect::<Vec<_>>()
                         } else {
                             // Single: "3" -> ["phase-3"]
                             // Validate it's a number
@@ -609,7 +634,9 @@ impl Manager {
                     continue;
                 }
                 Some(p) if p.status == PhaseStatus::Completed => {
-                    tee_println(&format!("Warning: Phase '{phase_id}' already completed, skipping."));
+                    tee_println(&format!(
+                        "Warning: Phase '{phase_id}' already completed, skipping."
+                    ));
                     continue;
                 }
                 Some(p) if p.status == PhaseStatus::Deferred => {
@@ -625,7 +652,9 @@ impl Manager {
                             self.update_state()?;
                         }
                         Ok(PhaseOutcome::Deferred) => {
-                            tee_println(&format!("Phase '{phase_id}' deferred (review cycles exhausted)."));
+                            tee_println(&format!(
+                                "Phase '{phase_id}' deferred (review cycles exhausted)."
+                            ));
                             self.update_state()?;
                         }
                         Err(e) => {
@@ -670,7 +699,12 @@ impl Manager {
         let stdin = io::stdin();
         let mut line = String::new();
         let read_ok = stdin.lock().read_line(&mut line).is_ok();
-        crate::am::send_event(crate::am::EventKind::Resolved, None, "", crate::am::EventFields::default());
+        crate::am::send_event(
+            crate::am::EventKind::Resolved,
+            None,
+            "",
+            crate::am::EventFields::default(),
+        );
         if !read_ok {
             return None;
         }
@@ -679,7 +713,11 @@ impl Manager {
         if input == "y" || input == "yes" {
             Some(5)
         } else if let Ok(n) = input.parse::<u32>() {
-            if n > 0 { Some(n) } else { None }
+            if n > 0 {
+                Some(n)
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -699,7 +737,10 @@ impl Manager {
             crate::am::EventKind::Started,
             Some(phase_id),
             &format!("Executing phase: {phase_id}"),
-            crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+            crate::am::EventFields {
+                phase: Some(phase_id.to_string()),
+                ..Default::default()
+            },
         );
         self.am_started_phase = Some(phase_id.to_string());
     }
@@ -713,7 +754,10 @@ impl Manager {
             crate::am::EventKind::Failed,
             Some(phase_id),
             &format!("Phase {phase_id} failed: {err}"),
-            crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+            crate::am::EventFields {
+                phase: Some(phase_id.to_string()),
+                ..Default::default()
+            },
         );
     }
 
@@ -752,7 +796,10 @@ impl Manager {
                         crate::am::EventKind::Completed,
                         Some(phase_id),
                         &format!("Phase {phase_id} complete"),
-                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                        crate::am::EventFields {
+                            phase: Some(phase_id.to_string()),
+                            ..Default::default()
+                        },
                     );
                     return Ok(PhaseOutcome::Completed);
                 }
@@ -761,7 +808,10 @@ impl Manager {
                         crate::am::EventKind::Deferred,
                         Some(phase_id),
                         &format!("Phase {phase_id} has deferred tasks, marking phase Deferred"),
-                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                        crate::am::EventFields {
+                            phase: Some(phase_id.to_string()),
+                            ..Default::default()
+                        },
                     );
                     return Ok(PhaseOutcome::Deferred);
                 }
@@ -769,7 +819,11 @@ impl Manager {
                 // injected a build-fix task
                 if phase.tasks.iter().any(|t| t.status == TaskStatus::Pending) {
                     Some("pending")
-                } else if phase.tasks.iter().any(|t| t.status == TaskStatus::InProgress) {
+                } else if phase
+                    .tasks
+                    .iter()
+                    .any(|t| t.status == TaskStatus::InProgress)
+                {
                     Some("in_progress")
                 } else if phase.tasks.iter().any(|t| t.status == TaskStatus::Deferred) {
                     phase.status = PhaseStatus::Deferred;
@@ -797,7 +851,10 @@ impl Manager {
                         crate::am::EventKind::Deferred,
                         Some(phase_id),
                         &format!("Phase {phase_id} has deferred tasks, marking phase Deferred"),
-                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                        crate::am::EventFields {
+                            phase: Some(phase_id.to_string()),
+                            ..Default::default()
+                        },
                     );
                     return Ok(PhaseOutcome::Deferred);
                 }
@@ -811,7 +868,10 @@ impl Manager {
                         crate::am::EventKind::Completed,
                         Some(phase_id),
                         &format!("Phase {phase_id} complete"),
-                        crate::am::EventFields { phase: Some(phase_id.to_string()), ..Default::default() },
+                        crate::am::EventFields {
+                            phase: Some(phase_id.to_string()),
+                            ..Default::default()
+                        },
                     );
                     return Ok(PhaseOutcome::Completed);
                 }
@@ -819,10 +879,15 @@ impl Manager {
         }
 
         // Mark phase as in progress only if there's actual work to do
-        self.state.mark_phase_status(phase_id, PhaseStatus::InProgress)?;
+        self.state
+            .mark_phase_status(phase_id, PhaseStatus::InProgress)?;
         self.emit_phase_started(phase_id);
 
-        emit_cm(&format!("Phase {} has {} pending tasks", phase_id, pending_tasks.len()));
+        emit_cm(&format!(
+            "Phase {} has {} pending tasks",
+            phase_id,
+            pending_tasks.len()
+        ));
 
         // Check if we should resume at REVIEW (phase IMPLEM already completed)
         let phase = self.state.get_phase_mut(phase_id)?;
@@ -832,9 +897,16 @@ impl Manager {
                 info!(
                     "Resuming phase {phase_id} at REVIEW cycle {starting_cycle} (IMPLEM already completed)"
                 );
-                emit_cm(&format!("Resuming {phase_id} at REVIEW cycle {starting_cycle}"));
+                emit_cm(&format!(
+                    "Resuming {phase_id} at REVIEW cycle {starting_cycle}"
+                ));
 
-                let verdict = self.run_phase_review_cycle(phase_id, baseline, starting_cycle, &pending_tasks)?;
+                let verdict = self.run_phase_review_cycle(
+                    phase_id,
+                    baseline,
+                    starting_cycle,
+                    &pending_tasks,
+                )?;
                 let outcome = self.apply_phase_verdict(phase_id, verdict, &pending_tasks)?;
                 return Ok(outcome);
             }
@@ -845,7 +917,8 @@ impl Manager {
 
         // Mark all tasks as in progress
         for task in &pending_tasks {
-            self.state.mark_task_status(&task.id, TaskStatus::InProgress)?;
+            self.state
+                .mark_task_status(&task.id, TaskStatus::InProgress)?;
         }
 
         // Get phase for prompt building
@@ -863,15 +936,26 @@ impl Manager {
 
         info!("Spawning PLAN agent for {phase_id}");
         emit_cm(&format!("Spawning PLAN agent for {phase_id}"));
-        emit_phase_progress(phase_id, "PHASE_PLAN", None, &format!("Spawning PLAN agent for {phase_id}"));
+        emit_phase_progress(
+            phase_id,
+            "PHASE_PLAN",
+            None,
+            &format!("Spawning PLAN agent for {phase_id}"),
+        );
 
         // Log prompt to phase logger
-        let _ = self.phase_logger.log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
+        let _ = self
+            .phase_logger
+            .log_prompt(phase_id, "PHASE_PLAN", &plan_prompt);
 
         // Log agent spawn to state records
-        self.state.log_records.push(
-            LogManager::create_agent_spawn_record(&AgentType::Plan, phase_id, &plan_prompt),
-        );
+        self.state
+            .log_records
+            .push(LogManager::create_agent_spawn_record(
+                &AgentType::Plan,
+                phase_id,
+                &plan_prompt,
+            ));
 
         let plan_agent_id = Uuid::new_v4().to_string();
         let plan_started = Utc::now();
@@ -886,18 +970,19 @@ impl Manager {
             commit_hash: None,
         });
 
-        let plan_handle = self.agent_spawner.spawn(&plan_prompt, phase_id, "PHASE_PLAN")
+        let plan_handle = self
+            .agent_spawner
+            .spawn(&plan_prompt, phase_id, "PHASE_PLAN")
             .inspect_err(|_| {
                 for task in &pending_tasks {
                     let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                 }
             })?;
-        let plan_output = plan_handle.wait()
-            .inspect_err(|_| {
-                for task in &pending_tasks {
-                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                }
-            })?;
+        let plan_output = plan_handle.wait().inspect_err(|_| {
+            for task in &pending_tasks {
+                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+            }
+        })?;
 
         // Parse plan response
         let plan_response = match ResponseParser::parse_plan_response(&plan_output.stdout) {
@@ -911,7 +996,12 @@ impl Manager {
         };
 
         // Update invocation completion
-        if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == plan_agent_id) {
+        if let Some(inv) = self
+            .state
+            .agent_history
+            .iter_mut()
+            .find(|i| i.id == plan_agent_id)
+        {
             inv.completed_at = Some(Utc::now());
             inv.exit_status = plan_output.exit_code;
         }
@@ -942,15 +1032,22 @@ impl Manager {
 
         // === Build phase-level IMPLEM prompt with the final plan ===
         let task_refs: Vec<&Task> = pending_tasks.iter().collect();
-        let prompt = PromptBuilder::build_phase_implem_prompt_with_plan(&phase, &task_refs, &final_plan);
+        let prompt =
+            PromptBuilder::build_phase_implem_prompt_with_plan(&phase, &task_refs, &final_plan);
 
         // Log full prompt to phase logger
-        let _ = self.phase_logger.log_prompt(phase_id, "PHASE_IMPLEM", &prompt);
+        let _ = self
+            .phase_logger
+            .log_prompt(phase_id, "PHASE_IMPLEM", &prompt);
 
         // Log agent spawn to state records
-        self.state.log_records.push(
-            LogManager::create_agent_spawn_record(&AgentType::Implem, phase_id, &prompt),
-        );
+        self.state
+            .log_records
+            .push(LogManager::create_agent_spawn_record(
+                &AgentType::Implem,
+                phase_id,
+                &prompt,
+            ));
 
         // Generate agent ID
         let agent_id = Uuid::new_v4().to_string();
@@ -969,41 +1066,58 @@ impl Manager {
 
         // Spawn and wait for the agent
         self.manager_state = ManagerState::WaitingForAgent;
-        emit_phase_progress(phase_id, "PHASE_IMPLEM", None, &format!("Spawning IMPLEM agent for {phase_id}"));
-        let handle = self.agent_spawner.spawn(&prompt, phase_id, "PHASE_IMPLEM")
+        emit_phase_progress(
+            phase_id,
+            "PHASE_IMPLEM",
+            None,
+            &format!("Spawning IMPLEM agent for {phase_id}"),
+        );
+        let handle = self
+            .agent_spawner
+            .spawn(&prompt, phase_id, "PHASE_IMPLEM")
             .inspect_err(|_| {
                 for task in &pending_tasks {
                     let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                 }
             })?;
-        let output = handle.wait()
-            .inspect_err(|_| {
-                for task in &pending_tasks {
-                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                }
-            })?;
+        let output = handle.wait().inspect_err(|_| {
+            for task in &pending_tasks {
+                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+            }
+        })?;
 
         // Parse the response
         let response = match ResponseParser::parse(&output.stdout) {
             Ok(resp) => resp,
             Err(AgentError::ParseError(msg)) => {
                 let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
-                tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} parse failed: {msg}"));
+                tee_eprintln(&format!(
+                    "[{now} PHASE_IMPLEM] {phase_id} parse failed: {msg}"
+                ));
 
                 // Log stderr if available (may contain error info)
                 if !output.stderr.trim().is_empty() {
-                    tee_eprintln(&format!("[{} PHASE_IMPLEM] {} stderr: {}", now, phase_id, output.stderr.trim()));
+                    tee_eprintln(&format!(
+                        "[{} PHASE_IMPLEM] {} stderr: {}",
+                        now,
+                        phase_id,
+                        output.stderr.trim()
+                    ));
                 }
 
                 // Log non-zero exit code
                 if let Some(code) = output.exit_code {
                     if code != 0 {
-                        tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} exit code: {code}"));
+                        tee_eprintln(&format!(
+                            "[{now} PHASE_IMPLEM] {phase_id} exit code: {code}"
+                        ));
                     }
                 }
 
                 if let Some(session_id) = &output.session_id {
-                    tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} retrying with --continue..."));
+                    tee_eprintln(&format!(
+                        "[{now} PHASE_IMPLEM] {phase_id} retrying with --continue..."
+                    ));
                     let retry_handle = self.agent_spawner.spawn_with_continue(
                         session_id,
                         "Your previous response could not be parsed. Please provide a summary of your changes.",
@@ -1014,16 +1128,17 @@ impl Manager {
                             let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                         }
                     })?;
-                    let retry_output = retry_handle.wait()
-                        .inspect_err(|_| {
-                            for task in &pending_tasks {
-                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                            }
-                        })?;
+                    let retry_output = retry_handle.wait().inspect_err(|_| {
+                        for task in &pending_tasks {
+                            let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                        }
+                    })?;
                     match ResponseParser::parse(&retry_output.stdout) {
                         Ok(resp) => resp,
                         Err(e) => {
-                            tee_eprintln(&format!("[{now} PHASE_IMPLEM] {phase_id} retry also failed: {e}"));
+                            tee_eprintln(&format!(
+                                "[{now} PHASE_IMPLEM] {phase_id} retry also failed: {e}"
+                            ));
                             // Restore task state before returning error
                             for task in &pending_tasks {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
@@ -1049,26 +1164,41 @@ impl Manager {
         };
 
         // Log full response to phase logger (with parsed result)
-        let _ = self.phase_logger.log_response(phase_id, "PHASE_IMPLEM", &output.stdout, output.duration.as_secs(), output.exit_code, Some(&response));
-
+        let _ = self.phase_logger.log_response(
+            phase_id,
+            "PHASE_IMPLEM",
+            &output.stdout,
+            output.duration.as_secs(),
+            output.exit_code,
+            Some(&response),
+        );
 
         // Update invocation completion
-        if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == agent_id) {
+        if let Some(inv) = self
+            .state
+            .agent_history
+            .iter_mut()
+            .find(|i| i.id == agent_id)
+        {
             inv.completed_at = Some(Utc::now());
             inv.exit_status = output.exit_code;
         }
 
         // Check if agent reported failure
         if response.status == AgentStatus::Failed {
-            warn!("Agent reported failure for phase {}: {}", phase_id, response.message);
+            warn!(
+                "Agent reported failure for phase {}: {}",
+                phase_id, response.message
+            );
             // Mark tasks back to pending
             for task in &pending_tasks {
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
             }
             self.manager_state = ManagerState::Executing;
-            return Err(ManagerError::TaskNotRunnable(
-                format!("IMPLEM agent reported failure for phase {phase_id}: {}", response.message),
-            ));
+            return Err(ManagerError::TaskNotRunnable(format!(
+                "IMPLEM agent reported failure for phase {phase_id}: {}",
+                response.message
+            )));
         }
 
         // Check whether the agent produced any file changes. An empty diff is
@@ -1099,8 +1229,15 @@ impl Manager {
         // Run build verification (if configured)
         self.manager_state = ManagerState::Verifying;
         if !self.config.build_commands.is_empty() {
-            emit_phase_progress(phase_id, "BUILD", None, &format!("Verifying build for {phase_id}"));
-            let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
+            emit_phase_progress(
+                phase_id,
+                "BUILD",
+                None,
+                &format!("Verifying build for {phase_id}"),
+            );
+            let build_result = self
+                .build_verifier
+                .verify_commands(&self.config.build_commands);
 
             if let Err(e) = build_result {
                 let last_err_msg = match &e {
@@ -1115,10 +1252,14 @@ impl Manager {
                     return Err(err);
                 }
             }
-            emit_cm(&format!("Build PASSED for phase {phase_id}, starting review"));
+            emit_cm(&format!(
+                "Build PASSED for phase {phase_id}, starting review"
+            ));
         } else {
             info!("No build commands configured, skipping build verification");
-            emit_cm(&format!("Skipping build verification for phase {phase_id} (no commands configured)"));
+            emit_cm(&format!(
+                "Skipping build verification for phase {phase_id} (no commands configured)"
+            ));
         }
 
         // Save phase IMPLEM completion state for potential resume
@@ -1126,7 +1267,8 @@ impl Manager {
 
         // Run phase-level review cycle
         let outcome = if !baseline_commit.is_empty() {
-            let verdict = self.run_phase_review_cycle(phase_id, &baseline_commit, 0, &pending_tasks)?;
+            let verdict =
+                self.run_phase_review_cycle(phase_id, &baseline_commit, 0, &pending_tasks)?;
             self.apply_phase_verdict(phase_id, verdict, &pending_tasks)?
         } else {
             // No baseline commit — skip review, mark complete
@@ -1152,13 +1294,15 @@ impl Manager {
         match verdict {
             Verdict::Approved => {
                 for task in pending_tasks {
-                    self.state.mark_task_status(&task.id, TaskStatus::Completed)?;
+                    self.state
+                        .mark_task_status(&task.id, TaskStatus::Completed)?;
                     self.sync_roadmap_item(&task.id);
                     self.state
                         .log_records
                         .push(LogManager::create_task_complete_record(&task.id));
                 }
-                self.state.mark_phase_status(phase_id, PhaseStatus::Completed)?;
+                self.state
+                    .mark_phase_status(phase_id, PhaseStatus::Completed)?;
                 self.clear_phase_implem_completion(phase_id);
                 crate::am::send_event(
                     crate::am::EventKind::Completed,
@@ -1178,12 +1322,14 @@ impl Manager {
                     self.config.max_cycles
                 );
                 for task in pending_tasks {
-                    self.state.mark_task_status(&task.id, TaskStatus::Deferred)?;
+                    self.state
+                        .mark_task_status(&task.id, TaskStatus::Deferred)?;
                     self.state
                         .log_records
                         .push(LogManager::create_task_deferred_record(&task.id, &reason));
                 }
-                self.state.mark_phase_status(phase_id, PhaseStatus::Deferred)?;
+                self.state
+                    .mark_phase_status(phase_id, PhaseStatus::Deferred)?;
                 self.clear_phase_implem_completion(phase_id);
                 crate::am::send_event(
                     crate::am::EventKind::Deferred,
@@ -1219,14 +1365,21 @@ impl Manager {
             if cycle >= max_cycles {
                 if let Some(additional) = self.prompt_retry_cycles(phase_id, cycle) {
                     max_cycles += additional;
-                    emit_cm(&format!("Retrying {additional} more cycles for phase {phase_id}"));
+                    emit_cm(&format!(
+                        "Retrying {additional} more cycles for phase {phase_id}"
+                    ));
                 } else {
                     warn!("Phase review cycle exhausted for {phase_id} after {cycle} cycles");
                     return Ok(Verdict::NeedsFixes);
                 }
             }
 
-            emit_cm(&format!("Phase review cycle {}/{} for {}", cycle + 1, max_cycles, phase_id));
+            emit_cm(&format!(
+                "Phase review cycle {}/{} for {}",
+                cycle + 1,
+                max_cycles,
+                phase_id
+            ));
 
             // Get diff from baseline to current HEAD
             let diff = self.get_diff_between(baseline_commit, "HEAD")?;
@@ -1249,11 +1402,17 @@ impl Manager {
             let review_prompt = PromptBuilder::build_phase_review_prompt(&phase, &diff);
 
             // Log full prompt to phase logger
-            let _ = self.phase_logger.log_prompt(phase_id, "PHASE_REVIEW", &review_prompt);
+            let _ = self
+                .phase_logger
+                .log_prompt(phase_id, "PHASE_REVIEW", &review_prompt);
 
-            self.state.log_records.push(
-                LogManager::create_agent_spawn_record(&AgentType::Review, phase_id, &review_prompt),
-            );
+            self.state
+                .log_records
+                .push(LogManager::create_agent_spawn_record(
+                    &AgentType::Review,
+                    phase_id,
+                    &review_prompt,
+                ));
 
             let review_agent_id = Uuid::new_v4().to_string();
             let review_started = Utc::now();
@@ -1272,43 +1431,52 @@ impl Manager {
                 phase_id,
                 "PHASE_REVIEW",
                 Some(cycle + 1),
-                &format!("Phase review cycle {}/{} for {}", cycle + 1, max_cycles, phase_id),
+                &format!(
+                    "Phase review cycle {}/{} for {}",
+                    cycle + 1,
+                    max_cycles,
+                    phase_id
+                ),
             );
-            let review_handle = self.agent_spawner.spawn(&review_prompt, phase_id, "PHASE_REVIEW")
+            let review_handle = self
+                .agent_spawner
+                .spawn(&review_prompt, phase_id, "PHASE_REVIEW")
                 .inspect_err(|_| {
                     for task in pending_tasks {
                         let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                     }
                 })?;
-            let review_output = review_handle.wait()
-                .inspect_err(|_| {
-                    for task in pending_tasks {
-                        let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                    }
-                })?;
+            let review_output = review_handle.wait().inspect_err(|_| {
+                for task in pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
 
             // Parse review response with proper JSON extraction
-            let review_response = match ResponseParser::parse_review_response(&review_output.stdout) {
+            let review_response = match ResponseParser::parse_review_response(&review_output.stdout)
+            {
                 Ok(resp) => resp,
                 Err(AgentError::ParseError(_)) => {
                     if let Some(session_id) = &review_output.session_id {
-                        let retry_handle = self.agent_spawner.spawn_with_continue(
-                            session_id,
-                            "Please provide your review verdict.",
-                            phase_id,
-                            "PHASE_REVIEW",
-                        )
-                        .inspect_err(|_| {
+                        let retry_handle = self
+                            .agent_spawner
+                            .spawn_with_continue(
+                                session_id,
+                                "Please provide your review verdict.",
+                                phase_id,
+                                "PHASE_REVIEW",
+                            )
+                            .inspect_err(|_| {
+                                for task in pending_tasks {
+                                    let _ =
+                                        self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                                }
+                            })?;
+                        let retry_output = retry_handle.wait().inspect_err(|_| {
                             for task in pending_tasks {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                             }
                         })?;
-                        let retry_output = retry_handle.wait()
-                            .inspect_err(|_| {
-                                for task in pending_tasks {
-                                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                                }
-                            })?;
                         match ResponseParser::parse_review_response(&retry_output.stdout) {
                             Ok(resp) => resp,
                             Err(_) => {
@@ -1333,10 +1501,22 @@ impl Manager {
                 commands_run: vec![],
                 message: review_response.summary.clone(),
             };
-            let _ = self.phase_logger.log_response(phase_id, "PHASE_REVIEW", &review_output.stdout, review_output.duration.as_secs(), review_output.exit_code, Some(&agent_response_for_log));
+            let _ = self.phase_logger.log_response(
+                phase_id,
+                "PHASE_REVIEW",
+                &review_output.stdout,
+                review_output.duration.as_secs(),
+                review_output.exit_code,
+                Some(&agent_response_for_log),
+            );
 
             // Update invocation
-            if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == review_agent_id) {
+            if let Some(inv) = self
+                .state
+                .agent_history
+                .iter_mut()
+                .find(|i| i.id == review_agent_id)
+            {
                 inv.completed_at = Some(Utc::now());
                 inv.exit_status = review_output.exit_code;
             }
@@ -1370,14 +1550,24 @@ impl Manager {
                     return Ok(Verdict::Approved);
                 }
                 Verdict::NeedsFixes => {
-                    warn!("Phase review found issues for {} (cycle {})", phase_id, cycle + 1);
-                    emit_cm(&format!("Phase review NEEDS_FIXES for {} (cycle {})", phase_id, cycle + 1));
+                    warn!(
+                        "Phase review found issues for {} (cycle {})",
+                        phase_id,
+                        cycle + 1
+                    );
+                    emit_cm(&format!(
+                        "Phase review NEEDS_FIXES for {} (cycle {})",
+                        phase_id,
+                        cycle + 1
+                    ));
 
                     if cycle + 1 >= max_cycles {
                         cycle += 1;
                         self.update_phase_review_cycles(phase_id, cycle);
                         warn!("Phase {phase_id} reached max cycles ({max_cycles}), deferring");
-                        emit_cm(&format!("Phase {phase_id} deferred after {max_cycles} cycles"));
+                        emit_cm(&format!(
+                            "Phase {phase_id} deferred after {max_cycles} cycles"
+                        ));
                         return Ok(Verdict::NeedsFixes);
                     }
 
@@ -1392,13 +1582,20 @@ impl Manager {
 
                     // Spawn FIX agent with formatted review feedback
                     let review_feedback = format_review_feedback(&review_response);
-                    let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &review_feedback);
+                    let fix_prompt =
+                        PromptBuilder::build_phase_fix_prompt(&phase, &review_feedback);
 
-                    let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
+                    let _ = self
+                        .phase_logger
+                        .log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
 
-                    self.state.log_records.push(
-                        LogManager::create_agent_spawn_record(&AgentType::Fix, phase_id, &fix_prompt),
-                    );
+                    self.state
+                        .log_records
+                        .push(LogManager::create_agent_spawn_record(
+                            &AgentType::Fix,
+                            phase_id,
+                            &fix_prompt,
+                        ));
 
                     let fix_agent_id = Uuid::new_v4().to_string();
                     let fix_started = Utc::now();
@@ -1419,28 +1616,40 @@ impl Manager {
                         Some(cycle + 1),
                         &format!("Spawning FIX agent for {phase_id} (cycle {})", cycle + 1),
                     );
-                    let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
+                    let fix_handle = self
+                        .agent_spawner
+                        .spawn(&fix_prompt, phase_id, "PHASE_FIX")
                         .inspect_err(|_| {
                             for task in pending_tasks {
                                 let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                             }
                         })?;
-                    let fix_output = fix_handle.wait()
-                        .inspect_err(|_| {
-                            for task in pending_tasks {
-                                let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                            }
-                        })?;
+                    let fix_output = fix_handle.wait().inspect_err(|_| {
+                        for task in pending_tasks {
+                            let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                        }
+                    })?;
 
                     // Parse and log with parsed response if available
                     let fix_response = ResponseParser::parse(&fix_output.stdout).ok();
-                    let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code, fix_response.as_ref());
+                    let _ = self.phase_logger.log_response(
+                        phase_id,
+                        "PHASE_FIX",
+                        &fix_output.stdout,
+                        fix_output.duration.as_secs(),
+                        fix_output.exit_code,
+                        fix_response.as_ref(),
+                    );
 
-                    if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
+                    if let Some(inv) = self
+                        .state
+                        .agent_history
+                        .iter_mut()
+                        .find(|i| i.id == fix_agent_id)
+                    {
                         inv.completed_at = Some(Utc::now());
                         inv.exit_status = fix_output.exit_code;
                     }
-
 
                     if !self.check_git_changes()? {
                         warn!("PHASE_FIX made no changes for {phase_id}");
@@ -1467,14 +1676,19 @@ impl Manager {
                             Some(cycle + 1),
                             &format!("Verifying build for {phase_id} (cycle {})", cycle + 1),
                         );
-                        if let Err(e) = self.build_verifier.verify_commands(&self.config.build_commands) {
+                        if let Err(e) = self
+                            .build_verifier
+                            .verify_commands(&self.config.build_commands)
+                        {
                             let last_err_msg = match &e {
                                 BuildError::CommandFailed { stderr, .. } => stderr.clone(),
                                 _ => e.to_string(),
                             };
                             warn!("Build failed after PHASE_FIX for {phase_id}: {last_err_msg}");
                             emit_cm(&format!("Build FAILED after PHASE_FIX for {phase_id}"));
-                            if let Err(err) = self.run_build_fix_loop(phase_id, last_err_msg, pending_tasks) {
+                            if let Err(err) =
+                                self.run_build_fix_loop(phase_id, last_err_msg, pending_tasks)
+                            {
                                 self.manager_state = ManagerState::WaitingForAgent;
                                 return Err(err);
                             }
@@ -1514,7 +1728,9 @@ impl Manager {
         for cycle in 0..max_cycles {
             emit_cm(&format!(
                 "Build-fix cycle {}/{} for {}",
-                cycle + 1, max_cycles, phase_id
+                cycle + 1,
+                max_cycles,
+                phase_id
             ));
 
             let build_feedback = format!(
@@ -1530,11 +1746,17 @@ impl Manager {
                 .ok_or_else(|| StateError::PhaseNotFound(phase_id.to_string()))?;
 
             let fix_prompt = PromptBuilder::build_phase_fix_prompt(&phase, &build_feedback);
-            let _ = self.phase_logger.log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
+            let _ = self
+                .phase_logger
+                .log_prompt(phase_id, "PHASE_FIX", &fix_prompt);
 
-            self.state.log_records.push(
-                LogManager::create_agent_spawn_record(&AgentType::Fix, phase_id, &fix_prompt),
-            );
+            self.state
+                .log_records
+                .push(LogManager::create_agent_spawn_record(
+                    &AgentType::Fix,
+                    phase_id,
+                    &fix_prompt,
+                ));
 
             let fix_agent_id = Uuid::new_v4().to_string();
             self.state.agent_history.push(AgentInvocation {
@@ -1554,23 +1776,36 @@ impl Manager {
                 Some(cycle + 1),
                 &format!("Spawning FIX agent for build error in {phase_id}"),
             );
-            let fix_handle = self.agent_spawner.spawn(&fix_prompt, phase_id, "PHASE_FIX")
+            let fix_handle = self
+                .agent_spawner
+                .spawn(&fix_prompt, phase_id, "PHASE_FIX")
                 .inspect_err(|_| {
                     for task in pending_tasks {
                         let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
                     }
                 })?;
-            let fix_output = fix_handle.wait()
-                .inspect_err(|_| {
-                    for task in pending_tasks {
-                        let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
-                    }
-                })?;
+            let fix_output = fix_handle.wait().inspect_err(|_| {
+                for task in pending_tasks {
+                    let _ = self.state.mark_task_status(&task.id, TaskStatus::Pending);
+                }
+            })?;
 
             let fix_response = ResponseParser::parse(&fix_output.stdout).ok();
-            let _ = self.phase_logger.log_response(phase_id, "PHASE_FIX", &fix_output.stdout, fix_output.duration.as_secs(), fix_output.exit_code, fix_response.as_ref());
+            let _ = self.phase_logger.log_response(
+                phase_id,
+                "PHASE_FIX",
+                &fix_output.stdout,
+                fix_output.duration.as_secs(),
+                fix_output.exit_code,
+                fix_response.as_ref(),
+            );
 
-            if let Some(inv) = self.state.agent_history.iter_mut().find(|i| i.id == fix_agent_id) {
+            if let Some(inv) = self
+                .state
+                .agent_history
+                .iter_mut()
+                .find(|i| i.id == fix_agent_id)
+            {
                 inv.completed_at = Some(Utc::now());
                 inv.exit_status = fix_output.exit_code;
             }
@@ -1589,9 +1824,16 @@ impl Manager {
                 Some(cycle + 1),
                 &format!("Verifying build for {phase_id} (cycle {})", cycle + 1),
             );
-            match self.build_verifier.verify_commands(&self.config.build_commands) {
+            match self
+                .build_verifier
+                .verify_commands(&self.config.build_commands)
+            {
                 Ok(()) => {
-                    emit_cm(&format!("Build PASSED after fix cycle {} for {}", cycle + 1, phase_id));
+                    emit_cm(&format!(
+                        "Build PASSED after fix cycle {} for {}",
+                        cycle + 1,
+                        phase_id
+                    ));
                     build_fixed = true;
                     break;
                 }
@@ -1600,8 +1842,17 @@ impl Manager {
                         BuildError::CommandFailed { stderr, .. } => stderr.clone(),
                         _ => e2.to_string(),
                     };
-                    warn!("Build still failing after fix cycle {} for {}: {}", cycle + 1, phase_id, last_err_msg);
-                    emit_cm(&format!("Build still FAILED after fix cycle {} for {}", cycle + 1, phase_id));
+                    warn!(
+                        "Build still failing after fix cycle {} for {}: {}",
+                        cycle + 1,
+                        phase_id,
+                        last_err_msg
+                    );
+                    emit_cm(&format!(
+                        "Build still FAILED after fix cycle {} for {}",
+                        cycle + 1,
+                        phase_id
+                    ));
                 }
             }
 
@@ -1610,7 +1861,9 @@ impl Manager {
 
         if !build_fixed {
             warn!("Build-fix cycles exhausted for {phase_id} after {max_cycles} attempts");
-            emit_cm(&format!("Build-fix EXHAUSTED for {phase_id} after {max_cycles} cycles"));
+            emit_cm(&format!(
+                "Build-fix EXHAUSTED for {phase_id} after {max_cycles} cycles"
+            ));
             for task in pending_tasks {
                 self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
             }
@@ -1659,7 +1912,10 @@ impl Manager {
                 if let Err(e) = write_md_file(&content, &self.config.roadmap_md_path) {
                     warn!("Failed to regenerate ROADMAP.md: {e}");
                 } else {
-                    debug!("ROADMAP.md regenerated at {:?}", self.config.roadmap_md_path);
+                    debug!(
+                        "ROADMAP.md regenerated at {:?}",
+                        self.config.roadmap_md_path
+                    );
                 }
             }
         }
@@ -1696,12 +1952,18 @@ impl Manager {
             for item in &mut phase.items {
                 if item.id == item_id {
                     item.completed = true;
-                    info!("Roadmap item '{}' marked completed (task {})", item.name, task_id);
+                    info!(
+                        "Roadmap item '{}' marked completed (task {})",
+                        item.name, task_id
+                    );
                     // Cascade: mark all sub-items as completed too
                     for sub_item in &mut item.sub_items {
                         if !sub_item.completed {
                             sub_item.completed = true;
-                            info!("Roadmap sub-item '{}' marked completed (cascaded from item {})", sub_item.name, item_id);
+                            info!(
+                                "Roadmap sub-item '{}' marked completed (cascaded from item {})",
+                                sub_item.name, item_id
+                            );
                         }
                     }
                     return;
@@ -1710,7 +1972,10 @@ impl Manager {
                 for sub_item in &mut item.sub_items {
                     if sub_item.name == item_id {
                         sub_item.completed = true;
-                        info!("Roadmap sub-item '{}' marked completed (task {})", sub_item.name, task_id);
+                        info!(
+                            "Roadmap sub-item '{}' marked completed (task {})",
+                            sub_item.name, task_id
+                        );
                         return;
                     }
                 }
@@ -1776,7 +2041,8 @@ impl Manager {
             .unwrap_or(false);
         if has_deferred {
             info!("Phase {phase_id} has deferred tasks, marking phase Deferred");
-            self.state.mark_phase_status(phase_id, PhaseStatus::Deferred)?;
+            self.state
+                .mark_phase_status(phase_id, PhaseStatus::Deferred)?;
             return Ok(true);
         }
 
@@ -1786,7 +2052,9 @@ impl Manager {
         // If no build commands configured, skip verification and mark complete
         if self.config.build_commands.is_empty() {
             info!("No build commands configured, skipping build verification");
-            emit_cm(&format!("Phase {phase_id} complete (build verification skipped)"));
+            emit_cm(&format!(
+                "Phase {phase_id} complete (build verification skipped)"
+            ));
 
             // Mark phase as completed
             self.state
@@ -1800,8 +2068,15 @@ impl Manager {
         }
 
         emit_cm(&format!("Phase {phase_id} complete, verifying build..."));
-        emit_phase_progress(phase_id, "BUILD", None, &format!("Verifying build for {phase_id}"));
-        let build_result = self.build_verifier.verify_commands(&self.config.build_commands);
+        emit_phase_progress(
+            phase_id,
+            "BUILD",
+            None,
+            &format!("Verifying build for {phase_id}"),
+        );
+        let build_result = self
+            .build_verifier
+            .verify_commands(&self.config.build_commands);
 
         match build_result {
             Ok(()) => {
@@ -1947,7 +2222,8 @@ impl Manager {
         match git.is_clean() {
             Ok(true) => Ok(()),
             Ok(false) => {
-                let msg = "Working tree has uncommitted changes. Commit or stash them before running cm.";
+                let msg =
+                    "Working tree has uncommitted changes. Commit or stash them before running cm.";
                 Err(ManagerError::TaskNotRunnable(msg.to_string()))
             }
             Err(e) => {
@@ -1985,7 +2261,11 @@ impl Manager {
         let commit_id = git.commit(&message)?;
         let hash = commit_id.0.clone();
 
-        emit_cm(&format!("Committed {} changes: {}", agent_label, &hash[..8.min(hash.len())]));
+        emit_cm(&format!(
+            "Committed {} changes: {}",
+            agent_label,
+            &hash[..8.min(hash.len())]
+        ));
 
         // Record commit hash in agent history
         if let Some(inv) = self
@@ -2023,25 +2303,27 @@ impl Manager {
         // Gather phase logs
         let logs = crate::review::gather_phase_logs(&cm_dir, &self.touched_phase_ids)
             .unwrap_or_else(|_| vec![]);
-        let cm_log_window =
-            crate::review::gather_cm_log_since(&cm_dir, self.run_started_at);
-        let formatted =
-            crate::review::format_logs_for_prompt_with_cm_log(&logs, &cm_log_window);
+        let cm_log_window = crate::review::gather_cm_log_since(&cm_dir, self.run_started_at);
+        let formatted = crate::review::format_logs_for_prompt_with_cm_log(&logs, &cm_log_window);
 
         // Build prompt
-        let prompt = crate::agent::PromptBuilder::build_run_review_prompt(
-            &self.run_started_at,
-            &formatted,
-        );
+        let prompt =
+            crate::agent::PromptBuilder::build_run_review_prompt(&self.run_started_at, &formatted);
 
         // Spawn agent
         crate::am::send_event(
             crate::am::EventKind::Progress,
             Some("run-review RUN_REVIEW"),
             "Spawning run review agent",
-            crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+            crate::am::EventFields {
+                step: Some("RUN_REVIEW".to_string()),
+                ..Default::default()
+            },
         );
-        let handle = match self.agent_spawner.spawn(&prompt, "run-review", "RUN_REVIEW") {
+        let handle = match self
+            .agent_spawner
+            .spawn(&prompt, "run-review", "RUN_REVIEW")
+        {
             Ok(h) => h,
             Err(e) => {
                 let msg = format!("run_post_run_review: failed to spawn agent: {e}");
@@ -2050,7 +2332,10 @@ impl Manager {
                     crate::am::EventKind::Failed,
                     Some("run-review RUN_REVIEW"),
                     &msg,
-                    crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                    crate::am::EventFields {
+                        step: Some("RUN_REVIEW".to_string()),
+                        ..Default::default()
+                    },
                 );
                 return false;
             }
@@ -2065,7 +2350,10 @@ impl Manager {
                     crate::am::EventKind::Failed,
                     Some("run-review RUN_REVIEW"),
                     &msg,
-                    crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                    crate::am::EventFields {
+                        step: Some("RUN_REVIEW".to_string()),
+                        ..Default::default()
+                    },
                 );
                 return false;
             }
@@ -2102,14 +2390,20 @@ impl Manager {
                 crate::am::EventKind::Failed,
                 Some("run-review RUN_REVIEW"),
                 "Run review: issues found",
-                crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                crate::am::EventFields {
+                    step: Some("RUN_REVIEW".to_string()),
+                    ..Default::default()
+                },
             );
         } else {
             crate::am::send_event(
                 crate::am::EventKind::Completed,
                 Some("run-review RUN_REVIEW"),
                 "Run review: no issues found",
-                crate::am::EventFields { step: Some("RUN_REVIEW".to_string()), ..Default::default() },
+                crate::am::EventFields {
+                    step: Some("RUN_REVIEW".to_string()),
+                    ..Default::default()
+                },
             );
         }
 
@@ -2121,8 +2415,7 @@ impl Manager {
         let trimmed = raw.trim();
         if trimmed.starts_with('[') {
             // Streaming format — find "result" event
-            let events: Vec<serde_json::Value> =
-                serde_json::from_str(trimmed).ok()?;
+            let events: Vec<serde_json::Value> = serde_json::from_str(trimmed).ok()?;
             for event in &events {
                 if event.get("type").and_then(|v| v.as_str()) == Some("result") {
                     if let Some(r) = event.get("result").and_then(|v| v.as_str()) {
@@ -2134,7 +2427,9 @@ impl Manager {
         } else {
             // Legacy format
             #[derive(serde::Deserialize)]
-            struct LegacyOutput { result: String }
+            struct LegacyOutput {
+                result: String,
+            }
             serde_json::from_str::<LegacyOutput>(trimmed)
                 .ok()
                 .map(|o| o.result)
@@ -2154,7 +2449,6 @@ impl Manager {
         let diff = git.diff_range(from, to)?;
         Ok(diff)
     }
-
 }
 
 /// Format review feedback from a parsed ReviewAgentResponse into a string for the fix agent.
@@ -2290,7 +2584,9 @@ mod tests {
                     if start > end {
                         return vec![];
                     }
-                    (start..=end).map(|n| format!("phase-{}", n)).collect::<Vec<_>>()
+                    (start..=end)
+                        .map(|n| format!("phase-{n}"))
+                        .collect::<Vec<_>>()
                 } else if token.parse::<u32>().is_ok() {
                     vec![format!("phase-{}", token)]
                 } else {
@@ -2318,7 +2614,10 @@ mod tests {
     fn test_phase_range_parsing_mixed_input() {
         // Test mixed input "1 3-5 8" returns ["phase-1", "phase-3", "phase-4", "phase-5", "phase-8"]
         let result = parse_phase_input("1 3-5 8");
-        assert_eq!(result, vec!["phase-1", "phase-3", "phase-4", "phase-5", "phase-8"]);
+        assert_eq!(
+            result,
+            vec!["phase-1", "phase-3", "phase-4", "phase-5", "phase-8"]
+        );
     }
 
     #[test]

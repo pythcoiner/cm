@@ -472,7 +472,9 @@ fn test_dependency_chain_unblocks() {
     assert_eq!(next.unwrap().id, "task-a");
 
     // Complete Task A
-    state.mark_task_status("task-a", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-a", TaskStatus::Completed)
+        .unwrap();
 
     // Now Task B should be unblocked and runnable
     assert!(!state.is_task_blocked("task-b"));
@@ -483,7 +485,9 @@ fn test_dependency_chain_unblocks() {
     assert!(state.is_task_blocked("task-c"));
 
     // Complete Task B
-    state.mark_task_status("task-b", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-b", TaskStatus::Completed)
+        .unwrap();
 
     // Now Task C should be unblocked
     assert!(!state.is_task_blocked("task-c"));
@@ -513,9 +517,15 @@ fn test_no_runnable_tasks_when_all_completed() {
     let mut state = create_state_with_dependencies();
 
     // Complete all tasks
-    state.mark_task_status("task-a", TaskStatus::Completed).unwrap();
-    state.mark_task_status("task-b", TaskStatus::Completed).unwrap();
-    state.mark_task_status("task-c", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-a", TaskStatus::Completed)
+        .unwrap();
+    state
+        .mark_task_status("task-b", TaskStatus::Completed)
+        .unwrap();
+    state
+        .mark_task_status("task-c", TaskStatus::Completed)
+        .unwrap();
 
     // No tasks are runnable because all are completed
     let next = state.next_runnable_task();
@@ -555,7 +565,7 @@ fn test_task_with_max_failed_attempts_scenario() {
     for i in 1..=5 {
         state.phases[0].tasks[0].attempts.push(TaskAttempt {
             attempt_number: i,
-            agent_id: format!("agent-{}", i),
+            agent_id: format!("agent-{i}"),
             started_at: Utc::now(),
             completed_at: Some(Utc::now()),
             status: AttemptStatus::Failed,
@@ -808,15 +818,21 @@ fn test_full_workflow_simulation() {
     let _cp1 = recovery.checkpoint(&state).expect("Checkpoint failed");
 
     // Step 2: Start executing Task A
-    state.mark_task_status("task-a", TaskStatus::InProgress).unwrap();
+    state
+        .mark_task_status("task-a", TaskStatus::InProgress)
+        .unwrap();
     state.current_task = Some("task-a".to_string());
 
     // Simulate "crash" - verify recovery would suggest retry
-    let action = recovery.recover_from_crash(&state).expect("Recovery failed");
+    let action = recovery
+        .recover_from_crash(&state)
+        .expect("Recovery failed");
     assert_eq!(action, RecoveryAction::Retry);
 
     // Step 3: Complete Task A
-    state.mark_task_status("task-a", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-a", TaskStatus::Completed)
+        .unwrap();
     state.phases[0].tasks[0].attempts.push(TaskAttempt {
         attempt_number: 1,
         agent_id: "agent-1".to_string(),
@@ -834,8 +850,12 @@ fn test_full_workflow_simulation() {
     assert_eq!(next.unwrap().id, "task-b");
 
     // Step 5: Complete Task B
-    state.mark_task_status("task-b", TaskStatus::InProgress).unwrap();
-    state.mark_task_status("task-b", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-b", TaskStatus::InProgress)
+        .unwrap();
+    state
+        .mark_task_status("task-b", TaskStatus::Completed)
+        .unwrap();
 
     // Step 6: Verify Task C is now unblocked
     assert!(!state.is_task_blocked("task-c"));
@@ -843,7 +863,9 @@ fn test_full_workflow_simulation() {
     assert_eq!(next.unwrap().id, "task-c");
 
     // Step 7: Complete Task C
-    state.mark_task_status("task-c", TaskStatus::Completed).unwrap();
+    state
+        .mark_task_status("task-c", TaskStatus::Completed)
+        .unwrap();
 
     // Step 8: No more runnable tasks
     assert!(state.next_runnable_task().is_none());

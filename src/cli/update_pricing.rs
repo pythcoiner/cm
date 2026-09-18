@@ -109,7 +109,9 @@ fn fetch_litellm() -> Result<Value, UpdatePricingError> {
 
 fn extract_anthropic_rates(root: &Value) -> BTreeMap<String, Rates> {
     let mut out = BTreeMap::new();
-    let Some(map) = root.as_object() else { return out };
+    let Some(map) = root.as_object() else {
+        return out;
+    };
 
     for (key, val) in map {
         if key == "sample_spec" || !key.starts_with("claude-") {
@@ -118,7 +120,9 @@ fn extract_anthropic_rates(root: &Value) -> BTreeMap<String, Rates> {
         if val.get("litellm_provider").and_then(Value::as_str) != Some("anthropic") {
             continue;
         }
-        let Some(rates) = read_rates(val) else { continue };
+        let Some(rates) = read_rates(val) else {
+            continue;
+        };
         out.insert(key.clone(), rates);
     }
     out
@@ -223,10 +227,7 @@ fn rates_to_table(r: &Rates) -> Table {
     t
 }
 
-fn print_summary(
-    rates: &BTreeMap<String, Rates>,
-    families: &BTreeMap<&'static str, Rates>,
-) {
+fn print_summary(rates: &BTreeMap<String, Rates>, families: &BTreeMap<&'static str, Rates>) {
     println!();
     println!("Family fallbacks:");
     for (fam, r) in families {

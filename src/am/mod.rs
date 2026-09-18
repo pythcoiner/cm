@@ -72,7 +72,10 @@ pub struct EventFields {
 impl EventFields {
     /// True when no field is set, meaning the frame should omit `fields` entirely.
     fn is_empty(&self) -> bool {
-        self.phase.is_none() && self.step.is_none() && self.cycle.is_none() && self.verdict.is_none()
+        self.phase.is_none()
+            && self.step.is_none()
+            && self.cycle.is_none()
+            && self.verdict.is_none()
     }
 }
 
@@ -209,7 +212,11 @@ impl Producer {
             task: task.map(String::from),
             pct: None,
             level: None,
-            fields: if fields.is_empty() { None } else { Some(fields) },
+            fields: if fields.is_empty() {
+                None
+            } else {
+                Some(fields)
+            },
         };
         broadcast(&mut guard, &frame);
     }
@@ -258,11 +265,21 @@ impl Producer {
         for text in lines {
             let seq = guard.next_seq;
             guard.next_seq += 1;
-            guard.backlog.push_back(BacklogLine { seq, stream, text: text.clone() });
+            guard.backlog.push_back(BacklogLine {
+                seq,
+                stream,
+                text: text.clone(),
+            });
             if guard.backlog.len() > OUTPUT_BACKLOG_LINES {
                 guard.backlog.pop_front();
             }
-            let frame = Frame::Output { source: SOURCE, pid: std::process::id(), seq, stream, text };
+            let frame = Frame::Output {
+                source: SOURCE,
+                pid: std::process::id(),
+                seq,
+                stream,
+                text,
+            };
             broadcast(&mut guard, &frame);
         }
     }
@@ -290,7 +307,10 @@ fn append_and_split(partial: &mut Vec<u8>, bytes: &[u8]) -> Vec<String> {
 
 /// Decode bytes lossily, strip `\r`, and trim trailing whitespace.
 fn clean_line(bytes: &[u8]) -> String {
-    String::from_utf8_lossy(bytes).replace('\r', "").trim_end().to_string()
+    String::from_utf8_lossy(bytes)
+        .replace('\r', "")
+        .trim_end()
+        .to_string()
 }
 
 /// Serialize a frame as one NDJSON line and write it to `stream`.
@@ -305,7 +325,9 @@ fn write_frame(stream: &mut UnixStream, frame: &Frame) -> bool {
 
 /// Write `frame` to every client, dropping any whose write fails or times out.
 fn broadcast(guard: &mut Inner, frame: &Frame) {
-    guard.clients.retain_mut(|client| write_frame(client, frame));
+    guard
+        .clients
+        .retain_mut(|client| write_frame(client, frame));
 }
 
 /// Accept loop: for each new connection, replay state and backlog, then keep it as a
@@ -408,7 +430,10 @@ pub fn shutdown() {
 #[cfg(test)]
 impl Producer {
     fn socket_path(&self) -> PathBuf {
-        self.inner.lock().map(|g| g.path.clone()).unwrap_or_default()
+        self.inner
+            .lock()
+            .map(|g| g.path.clone())
+            .unwrap_or_default()
     }
 
     fn client_count(&self) -> usize {
@@ -418,7 +443,12 @@ impl Producer {
     fn backlog_snapshot(&self) -> Vec<(u64, Stream, String)> {
         self.inner
             .lock()
-            .map(|g| g.backlog.iter().map(|l| (l.seq, l.stream, l.text.clone())).collect())
+            .map(|g| {
+                g.backlog
+                    .iter()
+                    .map(|l| (l.seq, l.stream, l.text.clone()))
+                    .collect()
+            })
             .unwrap_or_default()
     }
 }
@@ -500,7 +530,10 @@ mod tests {
         assert_eq!(value["type"], "output");
         assert_eq!(value["seq"], 17);
         assert_eq!(value["stream"], "stderr");
-        assert_eq!(value["text"], "[2026-09-17T10:00:00Z CM] Selected phase: phase-41");
+        assert_eq!(
+            value["text"],
+            "[2026-09-17T10:00:00Z CM] Selected phase: phase-41"
+        );
     }
 
     #[test]
@@ -542,11 +575,17 @@ mod tests {
 
     #[test]
     fn event_fields_verdict_spelling() {
-        let approved = EventFields { verdict: Some(Verdict::Approved), ..Default::default() };
+        let approved = EventFields {
+            verdict: Some(Verdict::Approved),
+            ..Default::default()
+        };
         let json = serde_json::to_string(&approved).unwrap();
         assert!(json.contains("\"verdict\":\"approved\""));
 
-        let needs_fixes = EventFields { verdict: Some(Verdict::NeedsFixes), ..Default::default() };
+        let needs_fixes = EventFields {
+            verdict: Some(Verdict::NeedsFixes),
+            ..Default::default()
+        };
         let json = serde_json::to_string(&needs_fixes).unwrap();
         assert!(json.contains("\"verdict\":\"needs_fixes\""));
     }
@@ -566,8 +605,11 @@ mod tests {
         let producer = Producer::bind(tmp.path()).unwrap();
         producer.send_output(Stream::Stdout, b"a\nb");
         producer.send_output(Stream::Stdout, b"c\n");
-        let lines: Vec<String> =
-            producer.backlog_snapshot().into_iter().map(|(_, _, t)| t).collect();
+        let lines: Vec<String> = producer
+            .backlog_snapshot()
+            .into_iter()
+            .map(|(_, _, t)| t)
+            .collect();
         assert_eq!(lines, vec!["a".to_string(), "bc".to_string()]);
     }
 
@@ -576,8 +618,11 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let producer = Producer::bind(tmp.path()).unwrap();
         producer.send_output(Stream::Stdout, b"hello  \r\n");
-        let lines: Vec<String> =
-            producer.backlog_snapshot().into_iter().map(|(_, _, t)| t).collect();
+        let lines: Vec<String> = producer
+            .backlog_snapshot()
+            .into_iter()
+            .map(|(_, _, t)| t)
+            .collect();
         assert_eq!(lines, vec!["hello".to_string()]);
     }
 
@@ -590,8 +635,11 @@ mod tests {
         producer.send_output(Stream::Stdout, &bytes[..1]);
         producer.send_output(Stream::Stdout, &bytes[1..]);
         producer.send_output(Stream::Stdout, b"\n");
-        let lines: Vec<String> =
-            producer.backlog_snapshot().into_iter().map(|(_, _, t)| t).collect();
+        let lines: Vec<String> = producer
+            .backlog_snapshot()
+            .into_iter()
+            .map(|(_, _, t)| t)
+            .collect();
         assert_eq!(lines, vec![euro.to_string()]);
     }
 
@@ -601,8 +649,11 @@ mod tests {
         let producer = Producer::bind(tmp.path()).unwrap();
         producer.send_output(Stream::Stdout, b"a");
         producer.send_output_line(Stream::Stdout, b"x");
-        let lines: Vec<String> =
-            producer.backlog_snapshot().into_iter().map(|(_, _, t)| t).collect();
+        let lines: Vec<String> = producer
+            .backlog_snapshot()
+            .into_iter()
+            .map(|(_, _, t)| t)
+            .collect();
         assert_eq!(lines, vec!["ax".to_string()]);
     }
 
@@ -611,8 +662,11 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let producer = Producer::bind(tmp.path()).unwrap();
         producer.send_output_line(Stream::Stdout, b"\nq: ");
-        let lines: Vec<String> =
-            producer.backlog_snapshot().into_iter().map(|(_, _, t)| t).collect();
+        let lines: Vec<String> = producer
+            .backlog_snapshot()
+            .into_iter()
+            .map(|(_, _, t)| t)
+            .collect();
         assert_eq!(lines, vec!["".to_string(), "q:".to_string()]);
     }
 
@@ -627,7 +681,9 @@ mod tests {
         }
 
         let stream = UnixStream::connect(&path).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader = BufReader::new(stream);
 
         let mut line = String::new();
@@ -670,7 +726,9 @@ mod tests {
 
         let path = producer.socket_path();
         let stream = UnixStream::connect(&path).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
         reader.read_line(&mut line).unwrap();
@@ -684,12 +742,19 @@ mod tests {
     fn state_clears_attention_after_resolved() {
         let tmp = TempDir::new().unwrap();
         let producer = Producer::bind(tmp.path()).unwrap();
-        producer.send_event(EventKind::NeedsAttention, None, "Select tasks", EventFields::default());
+        producer.send_event(
+            EventKind::NeedsAttention,
+            None,
+            "Select tasks",
+            EventFields::default(),
+        );
         producer.send_event(EventKind::Resolved, None, "", EventFields::default());
 
         let path = producer.socket_path();
         let stream = UnixStream::connect(&path).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
         reader.read_line(&mut line).unwrap();
@@ -707,11 +772,18 @@ mod tests {
             "Executing phase: phase-1",
             EventFields::default(),
         );
-        producer.send_event(EventKind::Completed, Some("phase-1"), "Phase complete", EventFields::default());
+        producer.send_event(
+            EventKind::Completed,
+            Some("phase-1"),
+            "Phase complete",
+            EventFields::default(),
+        );
 
         let path = producer.socket_path();
         let stream = UnixStream::connect(&path).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
         reader.read_line(&mut line).unwrap();
@@ -738,7 +810,9 @@ mod tests {
 
         let path = producer.socket_path();
         let stream = UnixStream::connect(&path).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
         reader.read_line(&mut line).unwrap();
@@ -750,7 +824,12 @@ mod tests {
     fn send_with_no_client_does_not_panic() {
         let tmp = TempDir::new().unwrap();
         let producer = Producer::bind(tmp.path()).unwrap();
-        producer.send_event(EventKind::Started, Some("phase-1"), "Executing phase: phase-1", EventFields::default());
+        producer.send_event(
+            EventKind::Started,
+            Some("phase-1"),
+            "Executing phase: phase-1",
+            EventFields::default(),
+        );
         producer.send_output(Stream::Stdout, b"hello\n");
         assert_eq!(producer.client_count(), 0);
         assert_eq!(producer.backlog_snapshot().len(), 1);
@@ -768,14 +847,21 @@ mod tests {
         assert_eq!(producer.client_count(), 1);
 
         let stream2 = UnixStream::connect(&path).unwrap();
-        stream2.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream2
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let mut reader2 = BufReader::new(stream2);
         let mut line = String::new();
         reader2.read_line(&mut line).unwrap();
         std::thread::sleep(Duration::from_millis(100));
         assert_eq!(producer.client_count(), 2);
 
-        producer.send_event(EventKind::Started, Some("phase-1"), "Executing phase: phase-1", EventFields::default());
+        producer.send_event(
+            EventKind::Started,
+            Some("phase-1"),
+            "Executing phase: phase-1",
+            EventFields::default(),
+        );
 
         let mut line2 = String::new();
         reader2.read_line(&mut line2).unwrap();

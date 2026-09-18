@@ -458,8 +458,7 @@ impl LogManager {
     /// Returns an error if writing to the log file fails.
     pub fn log_task_complete(&mut self, task_id: &str) -> Result<(), LogError> {
         let details = format!("Task `{task_id}` completed successfully.");
-        let entry =
-            LogEntry::new(LogAction::TaskComplete, details).with_task(task_id.to_string());
+        let entry = LogEntry::new(LogAction::TaskComplete, details).with_task(task_id.to_string());
         self.append_entry(&entry)
     }
 
@@ -475,8 +474,7 @@ impl LogManager {
     /// Returns an error if writing to the log file fails.
     pub fn log_task_deferred(&mut self, task_id: &str, reason: &str) -> Result<(), LogError> {
         let details = format!("Task `{task_id}` deferred.\n\n**Reason:** {reason}");
-        let entry =
-            LogEntry::new(LogAction::TaskDeferred, details).with_task(task_id.to_string());
+        let entry = LogEntry::new(LogAction::TaskDeferred, details).with_task(task_id.to_string());
         self.append_entry(&entry)
     }
 
@@ -717,7 +715,11 @@ fn truncate_content(content: &str, max_len: usize) -> String {
         content.to_string()
     } else {
         let truncated = &content[..max_len];
-        format!("{}\n\n... [truncated, {} more bytes]", truncated, content.len() - max_len)
+        format!(
+            "{}\n\n... [truncated, {} more bytes]",
+            truncated,
+            content.len() - max_len
+        )
     }
 }
 
@@ -726,7 +728,9 @@ mod tests {
     use super::*;
     use crate::build::CompilerMessage;
     use crate::build::MessageLevel;
-    use crate::state::{AgentStatus, PhaseStatus, Severity, Task, TaskContext, TaskStatus, TaskType};
+    use crate::state::{
+        AgentStatus, PhaseStatus, Severity, Task, TaskContext, TaskStatus, TaskType,
+    };
     use std::io::Read;
     use tempfile::NamedTempFile;
 
@@ -1028,11 +1032,7 @@ mod tests {
         let mut manager = LogManager::new(file.path().to_path_buf());
 
         manager
-            .log_shutdown(
-                Some("phase-1"),
-                Some("task-1"),
-                Some("Received SIGINT"),
-            )
+            .log_shutdown(Some("phase-1"), Some("task-1"), Some("Received SIGINT"))
             .unwrap();
 
         let mut content = String::new();

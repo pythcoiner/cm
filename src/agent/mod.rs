@@ -17,7 +17,10 @@ mod prompt;
 mod response;
 
 pub use prompt::PromptBuilder;
-pub use response::{PhaseAgentResponse, PlanAgentResponse, ResponseParser, ReviewAgentResponse, ReviewIssueResponse, RunReviewAgentResponse, TaskCompletionInfo};
+pub use response::{
+    PhaseAgentResponse, PlanAgentResponse, ResponseParser, ReviewAgentResponse,
+    ReviewIssueResponse, RunReviewAgentResponse, TaskCompletionInfo,
+};
 
 /// Errors that can occur during agent operations.
 #[derive(Debug, Error)]
@@ -95,7 +98,12 @@ impl AgentSpawner {
     ///
     /// Returns `AgentError::CliNotFound` if the claude CLI is not found.
     /// Returns `AgentError::SpawnFailed` if the process cannot be started.
-    pub fn spawn(&self, prompt: &str, task_id: &str, agent_label: &str) -> Result<AgentHandle, AgentError> {
+    pub fn spawn(
+        &self,
+        prompt: &str,
+        task_id: &str,
+        agent_label: &str,
+    ) -> Result<AgentHandle, AgentError> {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let started_at = Utc::now();
         let task_id_owned = task_id.to_string();
@@ -136,7 +144,12 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
+            run_agent_thread(
+                &mut child,
+                stop_flag_clone,
+                &task_id_for_thread,
+                &agent_label_owned,
+            )
         });
 
         Ok(AgentHandle {
@@ -205,7 +218,12 @@ impl AgentSpawner {
         // Run the process in a separate thread
         let task_id_for_thread = task_id_owned.clone();
         let thread_handle = thread::spawn(move || {
-            run_agent_thread(&mut child, stop_flag_clone, &task_id_for_thread, &agent_label_owned)
+            run_agent_thread(
+                &mut child,
+                stop_flag_clone,
+                &task_id_for_thread,
+                &agent_label_owned,
+            )
         });
 
         Ok(AgentHandle {
@@ -255,9 +273,7 @@ impl AgentHandle {
 
         match handle.join() {
             Ok(result) => result,
-            Err(_) => Err(AgentError::OutputError(
-                "agent thread panicked".to_string(),
-            )),
+            Err(_) => Err(AgentError::OutputError("agent thread panicked".to_string())),
         }
     }
 
@@ -423,7 +439,7 @@ mod tests {
             session_id: Some("test-session".to_string()),
         };
 
-        let debug_str = format!("{:?}", output);
+        let debug_str = format!("{output:?}");
         assert!(debug_str.contains("test output"));
         assert!(debug_str.contains("exit_code"));
         assert!(debug_str.contains("session_id"));

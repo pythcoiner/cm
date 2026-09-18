@@ -27,7 +27,6 @@ pub mod log;
 /// Deterministic markdown generation from JSON state.
 pub mod generate;
 
-
 /// CLI argument parsing with clap.
 pub mod cli;
 

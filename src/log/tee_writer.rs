@@ -35,9 +35,9 @@ pub fn init_log_file(cm_dir: &Path) -> io::Result<()> {
         .append(true)
         .open(&log_path)?;
 
-    LOG_FILE
-        .set(Mutex::new(file))
-        .map_err(|_| io::Error::new(io::ErrorKind::AlreadyExists, "log file already initialized"))?;
+    LOG_FILE.set(Mutex::new(file)).map_err(|_| {
+        io::Error::new(io::ErrorKind::AlreadyExists, "log file already initialized")
+    })?;
 
     Ok(())
 }
@@ -127,7 +127,11 @@ impl Write for TeeWriter {
             }
         }
 
-        let stream = if self.use_stderr { Stream::Stderr } else { Stream::Stdout };
+        let stream = if self.use_stderr {
+            Stream::Stderr
+        } else {
+            Stream::Stdout
+        };
         send_output(stream, &buf[..written]);
 
         Ok(written)

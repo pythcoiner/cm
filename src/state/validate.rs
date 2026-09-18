@@ -161,8 +161,18 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
 
     // Check project fields
     if let Some(project) = json.get("project") {
-        check_required_field(project, "name", &format!("{file_name} (project)"), &mut result);
-        check_required_field(project, "description", &format!("{file_name} (project)"), &mut result);
+        check_required_field(
+            project,
+            "name",
+            &format!("{file_name} (project)"),
+            &mut result,
+        );
+        check_required_field(
+            project,
+            "description",
+            &format!("{file_name} (project)"),
+            &mut result,
+        );
     } else {
         result.add_error(SanityError::SchemaError {
             file: file_name.clone(),
@@ -254,7 +264,11 @@ pub fn validate_tasks_json(path: &Path) -> ValidationResult {
                 if !plan_path.exists() {
                     result.add_error(SanityError::OrphanedReference {
                         file: file_name.clone(),
-                        id: task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                        id: task
+                            .get("id")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown")
+                            .to_string(),
                         message: format!("plan file '{plan_file}' does not exist"),
                     });
                 }
@@ -519,10 +533,7 @@ pub fn validate_roadmap_json(path: &Path) -> ValidationResult {
                         })
                         .count();
                     if uncompleted_count > 0 {
-                        let item_id = item
-                            .get("id")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("unknown");
+                        let item_id = item.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
                         result.add_warning(SanityError::OrphanedReference {
                             file: file_name.clone(),
                             id: item_id.to_string(),
@@ -615,9 +626,12 @@ pub fn validate_cross_references(tasks_path: &Path, roadmap_path: &Path) -> Vali
         for phase in phases {
             if let Some(Value::Array(tasks)) = phase.get("tasks") {
                 for task in tasks {
-                    if let Some(roadmap_item_id) = task.get("roadmap_item_id").and_then(|v| v.as_str()) {
+                    if let Some(roadmap_item_id) =
+                        task.get("roadmap_item_id").and_then(|v| v.as_str())
+                    {
                         if !roadmap_item_ids.contains(roadmap_item_id) {
-                            let task_id = task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
+                            let task_id =
+                                task.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
                             result.add_error(SanityError::InvalidReference {
                                 source_file: tasks_file.clone(),
                                 source_id: task_id.to_string(),
@@ -770,7 +784,8 @@ mod tests {
     use tempfile::{NamedTempFile, TempDir};
 
     fn create_valid_tasks_json_with_plan_file(plan_file_path: &str) -> String {
-        format!(r#"{{
+        format!(
+            r#"{{
             "version": "1.0.0",
             "project": {{
                 "name": "Test Project",
@@ -788,12 +803,13 @@ mod tests {
                             "type": "implement",
                             "status": "pending",
                             "context": {{}},
-                            "plan_file": "{}"
+                            "plan_file": "{plan_file_path}"
                         }}
                     ]
                 }}
             ]
-        }}"#, plan_file_path)
+        }}"#
+        )
     }
 
     fn create_valid_roadmap_json() -> String {
@@ -814,7 +830,8 @@ mod tests {
                     ]
                 }
             ]
-        }"#.to_string()
+        }"#
+        .to_string()
     }
 
     #[test]
@@ -824,11 +841,20 @@ mod tests {
         std::fs::write(plan_file.path(), "# Test Plan").unwrap();
 
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, "{}", create_valid_tasks_json_with_plan_file(plan_file.path().to_str().unwrap())).unwrap();
+        write!(
+            file,
+            "{}",
+            create_valid_tasks_json_with_plan_file(plan_file.path().to_str().unwrap())
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
 
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -838,7 +864,11 @@ mod tests {
 
         let result = validate_roadmap_json(file.path());
 
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
         assert!(result.warnings.is_empty());
     }
 
@@ -851,34 +881,48 @@ mod tests {
 
         assert!(!result.is_valid());
         assert_eq!(result.errors.len(), 1);
-        assert!(matches!(&result.errors[0], SanityError::JsonSyntaxError { .. }));
+        assert!(matches!(
+            &result.errors[0],
+            SanityError::JsonSyntaxError { .. }
+        ));
     }
 
     #[test]
     fn test_missing_required_field() {
         let mut file = NamedTempFile::new().unwrap();
         // Missing project.name
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{
                 "description": "A test project"
             }},
             "phases": []
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
 
         assert!(!result.is_valid());
-        let has_name_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "name")
-        });
-        assert!(has_name_error, "Expected error for missing 'name' field, got: {:?}", result.errors);
+        let has_name_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "name"));
+        assert!(
+            has_name_error,
+            "Expected error for missing 'name' field, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_duplicate_task_id() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{
                 "name": "Test",
@@ -909,21 +953,30 @@ mod tests {
                     ]
                 }}
             ]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
 
         assert!(!result.is_valid());
-        let has_duplicate_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::DuplicateId { id, .. } if id == "duplicate-id")
-        });
-        assert!(has_duplicate_error, "Expected duplicate ID error, got: {:?}", result.errors);
+        let has_duplicate_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::DuplicateId { id, .. } if id == "duplicate-id"));
+        assert!(
+            has_duplicate_error,
+            "Expected duplicate ID error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_duplicate_phase_id() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{
                 "name": "Test",
@@ -943,15 +996,22 @@ mod tests {
                     "tasks": []
                 }}
             ]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
 
         assert!(!result.is_valid());
-        let has_duplicate_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::DuplicateId { id, .. } if id == "same-phase")
-        });
-        assert!(has_duplicate_error, "Expected duplicate phase ID error, got: {:?}", result.errors);
+        let has_duplicate_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::DuplicateId { id, .. } if id == "same-phase"));
+        assert!(
+            has_duplicate_error,
+            "Expected duplicate phase ID error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -961,7 +1021,9 @@ mod tests {
         let roadmap_path = dir.path().join("roadmap.json");
 
         // Tasks file with reference to non-existent roadmap item
-        fs::write(&tasks_path, r#"{
+        fs::write(
+            &tasks_path,
+            r#"{
             "version": "1.0.0",
             "project": { "name": "Test", "description": "Test" },
             "phases": [{
@@ -978,10 +1040,14 @@ mod tests {
                     "roadmap_item_id": "nonexistent-item"
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Roadmap file without the referenced item
-        fs::write(&roadmap_path, r#"{
+        fs::write(
+            &roadmap_path,
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -994,7 +1060,9 @@ mod tests {
                     "completed": false
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_cross_references(&tasks_path, &roadmap_path);
 
@@ -1002,7 +1070,11 @@ mod tests {
         let has_invalid_ref = result.errors.iter().any(|e| {
             matches!(e, SanityError::InvalidReference { target_id, .. } if target_id == "nonexistent-item")
         });
-        assert!(has_invalid_ref, "Expected invalid reference error, got: {:?}", result.errors);
+        assert!(
+            has_invalid_ref,
+            "Expected invalid reference error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1012,7 +1084,9 @@ mod tests {
         let roadmap_path = dir.path().join("roadmap.json");
 
         // Tasks file
-        fs::write(&tasks_path, r#"{
+        fs::write(
+            &tasks_path,
+            r#"{
             "version": "1.0.0",
             "project": { "name": "Test", "description": "Test" },
             "phases": [{
@@ -1028,10 +1102,14 @@ mod tests {
                     "plan_file": ".cm/plans/plan-test.md"
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Roadmap file with reference to non-existent task
-        fs::write(&roadmap_path, r#"{
+        fs::write(
+            &roadmap_path,
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -1045,7 +1123,9 @@ mod tests {
                     "linked_task_ids": ["nonexistent-task"]
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_cross_references(&tasks_path, &roadmap_path);
 
@@ -1053,7 +1133,11 @@ mod tests {
         let has_invalid_ref = result.errors.iter().any(|e| {
             matches!(e, SanityError::InvalidReference { target_id, .. } if target_id == "nonexistent-task")
         });
-        assert!(has_invalid_ref, "Expected invalid reference error, got: {:?}", result.errors);
+        assert!(
+            has_invalid_ref,
+            "Expected invalid reference error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1071,7 +1155,10 @@ mod tests {
         let plan_file_abs = plan_file_path.to_str().unwrap();
 
         // Create valid tasks.json with absolute plan_file path
-        fs::write(cm_dir.join("tasks.json"), format!(r#"{{
+        fs::write(
+            cm_dir.join("tasks.json"),
+            format!(
+                r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [{{
@@ -1084,14 +1171,19 @@ mod tests {
                     "type": "implement",
                     "status": "pending",
                     "context": {{}},
-                    "plan_file": "{}",
+                    "plan_file": "{plan_file_abs}",
                     "roadmap_item_id": "item-1"
                 }}]
             }}]
-        }}"#, plan_file_abs)).unwrap();
+        }}"#
+            ),
+        )
+        .unwrap();
 
         // Create valid roadmap.json with matching reference
-        fs::write(cm_dir.join("roadmap.json"), r#"{
+        fs::write(
+            cm_dir.join("roadmap.json"),
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -1105,11 +1197,17 @@ mod tests {
                     "linked_task_ids": ["task-1"]
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_all(cm_dir);
 
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1118,23 +1216,35 @@ mod tests {
         let cm_dir = dir.path();
 
         // Create invalid tasks.json (missing project.name)
-        fs::write(cm_dir.join("tasks.json"), r#"{
+        fs::write(
+            cm_dir.join("tasks.json"),
+            r#"{
             "version": "1.0.0",
             "project": { "description": "Test" },
             "phases": []
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Create invalid roadmap.json (missing title)
-        fs::write(cm_dir.join("roadmap.json"), r#"{
+        fs::write(
+            cm_dir.join("roadmap.json"),
+            r#"{
             "version": "1.0.0",
             "phases": []
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_all(cm_dir);
 
         assert!(!result.is_valid());
         // Should have errors from both files
-        assert!(result.errors.len() >= 2, "Expected at least 2 errors, got: {:?}", result.errors);
+        assert!(
+            result.errors.len() >= 2,
+            "Expected at least 2 errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1186,7 +1296,9 @@ mod tests {
     #[test]
     fn test_roadmap_duplicate_item_id() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [
@@ -1208,15 +1320,22 @@ mod tests {
                     ]
                 }}
             ]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
         assert!(!result.is_valid());
-        let has_duplicate_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::DuplicateId { id, .. } if id == "dup-item")
-        });
-        assert!(has_duplicate_error, "Expected duplicate item ID error, got: {:?}", result.errors);
+        let has_duplicate_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::DuplicateId { id, .. } if id == "dup-item"));
+        assert!(
+            has_duplicate_error,
+            "Expected duplicate item ID error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1227,7 +1346,9 @@ mod tests {
         let result = validate_tasks_json(&nonexistent_path);
 
         assert!(!result.is_valid());
-        assert!(matches!(&result.errors[0], SanityError::JsonSyntaxError { message, .. } if message.contains("Failed to read")));
+        assert!(
+            matches!(&result.errors[0], SanityError::JsonSyntaxError { message, .. } if message.contains("Failed to read"))
+        );
     }
 
     #[test]
@@ -1238,7 +1359,9 @@ mod tests {
         let plan_path = plan_file.path().to_str().unwrap();
 
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [{{
@@ -1251,7 +1374,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "plan_file": "{}",
+                    "plan_file": "{plan_path}",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1263,16 +1386,24 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#, plan_path).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_attempt_missing_required_field() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [{{
@@ -1293,20 +1424,29 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(!result.is_valid());
-        let has_agent_id_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "agent_id")
-        });
-        assert!(has_agent_id_error, "Expected error for missing 'agent_id', got: {:?}", result.errors);
+        let has_agent_id_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "agent_id"));
+        assert!(
+            has_agent_id_error,
+            "Expected error for missing 'agent_id', got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_response_missing_message() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [{{
@@ -1331,14 +1471,21 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(!result.is_valid());
-        let has_message_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "message")
-        });
-        assert!(has_message_error, "Expected error for missing 'message', got: {:?}", result.errors);
+        let has_message_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "message"));
+        assert!(
+            has_message_error,
+            "Expected error for missing 'message', got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1349,7 +1496,9 @@ mod tests {
         let plan_path = plan_file.path().to_str().unwrap();
 
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [{{
@@ -1362,7 +1511,7 @@ mod tests {
                     "type": "implement",
                     "status": "completed",
                     "context": {{}},
-                    "plan_file": "{}",
+                    "plan_file": "{plan_path}",
                     "attempts": [{{
                         "attempt_number": 1,
                         "agent_id": "agent-1",
@@ -1374,16 +1523,24 @@ mod tests {
                     }}]
                 }}]
             }}]
-        }}"#, plan_path).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
-        assert!(result.is_valid(), "Legacy raw_response should be accepted, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Legacy raw_response should be accepted, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_agent_history_validation() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [],
@@ -1393,16 +1550,24 @@ mod tests {
                 "agent_type": "implem",
                 "started_at": "2026-01-24T14:07:20Z"
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_agent_history_missing_field() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [],
@@ -1410,20 +1575,29 @@ mod tests {
                 "id": "inv-1",
                 "started_at": "2026-01-24T14:07:20Z"
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(!result.is_valid());
-        let has_task_id_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "task_id")
-        });
-        assert!(has_task_id_error, "Expected error for missing 'task_id', got: {:?}", result.errors);
+        let has_task_id_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "task_id"));
+        assert!(
+            has_task_id_error,
+            "Expected error for missing 'task_id', got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_log_records_validation() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [],
@@ -1433,16 +1607,24 @@ mod tests {
                 "action": "phase_start",
                 "data": {{ "type": "phase_start", "name": "Phase 1" }}
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_log_records_missing_field() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [],
@@ -1450,25 +1632,36 @@ mod tests {
                 "id": "rec-1",
                 "action": "phase_start"
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(!result.is_valid());
-        let has_timestamp_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "timestamp")
-        });
-        assert!(has_timestamp_error, "Expected error for missing 'timestamp', got: {:?}", result.errors);
+        let has_timestamp_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "timestamp"));
+        assert!(
+            has_timestamp_error,
+            "Expected error for missing 'timestamp', got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_agent_history_not_array() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "project": {{ "name": "Test", "description": "Test" }},
             "phases": [],
             "agent_history": "not an array"
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_tasks_json(file.path());
         assert!(!result.is_valid());
@@ -1476,7 +1669,11 @@ mod tests {
             matches!(e, SanityError::SchemaError { field, message, .. }
                 if field == "agent_history" && message == "must be an array")
         });
-        assert!(has_type_error, "Expected 'must be an array' error, got: {:?}", result.errors);
+        assert!(
+            has_type_error,
+            "Expected 'must be an array' error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
@@ -1485,7 +1682,9 @@ mod tests {
         let tasks_path = dir.path().join("tasks.json");
         let roadmap_path = dir.path().join("roadmap.json");
 
-        fs::write(&tasks_path, r#"{
+        fs::write(
+            &tasks_path,
+            r#"{
             "version": "1.0.0",
             "project": { "name": "Test", "description": "Test" },
             "phases": [{
@@ -1501,10 +1700,14 @@ mod tests {
                     "plan_file": ".cm/plans/plan-test.md"
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Roadmap with uncompleted item that has no linked_task_ids
-        fs::write(&roadmap_path, r#"{
+        fs::write(
+            &roadmap_path,
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -1525,18 +1728,31 @@ mod tests {
                     }
                 ]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_cross_references(&tasks_path, &roadmap_path);
 
         // Should produce a warning for the unlinked item
-        assert!(result.is_valid(), "Should not produce errors, got: {:?}", result.errors);
-        assert!(!result.warnings.is_empty(), "Expected warning for unlinked roadmap item");
+        assert!(
+            result.is_valid(),
+            "Should not produce errors, got: {:?}",
+            result.errors
+        );
+        assert!(
+            !result.warnings.is_empty(),
+            "Expected warning for unlinked roadmap item"
+        );
         let has_orphan_warning = result.warnings.iter().any(|w| {
             matches!(w, SanityError::OrphanedReference { id, message, .. }
                 if id == "item-2" && message.contains("no linked_task_ids"))
         });
-        assert!(has_orphan_warning, "Expected orphaned reference warning for item-2, got: {:?}", result.warnings);
+        assert!(
+            has_orphan_warning,
+            "Expected orphaned reference warning for item-2, got: {:?}",
+            result.warnings
+        );
     }
 
     #[test]
@@ -1545,14 +1761,20 @@ mod tests {
         let tasks_path = dir.path().join("tasks.json");
         let roadmap_path = dir.path().join("roadmap.json");
 
-        fs::write(&tasks_path, r#"{
+        fs::write(
+            &tasks_path,
+            r#"{
             "version": "1.0.0",
             "project": { "name": "Test", "description": "Test" },
             "phases": [{ "id": "phase-1", "name": "Phase", "status": "pending", "tasks": [] }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Roadmap with uncompleted item that has empty linked_task_ids
-        fs::write(&roadmap_path, r#"{
+        fs::write(
+            &roadmap_path,
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -1566,23 +1788,34 @@ mod tests {
                     "linked_task_ids": []
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_cross_references(&tasks_path, &roadmap_path);
 
         assert!(result.is_valid());
-        assert!(!result.warnings.is_empty(), "Expected warning for empty linked_task_ids");
+        assert!(
+            !result.warnings.is_empty(),
+            "Expected warning for empty linked_task_ids"
+        );
         let has_orphan_warning = result.warnings.iter().any(|w| {
             matches!(w, SanityError::OrphanedReference { id, message, .. }
                 if id == "item-1" && message.contains("empty linked_task_ids"))
         });
-        assert!(has_orphan_warning, "Expected orphaned reference warning for item-1, got: {:?}", result.warnings);
+        assert!(
+            has_orphan_warning,
+            "Expected orphaned reference warning for item-1, got: {:?}",
+            result.warnings
+        );
     }
 
     #[test]
     fn test_completed_item_with_uncompleted_sub_items() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -1599,17 +1832,30 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
-        assert!(result.is_valid(), "Should not produce errors, got: {:?}", result.errors);
-        assert!(!result.warnings.is_empty(), "Expected warning for completed item with uncompleted sub_items");
+        assert!(
+            result.is_valid(),
+            "Should not produce errors, got: {:?}",
+            result.errors
+        );
+        assert!(
+            !result.warnings.is_empty(),
+            "Expected warning for completed item with uncompleted sub_items"
+        );
         let has_warning = result.warnings.iter().any(|w| {
             matches!(w, SanityError::OrphanedReference { id, message, .. }
                 if id == "item-1" && message.contains("1 uncompleted sub_item"))
         });
-        assert!(has_warning, "Expected orphaned reference warning for item-1, got: {:?}", result.warnings);
+        assert!(
+            has_warning,
+            "Expected orphaned reference warning for item-1, got: {:?}",
+            result.warnings
+        );
     }
 
     #[test]
@@ -1618,14 +1864,20 @@ mod tests {
         let tasks_path = dir.path().join("tasks.json");
         let roadmap_path = dir.path().join("roadmap.json");
 
-        fs::write(&tasks_path, r#"{
+        fs::write(
+            &tasks_path,
+            r#"{
             "version": "1.0.0",
             "project": { "name": "Test", "description": "Test" },
             "phases": [{ "id": "phase-1", "name": "Phase", "status": "completed", "tasks": [] }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         // Completed item with no linked tasks — should NOT warn
-        fs::write(&roadmap_path, r#"{
+        fs::write(
+            &roadmap_path,
+            r#"{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{
@@ -1638,18 +1890,26 @@ mod tests {
                     "completed": true
                 }]
             }]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let result = validate_cross_references(&tasks_path, &roadmap_path);
 
         assert!(result.is_valid());
-        assert!(result.warnings.is_empty(), "Completed items should not warn, got: {:?}", result.warnings);
+        assert!(
+            result.warnings.is_empty(),
+            "Completed items should not warn, got: {:?}",
+            result.warnings
+        );
     }
 
     #[test]
     fn test_duplicate_subitem_id_within_item() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -1666,21 +1926,30 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
         assert!(!result.is_valid());
-        let has_dup_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::DuplicateId { id, .. } if id == "dup-sub")
-        });
-        assert!(has_dup_error, "Expected duplicate sub-item ID error, got: {:?}", result.errors);
+        let has_dup_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::DuplicateId { id, .. } if id == "dup-sub"));
+        assert!(
+            has_dup_error,
+            "Expected duplicate sub-item ID error, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_subitem_missing_required_fields() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -1696,25 +1965,39 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
         assert!(!result.is_valid());
-        let has_name_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "name")
-        });
-        let has_completed_error = result.errors.iter().any(|e| {
-            matches!(e, SanityError::SchemaError { field, .. } if field == "completed")
-        });
-        assert!(has_name_error, "Expected error for missing 'name' field, got: {:?}", result.errors);
-        assert!(has_completed_error, "Expected error for missing 'completed' field, got: {:?}", result.errors);
+        let has_name_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "name"));
+        let has_completed_error = result
+            .errors
+            .iter()
+            .any(|e| matches!(e, SanityError::SchemaError { field, .. } if field == "completed"));
+        assert!(
+            has_name_error,
+            "Expected error for missing 'name' field, got: {:?}",
+            result.errors
+        );
+        assert!(
+            has_completed_error,
+            "Expected error for missing 'completed' field, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_valid_roadmap_with_subitem_ids() {
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -1731,18 +2014,26 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 
     #[test]
     fn test_valid_roadmap_with_subitem_without_id() {
         // Sub-items without IDs are valid (for backward compatibility)
         let mut file = NamedTempFile::new().unwrap();
-        write!(file, r#"{{
+        write!(
+            file,
+            r#"{{
             "version": "1.0.0",
             "title": "Test",
             "phases": [{{
@@ -1759,10 +2050,16 @@ mod tests {
                     ]
                 }}]
             }}]
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let result = validate_roadmap_json(file.path());
 
-        assert!(result.is_valid(), "Expected no errors, got: {:?}", result.errors);
+        assert!(
+            result.is_valid(),
+            "Expected no errors, got: {:?}",
+            result.errors
+        );
     }
 }
