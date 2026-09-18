@@ -96,6 +96,10 @@ pub enum ManagerError {
     /// Shutdown was requested via signal.
     #[error("shutdown requested")]
     ShutdownRequested,
+
+    /// An agent step produced no changes, so the phase is not done.
+    #[error("no changes produced: {0}")]
+    NoChanges(String),
 }
 
 /// Configuration for the Manager.
@@ -1190,10 +1194,7 @@ impl Manager {
                 "Agent reported failure for phase {}: {}",
                 phase_id, response.message
             );
-            // Mark tasks back to pending
-            for task in &pending_tasks {
-                self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
-            }
+            self.restore_pending_tasks(&pending_tasks)?;
             self.manager_state = ManagerState::Executing;
             return Err(ManagerError::TaskNotRunnable(format!(
                 "IMPLEM agent reported failure for phase {phase_id}: {}",
@@ -1201,29 +1202,23 @@ impl Manager {
             )));
         }
 
-        // Check whether the agent produced any file changes. An empty diff is
-        // not necessarily a failure: the work may have already been done by an
-        // earlier phase, or the phase may be verification-only (e.g. type:
-        // test). In that case we skip the commit and let build verification
-        // and the phase review cycle decide whether the phase is acceptable.
-        let implem_made_changes = self.check_git_changes()?;
-        if implem_made_changes {
-            // Commit IMPLEM agent changes for audit trail
-            match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
-                Ok(_) => {}
-                Err(e) => {
-                    warn!("Failed to commit PHASE_IMPLEM changes for {phase_id}: {e}");
-                }
-            }
-        } else {
-            warn!(
-                "Agent reported success but no file changes detected for phase {phase_id}; \
-                 deferring to build verification and phase review. Agent summary: {}",
+        // An agent that changed nothing did not do the phase, whatever it reported
+        if !self.check_git_changes()? {
+            warn!("Agent reported success but no file changes detected for phase {phase_id}");
+            self.restore_pending_tasks(&pending_tasks)?;
+            self.manager_state = ManagerState::Executing;
+            return Err(ManagerError::NoChanges(format!(
+                "IMPLEM agent produced no file changes for phase {phase_id}: {}",
                 response.message
-            );
-            emit_cm(&format!(
-                "PHASE_IMPLEM for {phase_id} produced no file changes; running build verification anyway"
-            ));
+            )));
+        }
+
+        // Commit IMPLEM agent changes for audit trail
+        match self.commit_agent_changes(phase_id, "PHASE_IMPLEM", &agent_id) {
+            Ok(_) => {}
+            Err(e) => {
+                warn!("Failed to commit PHASE_IMPLEM changes for {phase_id}: {e}");
+            }
         }
 
         // Run build verification (if configured)
@@ -1278,6 +1273,14 @@ impl Manager {
 
         self.manager_state = ManagerState::Executing;
         Ok(outcome)
+    }
+
+    /// Mark the phase's pending tasks back to `Pending` after a failed attempt.
+    fn restore_pending_tasks(&mut self, pending_tasks: &[Task]) -> Result<(), StateError> {
+        for task in pending_tasks {
+            self.state.mark_task_status(&task.id, TaskStatus::Pending)?;
+        }
+        Ok(())
     }
 
     /// Apply the verdict from a phase review cycle, updating task statuses,
@@ -1386,7 +1389,10 @@ impl Manager {
 
             if diff.trim().is_empty() {
                 warn!("No diff found for phase {phase_id}");
-                return Ok(Verdict::Approved);
+                self.restore_pending_tasks(pending_tasks)?;
+                return Err(ManagerError::NoChanges(format!(
+                    "no diff found for phase {phase_id} since {baseline_commit}"
+                )));
             }
 
             // Get phase for prompt building
@@ -2515,6 +2521,12 @@ mod tests {
 
         let err = ManagerError::ShutdownRequested;
         assert!(err.to_string().contains("shutdown requested"));
+
+        let err = ManagerError::NoChanges("phase-1 made no changes".to_string());
+        assert_eq!(
+            err.to_string(),
+            "no changes produced: phase-1 made no changes"
+        );
     }
 
     #[test]
