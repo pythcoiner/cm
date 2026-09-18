@@ -32,6 +32,9 @@ mod state;
 pub use recovery::{CheckpointId, RecoveryAction, RecoveryError, RecoveryManager, ShutdownHandler};
 pub use state::ManagerState;
 
+/// Interval between shutdown flag checks while waiting for a stdin line.
+const PROMPT_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(100);
+
 /// Outcome of executing a phase.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PhaseOutcome {
@@ -416,7 +419,7 @@ impl Manager {
     /// Shows pending tasks and asks for selection.
     /// This is used in daemon mode (non-TUI).
     pub fn prompt_task_selection(&self) -> Result<TaskSelection, ManagerError> {
-        use std::io::{self, BufRead, Write};
+        use std::io::{self, Write};
 
         // Reload state to get fresh data
         let state = load_state(&self.config.state_path)?;
@@ -505,16 +508,14 @@ impl Manager {
             crate::am::EventFields::default(),
         );
 
-        let stdin = io::stdin();
-        let mut line = String::new();
-        let read_result = stdin.lock().read_line(&mut line);
+        let read_result = self.read_prompt_line();
         crate::am::send_event(
             crate::am::EventKind::Resolved,
             None,
             "",
             crate::am::EventFields::default(),
         );
-        read_result.map_err(|e| ManagerError::StateError(StateError::Io(e)))?;
+        let line = read_result?;
 
         let input = line.trim().to_lowercase();
         match input.as_str() {
@@ -591,7 +592,12 @@ impl Manager {
         self.preflight_git_check()?;
 
         loop {
-            match self.prompt_task_selection()? {
+            let selection = match self.prompt_task_selection() {
+                Ok(selection) => selection,
+                Err(ManagerError::ShutdownRequested) => break,
+                Err(e) => return Err(e),
+            };
+            match selection {
                 TaskSelection::Single => {
                     if let Err(e) = self.step() {
                         match e {
@@ -678,8 +684,16 @@ impl Manager {
     /// Prompts via stdin/stdout.
     ///
     /// Returns Some(additional_cycles) if user wants to retry, None if they decline.
-    fn prompt_retry_cycles(&self, task_id: &str, cycles_completed: u32) -> Option<u32> {
-        use std::io::{self, BufRead, Write};
+    ///
+    /// # Errors
+    ///
+    /// Returns `ManagerError::ShutdownRequested` if shutdown is requested while waiting.
+    fn prompt_retry_cycles(
+        &self,
+        task_id: &str,
+        cycles_completed: u32,
+    ) -> Result<Option<u32>, ManagerError> {
+        use std::io::{self, Write};
 
         let message = format!(
             "Task {task_id} exhausted {cycles_completed} review cycles. Retry more cycles?"
@@ -700,30 +714,62 @@ impl Manager {
         tee_print("Retry more cycles? [y/N/number]: ");
         let _ = io::stdout().flush();
 
-        let stdin = io::stdin();
-        let mut line = String::new();
-        let read_ok = stdin.lock().read_line(&mut line).is_ok();
+        let read_result = self.read_prompt_line();
         crate::am::send_event(
             crate::am::EventKind::Resolved,
             None,
             "",
             crate::am::EventFields::default(),
         );
-        if !read_ok {
-            return None;
-        }
+        let line = match read_result {
+            Ok(line) => line,
+            Err(ManagerError::StateError(StateError::Io(_))) => return Ok(None),
+            Err(e) => return Err(e),
+        };
 
         let input = line.trim().to_lowercase();
         if input == "y" || input == "yes" {
-            Some(5)
+            Ok(Some(5))
         } else if let Ok(n) = input.parse::<u32>() {
-            if n > 0 {
-                Some(n)
-            } else {
-                None
-            }
+            Ok(if n > 0 { Some(n) } else { None })
         } else {
-            None
+            Ok(None)
+        }
+    }
+
+    /// Read one line from stdin, returning `ShutdownRequested` as soon as shutdown is requested.
+    ///
+    /// On shutdown the reader thread stays blocked on stdin and is abandoned, the process is exiting.
+    fn read_prompt_line(&self) -> Result<String, ManagerError> {
+        use std::{
+            io::{self, BufRead},
+            sync::mpsc::{self, RecvTimeoutError},
+            thread,
+        };
+
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            let mut line = String::new();
+            let result = io::stdin().lock().read_line(&mut line).map(|_| line);
+            // The receiver is gone only when the prompt was abandoned on shutdown
+            let _ = sender.send(result);
+        });
+
+        loop {
+            if self.shutdown_flag.load(Ordering::SeqCst) {
+                return Err(ManagerError::ShutdownRequested);
+            }
+            match receiver.recv_timeout(PROMPT_POLL_INTERVAL) {
+                Ok(result) => {
+                    return result.map_err(|e| ManagerError::StateError(StateError::Io(e)))
+                }
+                Err(RecvTimeoutError::Timeout) => {}
+                Err(RecvTimeoutError::Disconnected) => {
+                    return Err(ManagerError::StateError(StateError::Io(
+                        io::ErrorKind::BrokenPipe.into(),
+                    )));
+                }
+            }
         }
     }
 
@@ -1366,7 +1412,14 @@ impl Manager {
         loop {
             // Check if we've exceeded max cycles
             if cycle >= max_cycles {
-                if let Some(additional) = self.prompt_retry_cycles(phase_id, cycle) {
+                let retry = match self.prompt_retry_cycles(phase_id, cycle) {
+                    Ok(retry) => retry,
+                    Err(e) => {
+                        self.restore_pending_tasks(pending_tasks)?;
+                        return Err(e);
+                    }
+                };
+                if let Some(additional) = retry {
                     max_cycles += additional;
                     emit_cm(&format!(
                         "Retrying {additional} more cycles for phase {phase_id}"
