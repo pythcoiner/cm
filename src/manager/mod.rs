@@ -244,7 +244,7 @@ impl Manager {
         shutdown_flag: Arc<AtomicBool>,
     ) -> Result<Self, ManagerError> {
         let state = load_state(&config.state_path)?;
-        let agent_spawner = AgentSpawner::new(config.model.clone());
+        let agent_spawner = AgentSpawner::new(config.model.clone(), shutdown_flag.clone());
         let build_verifier = BuildVerifier::new(config.working_dir.clone());
 
         // Initialize phase logger

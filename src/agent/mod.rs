@@ -11,6 +11,7 @@ use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
+use log::warn;
 use thiserror::Error;
 
 mod prompt;
@@ -21,6 +22,12 @@ pub use response::{
     PhaseAgentResponse, PlanAgentResponse, ResponseParser, ReviewAgentResponse,
     ReviewIssueResponse, RunReviewAgentResponse, TaskCompletionInfo,
 };
+
+/// Interval between checks of a running agent or a pending rate limit wait.
+const CHECK_INTERVAL: Duration = Duration::from_millis(100);
+
+/// Delay before respawning an agent after claude reported a rate limit.
+const RATE_LIMIT_RETRY_DELAY: Duration = Duration::from_secs(30);
 
 /// Errors that can occur during agent operations.
 #[derive(Debug, Error)]
@@ -49,6 +56,10 @@ pub enum AgentError {
     #[error("claude CLI reported an error: {0}")]
     CliError(String),
 
+    /// The claude CLI reported a rate limit (`api_error_status: 429`).
+    #[error("claude CLI hit the rate limit: {0}")]
+    RateLimited(String),
+
     /// Failed to write the prompt to the agent's stdin.
     #[error("failed to write prompt to stdin: {0}")]
     PromptWriteFailed(String),
@@ -76,6 +87,8 @@ pub struct AgentOutput {
 pub struct AgentSpawner {
     /// Model to use for the agent.
     model: String,
+    /// Global shutdown flag, checked while waiting out a rate limit.
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 impl AgentSpawner {
@@ -84,8 +97,12 @@ impl AgentSpawner {
     /// # Arguments
     ///
     /// * `model` - The model identifier to use (e.g., "claude-sonnet-4-5-20250929")
-    pub fn new(model: String) -> Self {
-        Self { model }
+    /// * `shutdown_flag` - Global shutdown flag, stops a pending rate limit retry
+    pub fn new(model: String, shutdown_flag: Arc<AtomicBool>) -> Self {
+        Self {
+            model,
+            shutdown_flag,
+        }
     }
 
     /// Spawn a new agent process with the given prompt.
@@ -165,18 +182,15 @@ impl AgentSpawner {
         let mut child = spawn_claude(&args)?;
         let prompt_writer = write_prompt(&mut child, prompt.to_string());
 
-        let stop_flag_clone = stop_flag.clone();
-        let task_id_owned = task_id.to_string();
-        let agent_label_owned = agent_label.to_string();
-        let thread_handle = thread::spawn(move || {
-            run_agent_thread(
-                &mut child,
-                prompt_writer,
-                stop_flag_clone,
-                &task_id_owned,
-                &agent_label_owned,
-            )
-        });
+        let run = AgentRun {
+            args,
+            prompt: prompt.to_string(),
+            stop_flag: stop_flag.clone(),
+            shutdown_flag: self.shutdown_flag.clone(),
+            task_id: task_id.to_string(),
+            agent_label: agent_label.to_string(),
+        };
+        let thread_handle = thread::spawn(move || run.run(child, prompt_writer));
 
         Ok(AgentHandle {
             thread_handle: Some(thread_handle),
@@ -217,6 +231,7 @@ impl AgentHandle {
     /// - The agent is interrupted (`AgentError::Interrupted`)
     /// - Output cannot be read (`AgentError::OutputError`)
     /// - The claude CLI flagged its result as an error (`AgentError::CliError`)
+    /// - A stop or shutdown was requested during a rate limit wait (`AgentError::Interrupted`)
     /// - The prompt could not be written to stdin (`AgentError::PromptWriteFailed`)
     pub fn wait(mut self) -> Result<AgentOutput, AgentError> {
         let handle = self
@@ -285,16 +300,73 @@ fn join_prompt_writer(prompt_writer: Option<JoinHandle<io::Result<()>>>) -> Resu
     }
 }
 
-/// Run the agent in a thread, handling interruption.
-fn run_agent_thread(
+/// Everything needed to respawn the same agent step.
+struct AgentRun {
+    args: Vec<String>,
+    prompt: String,
+    stop_flag: Arc<AtomicBool>,
+    shutdown_flag: Arc<AtomicBool>,
+    task_id: String,
+    agent_label: String,
+}
+
+impl AgentRun {
+    /// Run the agent, respawning it after `RATE_LIMIT_RETRY_DELAY` while claude reports a rate limit.
+    fn run(
+        self,
+        mut child: Child,
+        mut prompt_writer: Option<JoinHandle<io::Result<()>>>,
+    ) -> Result<AgentOutput, AgentError> {
+        loop {
+            match run_child(
+                &mut child,
+                prompt_writer,
+                &self.stop_flag,
+                &self.task_id,
+                &self.agent_label,
+            ) {
+                Err(AgentError::RateLimited(msg)) => {
+                    self.wait_rate_limit(&msg)?;
+                    child = spawn_claude(&self.args)?;
+                    prompt_writer = write_prompt(&mut child, self.prompt.clone());
+                }
+                result => return result,
+            }
+        }
+    }
+
+    /// Wait `RATE_LIMIT_RETRY_DELAY`, returning `Interrupted` if a stop or shutdown is requested.
+    fn wait_rate_limit(&self, msg: &str) -> Result<(), AgentError> {
+        let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+        let line = format!(
+            "[{now} {}] {} hit the rate limit: {msg}, retrying in {}s",
+            self.agent_label,
+            self.task_id,
+            RATE_LIMIT_RETRY_DELAY.as_secs()
+        );
+        warn!("{line}");
+        crate::log::tee_eprintln(&line);
+
+        let start = Instant::now();
+        while start.elapsed() < RATE_LIMIT_RETRY_DELAY {
+            if self.stop_flag.load(Ordering::SeqCst) || self.shutdown_flag.load(Ordering::SeqCst) {
+                return Err(AgentError::Interrupted);
+            }
+            thread::sleep(CHECK_INTERVAL);
+        }
+        Ok(())
+    }
+}
+
+/// Run one claude process to completion, handling interruption.
+fn run_child(
     child: &mut Child,
     prompt_writer: Option<JoinHandle<io::Result<()>>>,
-    stop_flag: Arc<AtomicBool>,
+    stop_flag: &AtomicBool,
     task_id: &str,
     agent_label: &str,
 ) -> Result<AgentOutput, AgentError> {
     let start = Instant::now();
-    let check_interval = std::time::Duration::from_millis(100);
     let mut last_progress_secs = 0u64;
 
     // Spawn reader threads IMMEDIATELY to avoid pipe buffer overflow
@@ -359,8 +431,8 @@ fn run_agent_thread(
                     .map(|t| t.join().unwrap_or_default())
                     .unwrap_or_default();
 
-                if let Some(msg) = response::ResponseParser::extract_cli_error(&stdout) {
-                    return Err(AgentError::CliError(msg));
+                if let Some(err) = response::ResponseParser::extract_cli_error(&stdout) {
+                    return Err(err);
                 }
                 join_prompt_writer(prompt_writer)?;
 
@@ -376,7 +448,7 @@ fn run_agent_thread(
                 });
             }
             Ok(None) => {
-                thread::sleep(check_interval);
+                thread::sleep(CHECK_INTERVAL);
             }
             Err(e) => {
                 return Err(AgentError::OutputError(format!(
@@ -394,7 +466,10 @@ mod tests {
 
     #[test]
     fn test_agent_spawner_creation() {
-        let spawner = AgentSpawner::new("claude-sonnet-4-5-20250929".to_string());
+        let spawner = AgentSpawner::new(
+            "claude-sonnet-4-5-20250929".to_string(),
+            Arc::new(AtomicBool::new(false)),
+        );
 
         assert_eq!(spawner.model(), "claude-sonnet-4-5-20250929");
     }
@@ -417,6 +492,12 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "claude CLI reported an error: You've hit your limit"
+        );
+
+        let err = AgentError::RateLimited("You've hit your limit".to_string());
+        assert_eq!(
+            err.to_string(),
+            "claude CLI hit the rate limit: You've hit your limit"
         );
 
         let err = AgentError::PromptWriteFailed("Broken pipe (os error 32)".to_string());

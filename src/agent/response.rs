@@ -9,6 +9,9 @@ use crate::state::{AgentResponse, AgentStatus};
 
 use super::AgentError;
 
+/// HTTP status the claude CLI reports in `api_error_status` on a usage or rate limit.
+const RATE_LIMIT_STATUS: u64 = 429;
+
 /// Response from a phase-level agent that implements multiple tasks.
 ///
 /// This is the structured response expected from `build_phase_implem_prompt()`.
@@ -176,11 +179,12 @@ impl ResponseParser {
         None
     }
 
-    /// Extract the error message when the claude CLI flags its result with `is_error`.
+    /// Extract the error when the claude CLI flags its result with `is_error`.
     ///
     /// The CLI reports failures such as usage limits (`api_error_status: 429`) as a
     /// normal-looking result whose text is the error, e.g. "You've hit your limit".
-    pub fn extract_cli_error(raw_json: &str) -> Option<String> {
+    /// A 429 gives `AgentError::RateLimited`, any other error `AgentError::CliError`.
+    pub fn extract_cli_error(raw_json: &str) -> Option<AgentError> {
         let value: serde_json::Value = serde_json::from_str(raw_json.trim()).ok()?;
         let result = match &value {
             serde_json::Value::Array(events) => events.iter().find(|e| e["type"] == "result")?,
@@ -189,7 +193,12 @@ impl ResponseParser {
         if result["is_error"] != true {
             return None;
         }
-        Some(result["result"].as_str().unwrap_or_default().to_string())
+        let msg = result["result"].as_str().unwrap_or_default().to_string();
+        if result["api_error_status"] == RATE_LIMIT_STATUS {
+            Some(AgentError::RateLimited(msg))
+        } else {
+            Some(AgentError::CliError(msg))
+        }
     }
 
     /// Parse raw JSON output from claude CLI into an AgentResponse.
@@ -765,20 +774,36 @@ mod tests {
             {"type":"result","subtype":"success","is_error":true,"api_error_status":429,"result":"You've hit your limit · resets 11:10am (America/New_York)","session_id":"2c79e526-965b-4a24-a715-d193b618c2b9"}
         ]"#;
 
-        assert_eq!(
+        assert!(matches!(
             ResponseParser::extract_cli_error(raw),
-            Some("You've hit your limit · resets 11:10am (America/New_York)".to_string())
-        );
+            Some(AgentError::RateLimited(msg))
+                if msg == "You've hit your limit · resets 11:10am (America/New_York)"
+        ));
     }
 
     #[test]
     fn test_extract_cli_error_legacy_format() {
-        let raw = r#"{"type":"result","is_error":true,"result":"You've hit your limit","session_id":"abc"}"#;
+        let raw = r#"{"type":"result","is_error":true,"api_error_status":429,"result":"You've hit your limit","session_id":"abc"}"#;
 
-        assert_eq!(
+        assert!(matches!(
             ResponseParser::extract_cli_error(raw),
-            Some("You've hit your limit".to_string())
-        );
+            Some(AgentError::RateLimited(msg)) if msg == "You've hit your limit"
+        ));
+    }
+
+    #[test]
+    fn test_extract_cli_error_other_status_is_cli_error() {
+        let raw = r#"[{"type":"system","session_id":"abc"},{"type":"result","subtype":"success","is_error":true,"api_error_status":400,"result":"Prompt is too long"}]"#;
+        let no_status = r#"{"type":"result","is_error":true,"result":"Prompt is too long"}"#;
+
+        assert!(matches!(
+            ResponseParser::extract_cli_error(raw),
+            Some(AgentError::CliError(msg)) if msg == "Prompt is too long"
+        ));
+        assert!(matches!(
+            ResponseParser::extract_cli_error(no_status),
+            Some(AgentError::CliError(msg)) if msg == "Prompt is too long"
+        ));
     }
 
     #[test]
@@ -786,9 +811,9 @@ mod tests {
         let streaming = r#"[{"type":"system","session_id":"abc"},{"type":"result","is_error":false,"result":"done"}]"#;
         let legacy = r#"{"result":"done","session_id":"abc"}"#;
 
-        assert_eq!(ResponseParser::extract_cli_error(streaming), None);
-        assert_eq!(ResponseParser::extract_cli_error(legacy), None);
-        assert_eq!(ResponseParser::extract_cli_error("not json"), None);
+        assert!(ResponseParser::extract_cli_error(streaming).is_none());
+        assert!(ResponseParser::extract_cli_error(legacy).is_none());
+        assert!(ResponseParser::extract_cli_error("not json").is_none());
     }
 
     #[test]
